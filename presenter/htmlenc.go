@@ -18,12 +18,12 @@ import (
 	"net/http"
 	"strings"
 
-	"codeberg.org/t73fde/sxhtml"
-	"codeberg.org/t73fde/sxpf"
-	"codeberg.org/t73fde/sxpf/eval"
 	"zettelstore.de/c/api"
 	"zettelstore.de/c/shtml"
 	"zettelstore.de/c/sz"
+	"zettelstore.de/sx.fossil/sxhtml"
+	"zettelstore.de/sx.fossil/sxpf"
+	"zettelstore.de/sx.fossil/sxpf/eval"
 )
 
 type htmlGenerator struct {
@@ -46,8 +46,8 @@ func newGenerator(sf sxpf.SymbolFactory, slides *slideSet, ren renderer, extZett
 	}
 	tr.SetRebinder(func(te *shtml.TransformEnv) {
 		te.Rebind(sz.NameSymRegionBlock, func(args []sxpf.Object, prevFn eval.Callable) sxpf.Object {
-			attr, isCell := sxpf.GetCell(args[0])
-			if !isCell {
+			attr, isPair := sxpf.GetPair(args[0])
+			if !isPair {
 				return nil
 			}
 			a := sz.GetAttributes(attr)
@@ -75,7 +75,7 @@ func newGenerator(sf sxpf.SymbolFactory, slides *slideSet, ren renderer, extZett
 					}
 				case "both":
 					if ren != nil {
-						var classAttr *sxpf.Cell
+						var classAttr *sxpf.Pair
 						switch ren.Role() {
 						case SlideRoleShow:
 							classAttr = addClass(nil, "notes", sf)
@@ -98,7 +98,7 @@ func newGenerator(sf sxpf.SymbolFactory, slides *slideSet, ren renderer, extZett
 			return obj
 		})
 		te.Rebind(sz.NameSymVerbatimEval, func(args []sxpf.Object, prevFn eval.Callable) sxpf.Object {
-			attr, isCell := sxpf.GetCell(args[0])
+			attr, isCell := sxpf.GetPair(args[0])
 			if !isCell {
 				return nil
 			}
@@ -128,16 +128,16 @@ func newGenerator(sf sxpf.SymbolFactory, slides *slideSet, ren renderer, extZett
 			if err != nil {
 				return sxpf.Nil()
 			}
-			lst, isCell := sxpf.GetCell(obj)
-			if !isCell {
+			lst, isPair := sxpf.GetPair(obj)
+			if !isPair {
 				return obj
 			}
 			sym, isSymbol := sxpf.GetSymbol(lst.Car())
 			if !isSymbol || !sym.IsEqual(sf.MustMake("a")) {
 				return obj
 			}
-			attr, isCell := sxpf.GetCell(lst.Tail().Car())
-			if !isCell {
+			attr, isPair := sxpf.GetPair(lst.Tail().Car())
+			if !isPair {
 				return obj
 			}
 			avals := attr.Tail()
@@ -167,12 +167,12 @@ func newGenerator(sf sxpf.SymbolFactory, slides *slideSet, ren renderer, extZett
 			if err != nil {
 				return sxpf.Nil()
 			}
-			lst, isCell := sxpf.GetCell(obj)
-			if !isCell {
+			lst, isPair := sxpf.GetPair(obj)
+			if !isPair {
 				return obj
 			}
-			attr, isCell := sxpf.GetCell(lst.Tail().Car())
-			if !isCell {
+			attr, isPair := sxpf.GetPair(lst.Tail().Car())
+			if !isPair {
 				return obj
 			}
 			avals := attr.Tail()
@@ -187,12 +187,12 @@ func newGenerator(sf sxpf.SymbolFactory, slides *slideSet, ren renderer, extZett
 			if err != nil {
 				return sxpf.Nil()
 			}
-			cell, isCell := sxpf.GetCell(obj)
-			if !isCell {
+			pair, isPair := sxpf.GetPair(obj)
+			if !isPair {
 				return obj
 			}
-			attr, isCell := sxpf.GetCell(cell.Tail().Car())
-			if !isCell {
+			attr, isPair := sxpf.GetPair(pair.Tail().Car())
+			if !isPair {
 				return obj
 			}
 			avals := attr.Tail()
@@ -256,7 +256,7 @@ func newGenerator(sf sxpf.SymbolFactory, slides *slideSet, ren renderer, extZett
 func (gen *htmlGenerator) SetUnique(s string)            { gen.tr.SetUnique(s) }
 func (gen *htmlGenerator) SetCurrentSlide(si *slideInfo) { gen.curSlide = si }
 
-func (gen *htmlGenerator) Transform(astLst *sxpf.Cell) *sxpf.Cell {
+func (gen *htmlGenerator) Transform(astLst *sxpf.Pair) *sxpf.Pair {
 	result, err := gen.tr.Transform(astLst)
 	if err != nil {
 		log.Println("ETRA", err)
@@ -264,11 +264,11 @@ func (gen *htmlGenerator) Transform(astLst *sxpf.Cell) *sxpf.Cell {
 	return result
 }
 
-func (gen *htmlGenerator) Endnotes() *sxpf.Cell { return gen.tr.Endnotes() }
+func (gen *htmlGenerator) Endnotes() *sxpf.Pair { return gen.tr.Endnotes() }
 
-func (gen *htmlGenerator) writeHTMLDocument(w http.ResponseWriter, lang string, headHtml, bodyHtml *sxpf.Cell) {
+func (gen *htmlGenerator) writeHTMLDocument(w http.ResponseWriter, lang string, headHtml, bodyHtml *sxpf.Pair) {
 	sf := gen.tr.SymbolFactory()
-	var langAttr *sxpf.Cell
+	var langAttr *sxpf.Pair
 	if lang != "" {
 		langAttr = sxpf.MakeList(sf.MustMake(sxhtml.NameSymAttr), sxpf.Cons(sf.MustMake("lang"), sxpf.MakeString(lang)))
 	}
@@ -289,14 +289,14 @@ func (gen *htmlGenerator) writeHTMLDocument(w http.ResponseWriter, lang string, 
 	g.WriteHTML(w, zettelHtml)
 }
 
-func getJSScript(jsScript string, sf sxpf.SymbolFactory) *sxpf.Cell {
+func getJSScript(jsScript string, sf sxpf.SymbolFactory) *sxpf.Pair {
 	return sxpf.MakeList(
 		sf.MustMake("script"),
 		sxpf.MakeList(sf.MustMake(sxhtml.NameSymNoEscape), sxpf.MakeString(jsScript)),
 	)
 }
 
-func addClass(alist *sxpf.Cell, val string, sf sxpf.SymbolFactory) *sxpf.Cell {
+func addClass(alist *sxpf.Pair, val string, sf sxpf.SymbolFactory) *sxpf.Pair {
 	symClass := sf.MustMake("class")
 	if p := alist.Assoc(symClass); p != nil {
 		if s, ok := sxpf.GetString(p.Cdr()); ok {
