@@ -18,12 +18,12 @@ import (
 	"net/http"
 	"strings"
 
-	"zettelstore.de/c/api"
-	"zettelstore.de/c/shtml"
-	"zettelstore.de/c/sz"
+	"zettelstore.de/client.fossil/api"
+	"zettelstore.de/client.fossil/shtml"
+	"zettelstore.de/client.fossil/sz"
+	"zettelstore.de/sx.fossil"
+	"zettelstore.de/sx.fossil/sxeval"
 	"zettelstore.de/sx.fossil/sxhtml"
-	"zettelstore.de/sx.fossil/sxpf"
-	"zettelstore.de/sx.fossil/sxpf/eval"
 )
 
 type htmlGenerator struct {
@@ -38,15 +38,15 @@ type htmlGenerator struct {
 // true, false for handout
 // false, false for manual (?)
 
-func newGenerator(sf sxpf.SymbolFactory, slides *slideSet, ren renderer, extZettelLinks, embedImage bool) *htmlGenerator {
+func newGenerator(sf sx.SymbolFactory, slides *slideSet, ren renderer, extZettelLinks, embedImage bool) *htmlGenerator {
 	tr := shtml.NewTransformer(1, sf)
 	gen := htmlGenerator{
 		tr: tr,
 		s:  slides,
 	}
 	tr.SetRebinder(func(te *shtml.TransformEnv) {
-		te.Rebind(sz.NameSymRegionBlock, func(args []sxpf.Object, prevFn eval.Callable) sxpf.Object {
-			attr, isPair := sxpf.GetPair(args[0])
+		te.Rebind(sz.NameSymRegionBlock, func(args []sx.Object, prevFn sxeval.Callable) sx.Object {
+			attr, isPair := sx.GetPair(args[0])
 			if !isPair {
 				return nil
 			}
@@ -57,34 +57,34 @@ func newGenerator(sf sxpf.SymbolFactory, slides *slideSet, ren renderer, extZett
 					if ren != nil {
 						if ren.Role() == SlideRoleShow {
 							classAttr := addClass(nil, "notes", sf)
-							result := sxpf.MakeList(sf.MustMake("aside"), classAttr.Cons(sf.MustMake(sxhtml.NameSymAttr)))
+							result := sx.MakeList(sf.MustMake("aside"), classAttr.Cons(sf.MustMake(sxhtml.NameSymAttr)))
 							result.Tail().SetCdr(args[1])
 							return result
 						}
-						return sxpf.Nil()
+						return sx.Nil()
 					}
 				case "handout":
 					if ren != nil {
 						if ren.Role() == SlideRoleHandout {
 							classAttr := addClass(nil, "handout", sf)
-							result := sxpf.MakeList(sf.MustMake("aside"), classAttr.Cons(sf.MustMake(sxhtml.NameSymAttr)))
+							result := sx.MakeList(sf.MustMake("aside"), classAttr.Cons(sf.MustMake(sxhtml.NameSymAttr)))
 							result.Tail().SetCdr(args[1])
 							return result
 						}
-						return sxpf.Nil()
+						return sx.Nil()
 					}
 				case "both":
 					if ren != nil {
-						var classAttr *sxpf.Pair
+						var classAttr *sx.Pair
 						switch ren.Role() {
 						case SlideRoleShow:
 							classAttr = addClass(nil, "notes", sf)
 						case SlideRoleHandout:
 							classAttr = addClass(nil, "handout", sf)
 						default:
-							return sxpf.Nil()
+							return sx.Nil()
 						}
-						result := sxpf.MakeList(sf.MustMake("aside"), classAttr.Cons(sf.MustMake(sxhtml.NameSymAttr)))
+						result := sx.MakeList(sf.MustMake("aside"), classAttr.Cons(sf.MustMake(sxhtml.NameSymAttr)))
 						result.Tail().SetCdr(args[1])
 						return result
 					}
@@ -93,24 +93,24 @@ func newGenerator(sf sxpf.SymbolFactory, slides *slideSet, ren renderer, extZett
 
 			obj, err := prevFn.Call(nil, nil, args)
 			if err != nil {
-				return sxpf.Nil()
+				return sx.Nil()
 			}
 			return obj
 		})
-		te.Rebind(sz.NameSymVerbatimEval, func(args []sxpf.Object, prevFn eval.Callable) sxpf.Object {
-			attr, isCell := sxpf.GetPair(args[0])
+		te.Rebind(sz.NameSymVerbatimEval, func(args []sx.Object, prevFn sxeval.Callable) sx.Object {
+			attr, isCell := sx.GetPair(args[0])
 			if !isCell {
 				return nil
 			}
 			a := sz.GetAttributes(attr)
 			if syntax, found := a.Get(""); found && syntax == SyntaxMermaid {
 				gen.hasMermaid = true
-				if mmCode, isString := sxpf.GetString(args[1]); isString {
-					return sxpf.MakeList(
+				if mmCode, isString := sx.GetString(args[1]); isString {
+					return sx.MakeList(
 						sf.MustMake("div"),
-						sxpf.MakeList(
+						sx.MakeList(
 							sf.MustMake(sxhtml.NameSymAttr),
-							sxpf.Cons(sf.MustMake("class"), sxpf.MakeString("mermaid")),
+							sx.Cons(sf.MustMake("class"), sx.MakeString("mermaid")),
 						),
 						mmCode,
 					)
@@ -118,25 +118,25 @@ func newGenerator(sf sxpf.SymbolFactory, slides *slideSet, ren renderer, extZett
 			}
 			obj, err := prevFn.Call(nil, nil, args)
 			if err != nil {
-				return sxpf.Nil()
+				return sx.Nil()
 			}
 			return obj
 		})
-		te.Rebind(sz.NameSymVerbatimComment, func(_ []sxpf.Object, _ eval.Callable) sxpf.Object { return sxpf.Nil() })
-		te.Rebind(sz.NameSymLinkZettel, func(args []sxpf.Object, prevFn eval.Callable) sxpf.Object {
+		te.Rebind(sz.NameSymVerbatimComment, func(_ []sx.Object, _ sxeval.Callable) sx.Object { return sx.Nil() })
+		te.Rebind(sz.NameSymLinkZettel, func(args []sx.Object, prevFn sxeval.Callable) sx.Object {
 			obj, err := prevFn.Call(nil, nil, args)
 			if err != nil {
-				return sxpf.Nil()
+				return sx.Nil()
 			}
-			lst, isPair := sxpf.GetPair(obj)
+			lst, isPair := sx.GetPair(obj)
 			if !isPair {
 				return obj
 			}
-			sym, isSymbol := sxpf.GetSymbol(lst.Car())
+			sym, isSymbol := sx.GetSymbol(lst.Car())
 			if !isSymbol || !sym.IsEqual(sf.MustMake("a")) {
 				return obj
 			}
-			attr, isPair := sxpf.GetPair(lst.Tail().Car())
+			attr, isPair := sx.GetPair(lst.Tail().Car())
 			if !isPair {
 				return obj
 			}
@@ -146,52 +146,52 @@ func newGenerator(sf sxpf.SymbolFactory, slides *slideSet, ren renderer, extZett
 			if p == nil {
 				return obj
 			}
-			refVal, isString := sxpf.GetString(p.Cdr())
+			refVal, isString := sx.GetString(p.Cdr())
 			if !isString {
 				return obj
 			}
 			zid, _, _ := strings.Cut(refVal.String(), "#")
 			if si := gen.curSlide.FindSlide(api.ZettelID(zid)); si != nil {
-				avals = avals.Cons(sxpf.Cons(symHref, sxpf.MakeString(fmt.Sprintf("#(%d)", si.Number))))
+				avals = avals.Cons(sx.Cons(symHref, sx.MakeString(fmt.Sprintf("#(%d)", si.Number))))
 			} else if extZettelLinks {
 				// TODO: make link absolute
 				avals = addClass(avals, "zettel", sf)
-				attr.SetCdr(avals.Cons(sxpf.Cons(symHref, sxpf.MakeString("/"+zid))))
+				attr.SetCdr(avals.Cons(sx.Cons(symHref, sx.MakeString("/"+zid))))
 				return lst
 			}
 			attr.SetCdr(avals)
 			return lst
 		})
-		te.Rebind(sz.NameSymLinkExternal, func(args []sxpf.Object, prevFn eval.Callable) sxpf.Object {
+		te.Rebind(sz.NameSymLinkExternal, func(args []sx.Object, prevFn sxeval.Callable) sx.Object {
 			obj, err := prevFn.Call(nil, nil, args)
 			if err != nil {
-				return sxpf.Nil()
+				return sx.Nil()
 			}
-			lst, isPair := sxpf.GetPair(obj)
+			lst, isPair := sx.GetPair(obj)
 			if !isPair {
 				return obj
 			}
-			attr, isPair := sxpf.GetPair(lst.Tail().Car())
+			attr, isPair := sx.GetPair(lst.Tail().Car())
 			if !isPair {
 				return obj
 			}
 			avals := attr.Tail()
 			avals = addClass(avals, "external", sf)
-			avals = avals.Cons(sxpf.Cons(sf.MustMake("target"), sxpf.MakeString("_blank")))
-			avals = avals.Cons(sxpf.Cons(sf.MustMake("rel"), sxpf.MakeString("noopener noreferrer")))
+			avals = avals.Cons(sx.Cons(sf.MustMake("target"), sx.MakeString("_blank")))
+			avals = avals.Cons(sx.Cons(sf.MustMake("rel"), sx.MakeString("noopener noreferrer")))
 			attr.SetCdr(avals)
 			return lst
 		})
-		te.Rebind(sz.NameSymEmbed, func(args []sxpf.Object, prevFn eval.Callable) sxpf.Object {
+		te.Rebind(sz.NameSymEmbed, func(args []sx.Object, prevFn sxeval.Callable) sx.Object {
 			obj, err := prevFn.Call(nil, nil, args)
 			if err != nil {
-				return sxpf.Nil()
+				return sx.Nil()
 			}
-			pair, isPair := sxpf.GetPair(obj)
+			pair, isPair := sx.GetPair(obj)
 			if !isPair {
 				return obj
 			}
-			attr, isPair := sxpf.GetPair(pair.Tail().Car())
+			attr, isPair := sx.GetPair(pair.Tail().Car())
 			if !isPair {
 				return obj
 			}
@@ -201,12 +201,12 @@ func newGenerator(sf sxpf.SymbolFactory, slides *slideSet, ren renderer, extZett
 			if p == nil {
 				return obj
 			}
-			zidVal, isString := sxpf.GetString(p.Cdr())
+			zidVal, isString := sx.GetString(p.Cdr())
 			if !isString {
 				return obj
 			}
 			zid := api.ZettelID(zidVal)
-			syntax, isString := sxpf.GetString(args[2])
+			syntax, isString := sx.GetString(args[2])
 			if !isString {
 				return obj
 			}
@@ -217,14 +217,14 @@ func newGenerator(sf sxpf.SymbolFactory, slides *slideSet, ren renderer, extZett
 						return obj
 					}
 				}
-				return sxpf.MakeList(
+				return sx.MakeList(
 					sf.MustMake("figure"),
-					sxpf.MakeList(
+					sx.MakeList(
 						sf.MustMake("embed"),
-						sxpf.MakeList(
+						sx.MakeList(
 							sf.MustMake(sxhtml.NameSymAttr),
-							sxpf.Cons(sf.MustMake("type"), sxpf.MakeString("image/svg+xml")),
-							sxpf.Cons(symSrc, sxpf.MakeString("/"+string(zid)+".svg")),
+							sx.Cons(sf.MustMake("type"), sx.MakeString("image/svg+xml")),
+							sx.Cons(symSrc, sx.MakeString("/"+string(zid)+".svg")),
 						),
 					),
 				)
@@ -246,17 +246,17 @@ func newGenerator(sf sxpf.SymbolFactory, slides *slideSet, ren renderer, extZett
 			if src == "" {
 				src = "/" + string(zid) + ".content"
 			}
-			attr.SetCdr(avals.Cons(sxpf.Cons(symSrc, sxpf.MakeString(src))))
+			attr.SetCdr(avals.Cons(sx.Cons(symSrc, sx.MakeString(src))))
 			return obj
 		})
-		te.Rebind(sz.NameSymLiteralComment, func([]sxpf.Object, eval.Callable) sxpf.Object { return sxpf.Nil() })
+		te.Rebind(sz.NameSymLiteralComment, func([]sx.Object, sxeval.Callable) sx.Object { return sx.Nil() })
 	})
 	return &gen
 }
 func (gen *htmlGenerator) SetUnique(s string)            { gen.tr.SetUnique(s) }
 func (gen *htmlGenerator) SetCurrentSlide(si *slideInfo) { gen.curSlide = si }
 
-func (gen *htmlGenerator) Transform(astLst *sxpf.Pair) *sxpf.Pair {
+func (gen *htmlGenerator) Transform(astLst *sx.Pair) *sx.Pair {
 	result, err := gen.tr.Transform(astLst)
 	if err != nil {
 		log.Println("ETRA", err)
@@ -264,50 +264,50 @@ func (gen *htmlGenerator) Transform(astLst *sxpf.Pair) *sxpf.Pair {
 	return result
 }
 
-func (gen *htmlGenerator) Endnotes() *sxpf.Pair { return gen.tr.Endnotes() }
+func (gen *htmlGenerator) Endnotes() *sx.Pair { return gen.tr.Endnotes() }
 
-func (gen *htmlGenerator) writeHTMLDocument(w http.ResponseWriter, lang string, headHtml, bodyHtml *sxpf.Pair) {
+func (gen *htmlGenerator) writeHTMLDocument(w http.ResponseWriter, lang string, headHtml, bodyHtml *sx.Pair) {
 	sf := gen.tr.SymbolFactory()
-	var langAttr *sxpf.Pair
+	var langAttr *sx.Pair
 	if lang != "" {
-		langAttr = sxpf.MakeList(sf.MustMake(sxhtml.NameSymAttr), sxpf.Cons(sf.MustMake("lang"), sxpf.MakeString(lang)))
+		langAttr = sx.MakeList(sf.MustMake(sxhtml.NameSymAttr), sx.Cons(sf.MustMake("lang"), sx.MakeString(lang)))
 	}
 	if gen.hasMermaid {
-		curr := bodyHtml.Tail().LastPair().AppendBang(sxpf.MakeList(
+		curr := bodyHtml.Tail().LastPair().AppendBang(sx.MakeList(
 			sf.MustMake("script"),
-			sxpf.MakeString("//"),
-			sxpf.MakeList(sf.MustMake(sxhtml.NameSymCDATA), sxpf.MakeString(mermaid)),
+			sx.MakeString("//"),
+			sx.MakeList(sf.MustMake(sxhtml.NameSymCDATA), sx.MakeString(mermaid)),
 		))
 		curr.AppendBang(getJSScript("mermaid.initialize({startOnLoad:true});", sf))
 	}
-	zettelHtml := sxpf.MakeList(
+	zettelHtml := sx.MakeList(
 		sf.MustMake(sxhtml.NameSymDoctype),
-		sxpf.MakeList(sf.MustMake("html"), langAttr, headHtml, bodyHtml),
+		sx.MakeList(sf.MustMake("html"), langAttr, headHtml, bodyHtml),
 	)
 	g := sxhtml.NewGenerator(sf, sxhtml.WithNewline)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	g.WriteHTML(w, zettelHtml)
 }
 
-func getJSScript(jsScript string, sf sxpf.SymbolFactory) *sxpf.Pair {
-	return sxpf.MakeList(
+func getJSScript(jsScript string, sf sx.SymbolFactory) *sx.Pair {
+	return sx.MakeList(
 		sf.MustMake("script"),
-		sxpf.MakeList(sf.MustMake(sxhtml.NameSymNoEscape), sxpf.MakeString(jsScript)),
+		sx.MakeList(sf.MustMake(sxhtml.NameSymNoEscape), sx.MakeString(jsScript)),
 	)
 }
 
-func addClass(alist *sxpf.Pair, val string, sf sxpf.SymbolFactory) *sxpf.Pair {
+func addClass(alist *sx.Pair, val string, sf sx.SymbolFactory) *sx.Pair {
 	symClass := sf.MustMake("class")
 	if p := alist.Assoc(symClass); p != nil {
-		if s, ok := sxpf.GetString(p.Cdr()); ok {
+		if s, ok := sx.GetString(p.Cdr()); ok {
 			classVal := s.String()
 			if strings.Contains(" "+classVal+" ", val) {
 				return alist
 			}
-			return alist.Cons(sxpf.Cons(symClass, sxpf.MakeString(classVal+" "+val)))
+			return alist.Cons(sx.Cons(symClass, sx.MakeString(classVal+" "+val)))
 		}
 	}
-	return alist.Cons(sxpf.Cons(symClass, sxpf.MakeString(val)))
+	return alist.Cons(sx.Cons(symClass, sx.MakeString(val)))
 }
 
 //go:embed mermaid/mermaid.min.js
