@@ -339,7 +339,7 @@ func getURLHtml(sxMeta sz.Meta, sf sx.SymbolFactory) *sx.Pair {
 }
 
 func processSlideTOC(ctx context.Context, c *client.Client, zid api.ZettelID, sxMeta sz.Meta, zs *sz.ZettelSymbols, astSF sx.SymbolFactory) *slideSet {
-	o, err := c.GetZettelOrder(ctx, zid)
+	_, _, metaSeq, err := c.ListZettelJSON(ctx, string(zid)+" "+api.ItemsDirective)
 	if err != nil {
 		return nil
 	}
@@ -348,7 +348,7 @@ func processSlideTOC(ctx context.Context, c *client.Client, zid api.ZettelID, sx
 	sGetZettel := func(zid api.ZettelID) (sx.Object, error) {
 		return c.GetEvaluatedSz(ctx, zid, api.PartZettel, astSF)
 	}
-	setupSlideSet(slides, o.List, getZettel, sGetZettel, zs)
+	setupSlideSet(slides, metaSeq, getZettel, sGetZettel, zs)
 	return slides
 }
 
@@ -399,7 +399,7 @@ func renderSlideTOC(w http.ResponseWriter, slides *slideSet, zs *sz.ZettelSymbol
 
 func processSlideSet(w http.ResponseWriter, r *http.Request, cfg *slidesConfig, zid api.ZettelID, ren renderer) {
 	ctx := r.Context()
-	o, err := cfg.c.GetZettelOrder(ctx, zid)
+	_, _, metaSeq, err := cfg.c.ListZettelJSON(ctx, string(zid)+" "+api.ItemsDirective)
 	if err != nil {
 		reportRetrieveError(w, zid, err, "zettel")
 		return
@@ -414,7 +414,7 @@ func processSlideSet(w http.ResponseWriter, r *http.Request, cfg *slidesConfig, 
 	sGetZettel := func(zid api.ZettelID) (sx.Object, error) {
 		return cfg.c.GetEvaluatedSz(ctx, zid, api.PartZettel, cfg.astSF)
 	}
-	setupSlideSet(slides, o.List, getZettel, sGetZettel, cfg.zs)
+	setupSlideSet(slides, metaSeq, getZettel, sGetZettel, cfg.zs)
 	ren.Prepare(ctx)
 	ren.Render(w, slides, slides.Author(cfg))
 }
