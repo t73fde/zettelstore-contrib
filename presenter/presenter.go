@@ -151,7 +151,7 @@ type slidesConfig struct {
 }
 
 func getConfig(ctx context.Context, c *client.Client) (slidesConfig, error) {
-	m, err := c.GetMeta(ctx, zidConfig)
+	m, err := c.GetMetaJSON(ctx, zidConfig)
 	if err != nil {
 		return slidesConfig{}, err
 	}
@@ -339,7 +339,7 @@ func getURLHtml(sxMeta sz.Meta, sf sx.SymbolFactory) *sx.Pair {
 }
 
 func processSlideTOC(ctx context.Context, c *client.Client, zid api.ZettelID, sxMeta sz.Meta, zs *sz.ZettelSymbols, astSF sx.SymbolFactory) *slideSet {
-	_, _, metaSeq, err := c.ListZettelJSON(ctx, string(zid)+" "+api.ItemsDirective)
+	_, _, metaSeq, err := c.QueryZettelData(ctx, string(zid)+" "+api.ItemsDirective)
 	if err != nil {
 		return nil
 	}
@@ -399,7 +399,7 @@ func renderSlideTOC(w http.ResponseWriter, slides *slideSet, zs *sz.ZettelSymbol
 
 func processSlideSet(w http.ResponseWriter, r *http.Request, cfg *slidesConfig, zid api.ZettelID, ren renderer) {
 	ctx := r.Context()
-	_, _, metaSeq, err := cfg.c.ListZettelJSON(ctx, string(zid)+" "+api.ItemsDirective)
+	_, _, metaSeq, err := cfg.c.QueryZettelData(ctx, string(zid)+" "+api.ItemsDirective)
 	if err != nil {
 		reportRetrieveError(w, zid, err, "zettel")
 		return
@@ -635,7 +635,7 @@ func getSlideNoRange(si *slideInfo, sf sx.SymbolFactory) *sx.Pair {
 	return nil
 }
 
-func setupSlideSet(slides *slideSet, l []api.ZidMetaJSON, getZettel getZettelContentFunc, sGetZettel sGetZettelFunc, zs *sz.ZettelSymbols) {
+func setupSlideSet(slides *slideSet, l []api.ZidMetaRights, getZettel getZettelContentFunc, sGetZettel sGetZettelFunc, zs *sz.ZettelSymbols) {
 	for _, sl := range l {
 		slides.AddSlide(sl.ID, sGetZettel, zs)
 	}
@@ -644,7 +644,7 @@ func setupSlideSet(slides *slideSet, l []api.ZidMetaJSON, getZettel getZettelCon
 
 func processList(w http.ResponseWriter, r *http.Request, c *client.Client, astSF sx.SymbolFactory, zs *sz.ZettelSymbols) {
 	ctx := r.Context()
-	_, human, zl, err := c.ListZettelJSON(ctx, strings.Join(r.URL.Query()[api.QueryKeyQuery], " "))
+	_, human, zl, err := c.QueryZettelData(ctx, strings.Join(r.URL.Query()[api.QueryKeyQuery], " "))
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error retrieving zettel list %s: %s\n", r.URL.Query(), err), http.StatusBadRequest)
 		return
