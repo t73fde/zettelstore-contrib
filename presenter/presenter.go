@@ -151,7 +151,7 @@ type slidesConfig struct {
 }
 
 func getConfig(ctx context.Context, c *client.Client) (slidesConfig, error) {
-	m, err := c.GetMetaJSON(ctx, zidConfig)
+	mr, err := c.GetMetaData(ctx, zidConfig)
 	if err != nil {
 		return slidesConfig{}, err
 	}
@@ -163,10 +163,10 @@ func getConfig(ctx context.Context, c *client.Client) (slidesConfig, error) {
 		slideSetRole: DefaultSlideSetRole,
 	}
 	result.zs.InitializeZettelSymbols(astSF)
-	if ssr, ok := m[KeySlideSetRole]; ok {
+	if ssr, ok := mr.Meta[KeySlideSetRole]; ok {
 		result.slideSetRole = ssr
 	}
-	if author, ok := m[KeyAuthor]; ok {
+	if author, ok := mr.Meta[KeyAuthor]; ok {
 		result.author = author
 	}
 	return result, nil
