@@ -91,7 +91,7 @@ func newGenerator(sf sx.SymbolFactory, slides *slideSet, ren renderer, extZettel
 				}
 			}
 
-			obj, err := prevFn.Call(nil, nil, args)
+			obj, err := prevFn.Call(nil, args)
 			if err != nil {
 				return sx.Nil()
 			}
@@ -116,7 +116,7 @@ func newGenerator(sf sx.SymbolFactory, slides *slideSet, ren renderer, extZettel
 					)
 				}
 			}
-			obj, err := prevFn.Call(nil, nil, args)
+			obj, err := prevFn.Call(nil, args)
 			if err != nil {
 				return sx.Nil()
 			}
@@ -124,7 +124,7 @@ func newGenerator(sf sx.SymbolFactory, slides *slideSet, ren renderer, extZettel
 		})
 		te.Rebind(sz.NameSymVerbatimComment, func(_ []sx.Object, _ sxeval.Callable) sx.Object { return sx.Nil() })
 		te.Rebind(sz.NameSymLinkZettel, func(args []sx.Object, prevFn sxeval.Callable) sx.Object {
-			obj, err := prevFn.Call(nil, nil, args)
+			obj, err := prevFn.Call(nil, args)
 			if err != nil {
 				return sx.Nil()
 			}
@@ -163,7 +163,7 @@ func newGenerator(sf sx.SymbolFactory, slides *slideSet, ren renderer, extZettel
 			return lst
 		})
 		te.Rebind(sz.NameSymLinkExternal, func(args []sx.Object, prevFn sxeval.Callable) sx.Object {
-			obj, err := prevFn.Call(nil, nil, args)
+			obj, err := prevFn.Call(nil, args)
 			if err != nil {
 				return sx.Nil()
 			}
@@ -183,7 +183,7 @@ func newGenerator(sf sx.SymbolFactory, slides *slideSet, ren renderer, extZettel
 			return lst
 		})
 		te.Rebind(sz.NameSymEmbed, func(args []sx.Object, prevFn sxeval.Callable) sx.Object {
-			obj, err := prevFn.Call(nil, nil, args)
+			obj, err := prevFn.Call(nil, args)
 			if err != nil {
 				return sx.Nil()
 			}
