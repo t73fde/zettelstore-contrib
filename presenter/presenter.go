@@ -155,7 +155,7 @@ func getConfig(ctx context.Context, c *client.Client) (slidesConfig, error) {
 	if err != nil {
 		return slidesConfig{}, err
 	}
-	astSF := sx.MakeMappedFactory()
+	astSF := sx.MakeMappedFactory(1024)
 	result := slidesConfig{
 		c:            c,
 		astSF:        astSF,
@@ -269,7 +269,7 @@ func processZettel(w http.ResponseWriter, r *http.Request, cfg *slidesConfig, zi
 	}
 	title := getSlideTitleZid(sxMeta, zid, cfg.zs)
 
-	sf := sx.MakeMappedFactory()
+	sf := sx.MakeMappedFactory(256)
 	gen := newGenerator(sf, nil, nil, true, false)
 
 	headHtml := getHTMLHead("", sf)
@@ -360,7 +360,7 @@ func renderSlideTOC(w http.ResponseWriter, slides *slideSet, zs *sz.ZettelSymbol
 		offset++
 	}
 
-	sf := sx.MakeMappedFactory()
+	sf := sx.MakeMappedFactory(256)
 	gen := newGenerator(sf, nil, nil, false, false)
 
 	headHtml := getHTMLHead("", sf)
@@ -437,7 +437,7 @@ func (rr *revealRenderer) Prepare(ctx context.Context) {
 	}
 }
 func (rr *revealRenderer) Render(w http.ResponseWriter, slides *slideSet, author string) {
-	sf := sx.MakeMappedFactory()
+	sf := sx.MakeMappedFactory(256)
 	gen := newGenerator(sf, slides, rr, true, false)
 
 	title := slides.Title(rr.cfg.zs)
@@ -549,7 +549,7 @@ type handoutRenderer struct{ cfg *slidesConfig }
 func (*handoutRenderer) Role() string            { return SlideRoleHandout }
 func (*handoutRenderer) Prepare(context.Context) {}
 func (hr *handoutRenderer) Render(w http.ResponseWriter, slides *slideSet, author string) {
-	sf := sx.MakeMappedFactory()
+	sf := sx.MakeMappedFactory(256)
 	symAttr := sf.MustMake(sxhtml.NameSymAttr)
 	gen := newGenerator(sf, slides, hr, false, true)
 
@@ -651,7 +651,7 @@ func processList(w http.ResponseWriter, r *http.Request, c *client.Client, astSF
 	}
 	log.Println("LIST", human, zl)
 
-	sf := sx.MakeMappedFactory()
+	sf := sx.MakeMappedFactory(256)
 	gen := newGenerator(sf, nil, nil, false, false)
 
 	titles := make([]*sx.Pair, len(zl))
