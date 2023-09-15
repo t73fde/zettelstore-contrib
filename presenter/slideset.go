@@ -456,20 +456,20 @@ func (ce *collectEnv) visitContent(content *sx.Pair) {
 				continue
 			}
 			zs := ce.zs
-			if zs.SymText.IsEql(sym) || zs.SymSpace.IsEql(sym) {
+			if zs.SymText.IsEqual(sym) || zs.SymSpace.IsEqual(sym) {
 				continue
 			}
-			if zs.SymVerbatimEval.IsEql(sym) {
+			if zs.SymVerbatimEval.IsEqual(sym) {
 				if hasMermaidAttribute(o.Tail()) {
 					ce.hasMermaid = true
 				}
-			} else if zs.SymLinkZettel.IsEql(sym) {
+			} else if zs.SymLinkZettel.IsEqual(sym) {
 				if zidVal, isString := sx.GetString(o.Tail().Tail().Car()); isString {
 					if zid := api.ZettelID(zidVal); zid.IsValid() {
 						ce.visitZettel(zid)
 					}
 				}
-			} else if zs.SymEmbed.IsEql(sym) {
+			} else if zs.SymEmbed.IsEqual(sym) {
 				argRef := o.Tail().Tail()
 				qref, isPair := sx.GetPair(argRef.Car())
 				if !isPair {
@@ -480,7 +480,7 @@ func (ce *collectEnv) visitContent(content *sx.Pair) {
 					continue
 				}
 				symEmbedRefState, isSymbol := sx.GetSymbol(ref.Car())
-				if !isSymbol || !zs.SymRefStateZettel.IsEql(symEmbedRefState) {
+				if !isSymbol || !zs.SymRefStateZettel.IsEqual(symEmbedRefState) {
 					continue
 				}
 				zidVal, isString := sx.GetString(ref.Tail().Car())
@@ -571,7 +571,7 @@ func getZettelTitleZid(sxMeta sz.Meta, zid api.ZettelID, zs *sz.ZettelSymbols) *
 	if title := sxMeta.GetPair(api.KeyTitle); title != nil {
 		return title
 	}
-	return sx.Cons(zs.SymText, sx.Cons(sx.MakeString(string(zid)), sx.Nil()))
+	return sx.Cons(zs.SymText, sx.Cons(sx.String(string(zid)), sx.Nil()))
 }
 
 func getSlideTitle(sxMeta sz.Meta, zs *sz.ZettelSymbols) *sx.Pair {
@@ -598,5 +598,5 @@ func getSlideTitleZid(sxMeta sz.Meta, zid api.ZettelID, zs *sz.ZettelSymbols) *s
 }
 
 func makeTitleList(s string, zs *sz.ZettelSymbols) *sx.Pair {
-	return sx.MakeList(zs.SymInline, sx.MakeList(zs.SymText, sx.MakeString(s)))
+	return sx.MakeList(zs.SymInline, sx.MakeList(zs.SymText, sx.String(s)))
 }

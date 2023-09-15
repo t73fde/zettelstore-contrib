@@ -110,7 +110,7 @@ func newGenerator(sf sx.SymbolFactory, slides *slideSet, ren renderer, extZettel
 						sf.MustMake("div"),
 						sx.MakeList(
 							sf.MustMake(sxhtml.NameSymAttr),
-							sx.Cons(sf.MustMake("class"), sx.MakeString("mermaid")),
+							sx.Cons(sf.MustMake("class"), sx.String("mermaid")),
 						),
 						mmCode,
 					)
@@ -152,11 +152,11 @@ func newGenerator(sf sx.SymbolFactory, slides *slideSet, ren renderer, extZettel
 			}
 			zid, _, _ := strings.Cut(refVal.String(), "#")
 			if si := gen.curSlide.FindSlide(api.ZettelID(zid)); si != nil {
-				avals = avals.Cons(sx.Cons(symHref, sx.MakeString(fmt.Sprintf("#(%d)", si.Number))))
+				avals = avals.Cons(sx.Cons(symHref, sx.String(fmt.Sprintf("#(%d)", si.Number))))
 			} else if extZettelLinks {
 				// TODO: make link absolute
 				avals = addClass(avals, "zettel", sf)
-				attr.SetCdr(avals.Cons(sx.Cons(symHref, sx.MakeString("/"+zid))))
+				attr.SetCdr(avals.Cons(sx.Cons(symHref, sx.String("/"+zid))))
 				return lst
 			}
 			attr.SetCdr(avals)
@@ -177,8 +177,8 @@ func newGenerator(sf sx.SymbolFactory, slides *slideSet, ren renderer, extZettel
 			}
 			avals := attr.Tail()
 			avals = addClass(avals, "external", sf)
-			avals = avals.Cons(sx.Cons(sf.MustMake("target"), sx.MakeString("_blank")))
-			avals = avals.Cons(sx.Cons(sf.MustMake("rel"), sx.MakeString("noopener noreferrer")))
+			avals = avals.Cons(sx.Cons(sf.MustMake("target"), sx.String("_blank")))
+			avals = avals.Cons(sx.Cons(sf.MustMake("rel"), sx.String("noopener noreferrer")))
 			attr.SetCdr(avals)
 			return lst
 		})
@@ -223,8 +223,8 @@ func newGenerator(sf sx.SymbolFactory, slides *slideSet, ren renderer, extZettel
 						sf.MustMake("embed"),
 						sx.MakeList(
 							sf.MustMake(sxhtml.NameSymAttr),
-							sx.Cons(sf.MustMake("type"), sx.MakeString("image/svg+xml")),
-							sx.Cons(symSrc, sx.MakeString("/"+string(zid)+".svg")),
+							sx.Cons(sf.MustMake("type"), sx.String("image/svg+xml")),
+							sx.Cons(symSrc, sx.String("/"+string(zid)+".svg")),
 						),
 					),
 				)
@@ -246,7 +246,7 @@ func newGenerator(sf sx.SymbolFactory, slides *slideSet, ren renderer, extZettel
 			if src == "" {
 				src = "/" + string(zid) + ".content"
 			}
-			attr.SetCdr(avals.Cons(sx.Cons(symSrc, sx.MakeString(src))))
+			attr.SetCdr(avals.Cons(sx.Cons(symSrc, sx.String(src))))
 			return obj
 		})
 		te.Rebind(sz.NameSymLiteralComment, func([]sx.Object, sxeval.Callable) sx.Object { return sx.Nil() })
@@ -270,13 +270,13 @@ func (gen *htmlGenerator) writeHTMLDocument(w http.ResponseWriter, lang string, 
 	sf := gen.tr.SymbolFactory()
 	var langAttr *sx.Pair
 	if lang != "" {
-		langAttr = sx.MakeList(sf.MustMake(sxhtml.NameSymAttr), sx.Cons(sf.MustMake("lang"), sx.MakeString(lang)))
+		langAttr = sx.MakeList(sf.MustMake(sxhtml.NameSymAttr), sx.Cons(sf.MustMake("lang"), sx.String(lang)))
 	}
 	if gen.hasMermaid {
 		curr := bodyHtml.Tail().LastPair().AppendBang(sx.MakeList(
 			sf.MustMake("script"),
-			sx.MakeString("//"),
-			sx.MakeList(sf.MustMake(sxhtml.NameSymCDATA), sx.MakeString(mermaid)),
+			sx.String("//"),
+			sx.MakeList(sf.MustMake(sxhtml.NameSymCDATA), sx.String(mermaid)),
 		))
 		curr.AppendBang(getJSScript("mermaid.initialize({startOnLoad:true});", sf))
 	}
@@ -292,7 +292,7 @@ func (gen *htmlGenerator) writeHTMLDocument(w http.ResponseWriter, lang string, 
 func getJSScript(jsScript string, sf sx.SymbolFactory) *sx.Pair {
 	return sx.MakeList(
 		sf.MustMake("script"),
-		sx.MakeList(sf.MustMake(sxhtml.NameSymNoEscape), sx.MakeString(jsScript)),
+		sx.MakeList(sf.MustMake(sxhtml.NameSymNoEscape), sx.String(jsScript)),
 	)
 }
 
@@ -304,10 +304,10 @@ func addClass(alist *sx.Pair, val string, sf sx.SymbolFactory) *sx.Pair {
 			if strings.Contains(" "+classVal+" ", val) {
 				return alist
 			}
-			return alist.Cons(sx.Cons(symClass, sx.MakeString(classVal+" "+val)))
+			return alist.Cons(sx.Cons(symClass, sx.String(classVal+" "+val)))
 		}
 	}
-	return alist.Cons(sx.Cons(symClass, sx.MakeString(val)))
+	return alist.Cons(sx.Cons(symClass, sx.String(val)))
 }
 
 //go:embed mermaid/mermaid.min.js
