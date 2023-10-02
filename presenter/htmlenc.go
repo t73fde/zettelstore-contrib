@@ -153,14 +153,18 @@ func newGenerator(sf sx.SymbolFactory, slides *slideSet, ren renderer, extZettel
 			zid, _, _ := strings.Cut(refVal.String(), "#")
 			if si := gen.curSlide.FindSlide(api.ZettelID(zid)); si != nil {
 				avals = avals.Cons(sx.Cons(symHref, sx.String(fmt.Sprintf("#(%d)", si.Number))))
-			} else if extZettelLinks {
+				attr.SetCdr(avals)
+				return lst
+			}
+			if extZettelLinks {
 				// TODO: make link absolute
 				avals = addClass(avals, "zettel", sf)
 				attr.SetCdr(avals.Cons(sx.Cons(symHref, sx.String("/"+zid))))
 				return lst
 			}
-			attr.SetCdr(avals)
-			return lst
+			// Do not show link to other, possibly non-public zettel
+			text := lst.Tail().Tail() // Return just the text of the link
+			return text.Cons(sf.MustMake("span"))
 		})
 		te.Rebind(sz.NameSymLinkExternal, func(args []sx.Object, prevFn sxeval.Callable) sx.Object {
 			obj, err := prevFn.Call(nil, args)
