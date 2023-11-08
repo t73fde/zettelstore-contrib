@@ -19,7 +19,7 @@ import (
 	"strings"
 
 	"zettelstore.de/client.fossil/api"
-	"zettelstore.de/client.fossil/shtml"
+	"zettelstore.de/client.fossil/htmls"
 	"zettelstore.de/client.fossil/sz"
 	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxeval"
@@ -27,7 +27,7 @@ import (
 )
 
 type htmlGenerator struct {
-	tr         *shtml.Transformer
+	tr         *htmls.Transformer
 	s          *slideSet
 	curSlide   *slideInfo
 	hasMermaid bool
@@ -39,12 +39,12 @@ type htmlGenerator struct {
 // false, false for manual (?)
 
 func newGenerator(sf sx.SymbolFactory, slides *slideSet, ren renderer, extZettelLinks, embedImage bool) *htmlGenerator {
-	tr := shtml.NewTransformer(1, sf)
+	tr := htmls.NewTransformer(1, sf)
 	gen := htmlGenerator{
 		tr: tr,
 		s:  slides,
 	}
-	tr.SetRebinder(func(te *shtml.TransformEnv) {
+	tr.SetRebinder(func(te *htmls.TransformEnv) {
 		te.Rebind(sz.NameSymRegionBlock, func(args []sx.Object, prevFn sxeval.Callable) sx.Object {
 			attr, isPair := sx.GetPair(args[0])
 			if !isPair {
