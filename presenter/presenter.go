@@ -34,6 +34,8 @@ import (
 	"zettelstore.de/sx.fossil/sxhtml"
 )
 
+const langDE = "de"
+
 // Constants for minimum required version.
 const (
 	minMajor = 0
@@ -270,7 +272,7 @@ func processZettel(w http.ResponseWriter, r *http.Request, cfg *slidesConfig, zi
 	title := getSlideTitleZid(sxMeta, zid, cfg.zs)
 
 	sf := sx.MakeMappedFactory(256)
-	gen := newGenerator(sf, nil, nil, true, false)
+	gen := newGenerator(sf, nil, langDE, nil, true, false)
 
 	headHtml := getHTMLHead("", sf)
 	headHtml.LastPair().AppendBang(sx.MakeList(sf.MustMake("title"), sx.String(text.EvaluateInlineString(title))))
@@ -361,7 +363,7 @@ func renderSlideTOC(w http.ResponseWriter, slides *slideSet, zs *sz.ZettelSymbol
 	}
 
 	sf := sx.MakeMappedFactory(256)
-	gen := newGenerator(sf, nil, nil, false, false)
+	gen := newGenerator(sf, nil, langDE, nil, false, false)
 
 	headHtml := getHTMLHead("", sf)
 	headHtml.LastPair().AppendBang(sx.MakeList(sf.MustMake("title"), sx.String(text.EvaluateInlineString(showTitle))))
@@ -438,7 +440,7 @@ func (rr *revealRenderer) Prepare(ctx context.Context) {
 }
 func (rr *revealRenderer) Render(w http.ResponseWriter, slides *slideSet, author string) {
 	sf := sx.MakeMappedFactory(256)
-	gen := newGenerator(sf, slides, rr, true, false)
+	gen := newGenerator(sf, slides, langDE, rr, true, false)
 
 	title := slides.Title(rr.cfg.zs)
 
@@ -551,7 +553,7 @@ func (*handoutRenderer) Prepare(context.Context) {}
 func (hr *handoutRenderer) Render(w http.ResponseWriter, slides *slideSet, author string) {
 	sf := sx.MakeMappedFactory(256)
 	symAttr := sf.MustMake(sxhtml.NameSymAttr)
-	gen := newGenerator(sf, slides, hr, false, true)
+	gen := newGenerator(sf, slides, langDE, hr, false, true)
 
 	handoutTitle := slides.Title(hr.cfg.zs)
 	copyright := slides.Copyright()
@@ -652,7 +654,7 @@ func processList(w http.ResponseWriter, r *http.Request, c *client.Client, astSF
 	log.Println("LIST", human, zl)
 
 	sf := sx.MakeMappedFactory(256)
-	gen := newGenerator(sf, nil, nil, false, false)
+	gen := newGenerator(sf, nil, langDE, nil, false, false)
 
 	titles := make([]*sx.Pair, len(zl))
 	for i, jm := range zl {
