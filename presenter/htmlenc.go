@@ -47,11 +47,7 @@ func newGenerator(sf sx.SymbolFactory, slides *slideSet, lang string, ren render
 		s:   slides,
 	}
 	rebind(tr, sz.NameSymRegionBlock, func(args []sx.Object, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
-		attr, isPair := sx.GetPair(args[0])
-		if !isPair {
-			return nil
-		}
-		a := sz.GetAttributes(attr)
+		a := tr.GetAttributes(args[0], env)
 		if val, found := a.Get(""); found {
 			switch val {
 			case "show":
@@ -59,7 +55,7 @@ func newGenerator(sf sx.SymbolFactory, slides *slideSet, lang string, ren render
 					if ren.Role() == SlideRoleShow {
 						classAttr := addClass(nil, "notes", sf)
 						result := sx.MakeList(sf.MustMake("aside"), classAttr.Cons(sf.MustMake(sxhtml.NameSymAttr)))
-						result.Tail().SetCdr(args[1])
+						result.Tail().SetCdr(tr.Eval(args[1], env))
 						return result
 					}
 					return sx.Nil()
@@ -69,7 +65,7 @@ func newGenerator(sf sx.SymbolFactory, slides *slideSet, lang string, ren render
 					if ren.Role() == SlideRoleHandout {
 						classAttr := addClass(nil, "handout", sf)
 						result := sx.MakeList(sf.MustMake("aside"), classAttr.Cons(sf.MustMake(sxhtml.NameSymAttr)))
-						result.Tail().SetCdr(args[1])
+						result.Tail().SetCdr(tr.Eval(args[1], env))
 						return result
 					}
 					return sx.Nil()
@@ -86,7 +82,7 @@ func newGenerator(sf sx.SymbolFactory, slides *slideSet, lang string, ren render
 						return sx.Nil()
 					}
 					result := sx.MakeList(sf.MustMake("aside"), classAttr.Cons(sf.MustMake(sxhtml.NameSymAttr)))
-					result.Tail().SetCdr(args[1])
+					result.Tail().SetCdr(tr.Eval(args[1], env))
 					return result
 				}
 			}
@@ -95,11 +91,7 @@ func newGenerator(sf sx.SymbolFactory, slides *slideSet, lang string, ren render
 		return prevFn(args, env)
 	})
 	rebind(tr, sz.NameSymVerbatimEval, func(args []sx.Object, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
-		attr, isCell := sx.GetPair(args[0])
-		if !isCell {
-			return nil
-		}
-		a := sz.GetAttributes(attr)
+		a := tr.GetAttributes(args[0], env)
 		if syntax, found := a.Get(""); found && syntax == SyntaxMermaid {
 			gen.hasMermaid = true
 			if mmCode, isString := sx.GetString(args[1]); isString {
