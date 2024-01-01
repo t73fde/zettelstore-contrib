@@ -6,6 +6,9 @@
 // Zettelstore slides application is licensed under the latest version of the
 // EUPL (European Union Public License). Please see file LICENSE.txt for your
 // rights and obligations under this license.
+//
+// SPDX-License-Identifier: EUPL-1.2
+// SPDX-FileCopyrightText: 2022-present Detlef Stern
 //-----------------------------------------------------------------------------
 
 package main
@@ -38,23 +41,23 @@ type htmlGenerator struct {
 // true, false for handout
 // false, false for manual (?)
 
-func newGenerator(sf sx.SymbolFactory, slides *slideSet, lang string, ren renderer, extZettelLinks, embedImage bool) *htmlGenerator {
-	tr := shtml.NewEvaluator(1, sf)
+func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, embedImage bool) *htmlGenerator {
+	tr := shtml.NewEvaluator(1)
 	env := shtml.MakeEnvironment(lang)
 	gen := htmlGenerator{
 		tr:  tr,
 		env: &env,
 		s:   slides,
 	}
-	rebind(tr, sz.NameSymRegionBlock, func(args []sx.Object, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
+	rebind(tr, sz.SymRegionBlock, func(args []sx.Object, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
 		a := tr.GetAttributes(args[0], env)
 		if val, found := a.Get(""); found {
 			switch val {
 			case "show":
 				if ren != nil {
 					if ren.Role() == SlideRoleShow {
-						classAttr := addClass(nil, "notes", sf)
-						result := sx.MakeList(sf.MustMake("aside"), classAttr.Cons(sf.MustMake(sxhtml.NameSymAttr)))
+						classAttr := addClass(nil, "notes")
+						result := sx.MakeList(shtml.SymASIDE, classAttr.Cons(sxhtml.SymAttr))
 						result.Tail().SetCdr(tr.Eval(args[1], env))
 						return result
 					}
@@ -63,8 +66,8 @@ func newGenerator(sf sx.SymbolFactory, slides *slideSet, lang string, ren render
 			case "handout":
 				if ren != nil {
 					if ren.Role() == SlideRoleHandout {
-						classAttr := addClass(nil, "handout", sf)
-						result := sx.MakeList(sf.MustMake("aside"), classAttr.Cons(sf.MustMake(sxhtml.NameSymAttr)))
+						classAttr := addClass(nil, "handout")
+						result := sx.MakeList(shtml.SymASIDE, classAttr.Cons(sxhtml.SymAttr))
 						result.Tail().SetCdr(tr.Eval(args[1], env))
 						return result
 					}
@@ -75,13 +78,13 @@ func newGenerator(sf sx.SymbolFactory, slides *slideSet, lang string, ren render
 					var classAttr *sx.Pair
 					switch ren.Role() {
 					case SlideRoleShow:
-						classAttr = addClass(nil, "notes", sf)
+						classAttr = addClass(nil, "notes")
 					case SlideRoleHandout:
-						classAttr = addClass(nil, "handout", sf)
+						classAttr = addClass(nil, "handout")
 					default:
 						return sx.Nil()
 					}
-					result := sx.MakeList(sf.MustMake("aside"), classAttr.Cons(sf.MustMake(sxhtml.NameSymAttr)))
+					result := sx.MakeList(shtml.SymASIDE, classAttr.Cons(sxhtml.SymAttr))
 					result.Tail().SetCdr(tr.Eval(args[1], env))
 					return result
 				}
@@ -90,16 +93,16 @@ func newGenerator(sf sx.SymbolFactory, slides *slideSet, lang string, ren render
 
 		return prevFn(args, env)
 	})
-	rebind(tr, sz.NameSymVerbatimEval, func(args []sx.Object, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
+	rebind(tr, sz.SymVerbatimEval, func(args []sx.Object, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
 		a := tr.GetAttributes(args[0], env)
 		if syntax, found := a.Get(""); found && syntax == SyntaxMermaid {
 			gen.hasMermaid = true
 			if mmCode, isString := sx.GetString(args[1]); isString {
 				return sx.MakeList(
-					sf.MustMake("div"),
+					shtml.SymDIV,
 					sx.MakeList(
-						sf.MustMake(sxhtml.NameSymAttr),
-						sx.Cons(sf.MustMake("class"), sx.String("mermaid")),
+						sxhtml.SymAttr,
+						sx.Cons(shtml.SymAttrClass, sx.String("mermaid")),
 					),
 					mmCode,
 				)
@@ -107,8 +110,8 @@ func newGenerator(sf sx.SymbolFactory, slides *slideSet, lang string, ren render
 		}
 		return prevFn(args, env)
 	})
-	rebind(tr, sz.NameSymVerbatimComment, func([]sx.Object, *shtml.Environment, shtml.EvalFn) sx.Object { return sx.Nil() })
-	rebind(tr, sz.NameSymLinkZettel, func(args []sx.Object, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
+	rebind(tr, sz.SymVerbatimComment, func([]sx.Object, *shtml.Environment, shtml.EvalFn) sx.Object { return sx.Nil() })
+	rebind(tr, sz.SymLinkZettel, func(args []sx.Object, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
 		obj := prevFn(args, env)
 		if env.GetError() != nil {
 			return sx.Nil()
@@ -118,7 +121,7 @@ func newGenerator(sf sx.SymbolFactory, slides *slideSet, lang string, ren render
 			return obj
 		}
 		sym, isSymbol := sx.GetSymbol(lst.Car())
-		if !isSymbol || !sym.IsEqual(sf.MustMake("a")) {
+		if !isSymbol || !sym.IsEqual(shtml.SymA) {
 			return obj
 		}
 		attr, isPair := sx.GetPair(lst.Tail().Car())
@@ -126,8 +129,7 @@ func newGenerator(sf sx.SymbolFactory, slides *slideSet, lang string, ren render
 			return obj
 		}
 		avals := attr.Tail()
-		symHref := sf.MustMake("href")
-		p := avals.Assoc(symHref)
+		p := avals.Assoc(shtml.SymAttrHref)
 		if p == nil {
 			return obj
 		}
@@ -137,21 +139,21 @@ func newGenerator(sf sx.SymbolFactory, slides *slideSet, lang string, ren render
 		}
 		zid, _, _ := strings.Cut(refVal.String(), "#")
 		if si := gen.curSlide.FindSlide(api.ZettelID(zid)); si != nil {
-			avals = avals.Cons(sx.Cons(symHref, sx.String(fmt.Sprintf("#(%d)", si.Number))))
+			avals = avals.Cons(sx.Cons(shtml.SymAttrHref, sx.String(fmt.Sprintf("#(%d)", si.Number))))
 			attr.SetCdr(avals)
 			return lst
 		}
 		if extZettelLinks {
 			// TODO: make link absolute
-			avals = addClass(avals, "zettel", sf)
-			attr.SetCdr(avals.Cons(sx.Cons(symHref, sx.String("/"+zid))))
+			avals = addClass(avals, "zettel")
+			attr.SetCdr(avals.Cons(sx.Cons(shtml.SymAttrHref, sx.String("/"+zid))))
 			return lst
 		}
 		// Do not show link to other, possibly non-public zettel
 		text := lst.Tail().Tail() // Return just the text of the link
-		return text.Cons(sf.MustMake("span"))
+		return text.Cons(shtml.SymSPAN)
 	})
-	rebind(tr, sz.NameSymLinkExternal, func(args []sx.Object, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
+	rebind(tr, sz.SymLinkExternal, func(args []sx.Object, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
 		obj := prevFn(args, env)
 		if env.GetError() != nil {
 			return sx.Nil()
@@ -165,13 +167,13 @@ func newGenerator(sf sx.SymbolFactory, slides *slideSet, lang string, ren render
 			return obj
 		}
 		avals := attr.Tail()
-		avals = addClass(avals, "external", sf)
-		avals = avals.Cons(sx.Cons(sf.MustMake("target"), sx.String("_blank")))
-		avals = avals.Cons(sx.Cons(sf.MustMake("rel"), sx.String("noopener noreferrer")))
+		avals = addClass(avals, "external")
+		avals = avals.Cons(sx.Cons(shtml.SymAttrTarget, sx.String("_blank")))
+		avals = avals.Cons(sx.Cons(shtml.SymAttrRel, sx.String("noopener noreferrer")))
 		attr.SetCdr(avals)
 		return lst
 	})
-	rebind(tr, sz.NameSymEmbed, func(args []sx.Object, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
+	rebind(tr, sz.SymEmbed, func(args []sx.Object, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
 		obj := prevFn(args, env)
 		if env.GetError() != nil {
 			return sx.Nil()
@@ -185,8 +187,7 @@ func newGenerator(sf sx.SymbolFactory, slides *slideSet, lang string, ren render
 			return obj
 		}
 		avals := attr.Tail()
-		symSrc := sf.MustMake("src")
-		p := avals.Assoc(symSrc)
+		p := avals.Assoc(shtml.SymAttrSrc)
 		if p == nil {
 			return obj
 		}
@@ -207,13 +208,13 @@ func newGenerator(sf sx.SymbolFactory, slides *slideSet, lang string, ren render
 				}
 			}
 			return sx.MakeList(
-				sf.MustMake("figure"),
+				shtml.SymFIGURE,
 				sx.MakeList(
-					sf.MustMake("embed"),
+					shtml.SymEMBED,
 					sx.MakeList(
-						sf.MustMake(sxhtml.NameSymAttr),
-						sx.Cons(sf.MustMake("type"), sx.String("image/svg+xml")),
-						sx.Cons(symSrc, sx.String("/"+string(zid)+".svg")),
+						sxhtml.SymAttr,
+						sx.Cons(shtml.SymAttrType, sx.String("image/svg+xml")),
+						sx.Cons(shtml.SymAttrSrc, sx.String("/"+string(zid)+".svg")),
 					),
 				),
 			)
@@ -235,16 +236,16 @@ func newGenerator(sf sx.SymbolFactory, slides *slideSet, lang string, ren render
 		if src == "" {
 			src = "/" + string(zid) + ".content"
 		}
-		attr.SetCdr(avals.Cons(sx.Cons(symSrc, sx.String(src))))
+		attr.SetCdr(avals.Cons(sx.Cons(shtml.SymAttrSrc, sx.String(src))))
 		return obj
 	})
-	rebind(tr, sz.NameSymLiteralComment, func([]sx.Object, *shtml.Environment, shtml.EvalFn) sx.Object { return sx.Nil() })
+	rebind(tr, sz.SymLiteralComment, func([]sx.Object, *shtml.Environment, shtml.EvalFn) sx.Object { return sx.Nil() })
 
 	return &gen
 }
-func rebind(th *shtml.Evaluator, name string, fn func([]sx.Object, *shtml.Environment, shtml.EvalFn) sx.Object) {
-	prevFn := th.ResolveBinding(name)
-	th.Rebind(name, func(args []sx.Object, env *shtml.Environment) sx.Object {
+func rebind(th *shtml.Evaluator, sym sx.Symbol, fn func([]sx.Object, *shtml.Environment, shtml.EvalFn) sx.Object) {
+	prevFn := th.ResolveBinding(sym)
+	th.Rebind(sym, func(args []sx.Object, env *shtml.Environment) sx.Object {
 		return fn(args, env, prevFn)
 	})
 }
@@ -267,47 +268,45 @@ func (gen *htmlGenerator) Endnotes() *sx.Pair {
 }
 
 func (gen *htmlGenerator) writeHTMLDocument(w http.ResponseWriter, lang string, headHtml, bodyHtml *sx.Pair) {
-	sf := gen.tr.SymbolFactory()
 	var langAttr *sx.Pair
 	if lang != "" {
-		langAttr = sx.MakeList(sf.MustMake(sxhtml.NameSymAttr), sx.Cons(sf.MustMake("lang"), sx.String(lang)))
+		langAttr = sx.MakeList(sxhtml.SymAttr, sx.Cons(shtml.SymAttrLang, sx.String(lang)))
 	}
 	if gen.hasMermaid {
 		curr := bodyHtml.Tail().LastPair().AppendBang(sx.MakeList(
-			sf.MustMake("script"),
+			shtml.SymScript,
 			sx.String("//"),
-			sx.MakeList(sf.MustMake(sxhtml.NameSymCDATA), sx.String(mermaid)),
+			sx.MakeList(sxhtml.SymCDATA, sx.String(mermaid)),
 		))
-		curr.AppendBang(getJSScript("mermaid.initialize({startOnLoad:true});", sf))
+		curr.AppendBang(getJSScript("mermaid.initialize({startOnLoad:true});"))
 	}
 	zettelHtml := sx.MakeList(
-		sf.MustMake(sxhtml.NameSymDoctype),
-		sx.MakeList(sf.MustMake("html"), langAttr, headHtml, bodyHtml),
+		sxhtml.SymDoctype,
+		sx.MakeList(shtml.SymHtml, langAttr, headHtml, bodyHtml),
 	)
-	g := sxhtml.NewGenerator(sf, sxhtml.WithNewline)
+	g := sxhtml.NewGenerator(sxhtml.WithNewline)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	g.WriteHTML(w, zettelHtml)
 }
 
-func getJSScript(jsScript string, sf sx.SymbolFactory) *sx.Pair {
+func getJSScript(jsScript string) *sx.Pair {
 	return sx.MakeList(
-		sf.MustMake("script"),
-		sx.MakeList(sf.MustMake(sxhtml.NameSymNoEscape), sx.String(jsScript)),
+		shtml.SymScript,
+		sx.MakeList(sxhtml.SymNoEscape, sx.String(jsScript)),
 	)
 }
 
-func addClass(alist *sx.Pair, val string, sf sx.SymbolFactory) *sx.Pair {
-	symClass := sf.MustMake("class")
-	if p := alist.Assoc(symClass); p != nil {
+func addClass(alist *sx.Pair, val string) *sx.Pair {
+	if p := alist.Assoc(shtml.SymAttrClass); p != nil {
 		if s, ok := sx.GetString(p.Cdr()); ok {
 			classVal := s.String()
 			if strings.Contains(" "+classVal+" ", val) {
 				return alist
 			}
-			return alist.Cons(sx.Cons(symClass, sx.String(classVal+" "+val)))
+			return alist.Cons(sx.Cons(shtml.SymAttrClass, sx.String(classVal+" "+val)))
 		}
 	}
-	return alist.Cons(sx.Cons(symClass, sx.String(val)))
+	return alist.Cons(sx.Cons(shtml.SymAttrClass, sx.String(val)))
 }
 
 //go:embed mermaid/mermaid.min.js
