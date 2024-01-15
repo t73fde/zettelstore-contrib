@@ -137,7 +137,7 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		if !isString {
 			return obj
 		}
-		zid, _, _ := strings.Cut(refVal.String(), "#")
+		zid, _, _ := strings.Cut(string(refVal), "#")
 		if si := gen.curSlide.FindSlide(api.ZettelID(zid)); si != nil {
 			avals = avals.Cons(sx.Cons(shtml.SymAttrHref, sx.String(fmt.Sprintf("#(%d)", si.Number))))
 			attr.SetCdr(avals)
