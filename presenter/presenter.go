@@ -364,18 +364,19 @@ func renderSlideTOC(w http.ResponseWriter, slides *slideSet) {
 	headHtml := getHTMLHead("")
 	headHtml.LastPair().AppendBang(sx.MakeList(shtml.SymTitle, sx.String(text.EvaluateInlineString(showTitle))))
 
+	hxShowTitle := gen.TransformList(showTitle)
 	headerHtml := sx.MakeList(
 		sx.Symbol("header"),
-		gen.Transform(showTitle).Cons(shtml.SymH1),
+		hxShowTitle.Cons(shtml.SymH1),
 	)
 	if showSubtitle != nil {
-		headerHtml.LastPair().AppendBang(gen.Transform(showSubtitle).Cons(shtml.SymH2))
+		headerHtml.LastPair().AppendBang(gen.TransformList(showSubtitle).Cons(shtml.SymH2))
 	}
 	lstSlide := sx.MakeList(shtml.SymOL)
 	curr := lstSlide
-	curr = curr.AppendBang(sx.MakeList(shtml.SymLI, getSimpleLink("/"+string(slides.zid)+".slide#(1)", gen.Transform(showTitle))))
+	curr = curr.AppendBang(sx.MakeList(shtml.SymLI, getSimpleLink("/"+string(slides.zid)+".slide#(1)", hxShowTitle)))
 	for si := slides.Slides(SlideRoleShow, offset); si != nil; si = si.Next() {
-		slideTitle := gen.Transform(si.Slide.title)
+		slideTitle := gen.TransformList(si.Slide.title)
 		curr = curr.AppendBang(sx.MakeList(
 			shtml.SymLI,
 			getSimpleLink(fmt.Sprintf("/%s.slide#(%d)", slides.zid, si.Number), slideTitle)))
@@ -449,11 +450,11 @@ func (rr *revealRenderer) Render(w http.ResponseWriter, slides *slideSet, author
 		offset++
 		hgroupHtml := sx.MakeList(
 			sx.Symbol("hgroup"),
-			gen.Transform(title).Cons(getClassAttr("title")).Cons(shtml.SymH1),
+			gen.TransformList(title).Cons(getClassAttr("title")).Cons(shtml.SymH1),
 		)
 		curr := hgroupHtml.LastPair()
 		if subtitle := slides.Subtitle(); subtitle != nil {
-			curr = curr.AppendBang(gen.Transform(subtitle).Cons(getClassAttr("subtitle")).Cons(shtml.SymH2))
+			curr = curr.AppendBang(gen.TransformList(subtitle).Cons(getClassAttr("subtitle")).Cons(shtml.SymH2))
 		}
 		if author != "" {
 			curr.AppendBang(sx.MakeList(
@@ -502,7 +503,7 @@ func getRevealSlide(gen *htmlGenerator, si *slideInfo, lang string) *sx.Pair {
 
 	var titleHtml *sx.Pair
 	if title := si.Slide.title; title != nil {
-		titleHtml = gen.Transform(title).Cons(shtml.SymH1)
+		titleHtml = gen.TransformList(title).Cons(shtml.SymH1)
 	}
 	gen.SetUnique(fmt.Sprintf("%d:", si.Number))
 	slideHtml := sx.MakeList(sx.Symbol("section"), attr, titleHtml)
@@ -572,11 +573,11 @@ aside.handout { border: 0.2rem solid lightgray }
 		curr := sx.MakeList(sx.Symbol("hgroup"))
 		headerHtml.LastPair().AppendBang(curr)
 		curr = curr.AppendBang(
-			gen.Transform(handoutTitle).
+			gen.TransformList(handoutTitle).
 				Cons(sx.MakeList(sxhtml.SymAttr, sx.Cons(shtml.SymAttrId, sx.String("(1)")))).
 				Cons(shtml.SymH1))
 		if handoutSubtitle := slides.Subtitle(); handoutSubtitle != nil {
-			curr = curr.AppendBang(gen.Transform(handoutSubtitle).Cons(shtml.SymH2))
+			curr = curr.AppendBang(gen.TransformList(handoutSubtitle).Cons(shtml.SymH2))
 		}
 		curr.AppendBang(sx.MakeList(shtml.SymP, sx.String(author))).
 			AppendBang(sx.MakeList(shtml.SymP, sx.String(copyright))).
@@ -594,7 +595,7 @@ aside.handout { border: 0.2rem solid lightgray }
 		sl := si.Slide
 		if slideTitle := sl.title; slideTitle != nil {
 			h1 := sx.MakeList(shtml.SymH1, idAttr)
-			h1.LastPair().ExtendBang(gen.Transform(slideTitle)).AppendBang(getSlideNoRange(si))
+			h1.LastPair().ExtendBang(gen.TransformList(slideTitle)).AppendBang(getSlideNoRange(si))
 			curr = curr.AppendBang(h1)
 		} else {
 			curr = curr.AppendBang(sx.MakeList(shtml.SymA, idAttr))

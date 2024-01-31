@@ -109,7 +109,7 @@ func (si *slideInfo) LastChild() *slideInfo {
 func (si *slideInfo) SplitChildren() {
 	var oldest, youngest *slideInfo
 	title := si.Slide.title
-	var content []sx.Object
+	var content sx.Vector
 	// First element of si.Slide.content is the BLOCK symbol. Ignore it.
 	for elem := si.Slide.content.Tail(); !elem.IsNil(); elem = elem.Tail() {
 		bn, isPair := sx.GetPair(elem.Car())

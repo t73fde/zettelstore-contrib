@@ -49,7 +49,7 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		env: &env,
 		s:   slides,
 	}
-	rebind(tr, sz.SymRegionBlock, func(args []sx.Object, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
+	rebind(tr, sz.SymRegionBlock, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
 		a := tr.GetAttributes(args[0], env)
 		if val, found := a.Get(""); found {
 			switch val {
@@ -93,7 +93,7 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 
 		return prevFn(args, env)
 	})
-	rebind(tr, sz.SymVerbatimEval, func(args []sx.Object, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
+	rebind(tr, sz.SymVerbatimEval, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
 		a := tr.GetAttributes(args[0], env)
 		if syntax, found := a.Get(""); found && syntax == SyntaxMermaid {
 			gen.hasMermaid = true
@@ -110,8 +110,8 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		}
 		return prevFn(args, env)
 	})
-	rebind(tr, sz.SymVerbatimComment, func([]sx.Object, *shtml.Environment, shtml.EvalFn) sx.Object { return sx.Nil() })
-	rebind(tr, sz.SymLinkZettel, func(args []sx.Object, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
+	rebind(tr, sz.SymVerbatimComment, func(sx.Vector, *shtml.Environment, shtml.EvalFn) sx.Object { return sx.Nil() })
+	rebind(tr, sz.SymLinkZettel, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
 		obj := prevFn(args, env)
 		if env.GetError() != nil {
 			return sx.Nil()
@@ -153,7 +153,7 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		text := lst.Tail().Tail() // Return just the text of the link
 		return text.Cons(shtml.SymSPAN)
 	})
-	rebind(tr, sz.SymLinkExternal, func(args []sx.Object, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
+	rebind(tr, sz.SymLinkExternal, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
 		obj := prevFn(args, env)
 		if env.GetError() != nil {
 			return sx.Nil()
@@ -173,7 +173,7 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		attr.SetCdr(avals)
 		return lst
 	})
-	rebind(tr, sz.SymEmbed, func(args []sx.Object, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
+	rebind(tr, sz.SymEmbed, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
 		obj := prevFn(args, env)
 		if env.GetError() != nil {
 			return sx.Nil()
@@ -239,13 +239,13 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		attr.SetCdr(avals.Cons(sx.Cons(shtml.SymAttrSrc, sx.String(src))))
 		return obj
 	})
-	rebind(tr, sz.SymLiteralComment, func([]sx.Object, *shtml.Environment, shtml.EvalFn) sx.Object { return sx.Nil() })
+	rebind(tr, sz.SymLiteralComment, func(sx.Vector, *shtml.Environment, shtml.EvalFn) sx.Object { return sx.Nil() })
 
 	return &gen
 }
-func rebind(th *shtml.Evaluator, sym sx.Symbol, fn func([]sx.Object, *shtml.Environment, shtml.EvalFn) sx.Object) {
+func rebind(th *shtml.Evaluator, sym sx.Symbol, fn func(sx.Vector, *shtml.Environment, shtml.EvalFn) sx.Object) {
 	prevFn := th.ResolveBinding(sym)
-	th.Rebind(sym, func(args []sx.Object, env *shtml.Environment) sx.Object {
+	th.Rebind(sym, func(args sx.Vector, env *shtml.Environment) sx.Object {
 		return fn(args, env, prevFn)
 	})
 }
@@ -257,6 +257,14 @@ func (gen *htmlGenerator) Transform(astLst *sx.Pair) *sx.Pair {
 	result, err := gen.tr.Evaluate(astLst, gen.env)
 	if err != nil {
 		log.Println("ETRA", err)
+	}
+	return result
+}
+
+func (gen *htmlGenerator) TransformList(astLst *sx.Pair) *sx.Pair {
+	result, err := gen.tr.EvaluateList(astLst.AsVector(), gen.env)
+	if err != nil {
+		log.Println("ETRL", err)
 	}
 	return result
 }
