@@ -1,11 +1,11 @@
 module zettelstore.de/contrib/presenter
 
-go 1.21
+go 1.22
 
 require (
-	golang.org/x/term v0.16.0
-	zettelstore.de/client.fossil v0.0.0-20240131111511-53214a232257
-	zettelstore.de/sx.fossil v0.0.0-20240128172542-b1da8a68f61f
+	golang.org/x/term v0.17.0
+	zettelstore.de/client.fossil v0.0.0-20240211201038-3230e564caba
+	zettelstore.de/sx.fossil v0.0.0-20240211192136-448bcf6f607c
 )
 
-require golang.org/x/sys v0.16.0 // indirect
+require golang.org/x/sys v0.17.0 // indirect

@@ -49,6 +49,16 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		env: &env,
 		s:   slides,
 	}
+	genSideNote := func(arg sx.Object, env *shtml.Environment, classAttr *sx.Pair) *sx.Pair {
+		result := sx.MakeList(shtml.SymASIDE, classAttr.Cons(sxhtml.SymAttr))
+		if region, isPair := sx.GetPair(arg); isPair {
+			if evalRegion := tr.EvalPairList(region, env); evalRegion != nil {
+				result.Tail().SetCdr(evalRegion)
+			}
+		}
+		return result
+	}
+
 	rebind(tr, sz.SymRegionBlock, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
 		a := tr.GetAttributes(args[0], env)
 		if val, found := a.Get(""); found {
@@ -57,9 +67,7 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 				if ren != nil {
 					if ren.Role() == SlideRoleShow {
 						classAttr := addClass(nil, "notes")
-						result := sx.MakeList(shtml.SymASIDE, classAttr.Cons(sxhtml.SymAttr))
-						result.Tail().SetCdr(tr.Eval(args[1], env))
-						return result
+						return genSideNote(args[1], env, classAttr)
 					}
 					return sx.Nil()
 				}
@@ -67,9 +75,7 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 				if ren != nil {
 					if ren.Role() == SlideRoleHandout {
 						classAttr := addClass(nil, "handout")
-						result := sx.MakeList(shtml.SymASIDE, classAttr.Cons(sxhtml.SymAttr))
-						result.Tail().SetCdr(tr.Eval(args[1], env))
-						return result
+						return genSideNote(args[1], env, classAttr)
 					}
 					return sx.Nil()
 				}
@@ -84,15 +90,14 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 					default:
 						return sx.Nil()
 					}
-					result := sx.MakeList(shtml.SymASIDE, classAttr.Cons(sxhtml.SymAttr))
-					result.Tail().SetCdr(tr.Eval(args[1], env))
-					return result
+					return genSideNote(args[1], env, classAttr)
 				}
 			}
 		}
 
 		return prevFn(args, env)
 	})
+
 	rebind(tr, sz.SymVerbatimEval, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
 		a := tr.GetAttributes(args[0], env)
 		if syntax, found := a.Get(""); found && syntax == SyntaxMermaid {
@@ -243,7 +248,7 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 
 	return &gen
 }
-func rebind(th *shtml.Evaluator, sym sx.Symbol, fn func(sx.Vector, *shtml.Environment, shtml.EvalFn) sx.Object) {
+func rebind(th *shtml.Evaluator, sym *sx.Symbol, fn func(sx.Vector, *shtml.Environment, shtml.EvalFn) sx.Object) {
 	prevFn := th.ResolveBinding(sym)
 	th.Rebind(sym, func(args sx.Vector, env *shtml.Environment) sx.Object {
 		return fn(args, env, prevFn)

@@ -1,8 +1,8 @@
-golang.org/x/sys v0.16.0 h1:xWw16ngr6ZMtmxDyKyIgsE93KNKz5HKmMa3b8ALHidU=
-golang.org/x/sys v0.16.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
-golang.org/x/term v0.16.0 h1:m+B6fahuftsE9qjo0VWp2FW0mB3MTJvR0BaMQrq0pmE=
-golang.org/x/term v0.16.0/go.mod h1:yn7UURbUtPyrVJPGPq404EukNFxcm/foM+bV/bfcDsY=
-zettelstore.de/client.fossil v0.0.0-20240131111511-53214a232257 h1://Qf0N+sfunpoEDqWgI+hp2qBiUh9wXzOaKLXiJWAy4=
-zettelstore.de/client.fossil v0.0.0-20240131111511-53214a232257/go.mod h1:Z/zewobWHYsFfb5PcTm/U4opaW44BlnD3kMgLQjMu6A=
-zettelstore.de/sx.fossil v0.0.0-20240128172542-b1da8a68f61f h1:Q+eGiq4rFEoY7V+IpkCmMLDIS2+gkTCffu5+6rT+S9E=
-zettelstore.de/sx.fossil v0.0.0-20240128172542-b1da8a68f61f/go.mod h1:Uw3OLM1ufOM4Xe0G51mvkTDUv2okd+HyDBMx+0ZG7ME=
+golang.org/x/sys v0.17.0 h1:25cE3gD+tdBA7lp7QfhuV+rJiE9YXTcS3VG1SqssI/Y=
+golang.org/x/sys v0.17.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
+golang.org/x/term v0.17.0 h1:mkTF7LCd6WGJNL3K1Ad7kwxNfYAW6a8a8QqtMblp/4U=
+golang.org/x/term v0.17.0/go.mod h1:lLRBjIVuehSbZlaOtGMbcMncT+aqLLLmKrsjNrUguwk=
+zettelstore.de/client.fossil v0.0.0-20240211201038-3230e564caba h1:tgDx+lU3564eDcE3vLQ/WUxbdFfPszvVD9BsRtJYhho=
+zettelstore.de/client.fossil v0.0.0-20240211201038-3230e564caba/go.mod h1:JlOwibd/4ytZXO+utIXjCHZNMCRHMWKAEWACAJ2FgSg=
+zettelstore.de/sx.fossil v0.0.0-20240211192136-448bcf6f607c h1:e4USHy6myTYEhusmWOESYyo1jyT8fGkzdSts+TAa71U=
+zettelstore.de/sx.fossil v0.0.0-20240211192136-448bcf6f607c/go.mod h1:/iGHxFXoo6GSV04PUkwaLuFrrCa5LMorxD73iLMAruI=
