@@ -35,7 +35,6 @@ const (
 	DefaultSlideSetRole = "slideset"
 	SlideRoleHandout    = "handout" // TODO: Includes manual?
 	SlideRoleShow       = "show"
-	SyntaxMermaid       = "mermaid"
 )
 
 // Slide is one slide that is shown one or more times.
@@ -204,7 +203,6 @@ type slideSet struct {
 	setSlide    map[api.ZettelID]*slide
 	setImage    map[api.ZettelID]image
 	isCompleted bool
-	hasMermaid  bool
 }
 
 func newSlideSet(zid api.ZettelID, sxMeta sz.Meta) *slideSet {
@@ -405,7 +403,6 @@ func (s *slideSet) Completion(getZettel getZettelContentFunc, getZettelSexpr sGe
 		env.mark(zid)
 		env.visitContent(sl.content)
 	}
-	s.hasMermaid = env.hasMermaid
 	s.isCompleted = true
 }
 
@@ -441,7 +438,6 @@ type collectEnv struct {
 	sGetZettel sGetZettelFunc
 	stack      []api.ZettelID
 	visited    map[api.ZettelID]struct{}
-	hasMermaid bool
 }
 
 func (ce *collectEnv) visitContent(content *sx.Pair) {
@@ -458,11 +454,7 @@ func (ce *collectEnv) visitContent(content *sx.Pair) {
 			if sz.SymText.IsEqual(sym) || sz.SymSpace.IsEqual(sym) {
 				continue
 			}
-			if sz.SymVerbatimEval.IsEqual(sym) {
-				if hasMermaidAttribute(o.Tail()) {
-					ce.hasMermaid = true
-				}
-			} else if sz.SymLinkZettel.IsEqual(sym) {
+			if sz.SymLinkZettel.IsEqual(sym) {
 				if zidVal, isString := sx.GetString(o.Tail().Tail().Car()); isString {
 					if zid := api.ZettelID(zidVal); zid.IsValid() {
 						ce.visitZettel(zid)
@@ -504,22 +496,6 @@ func (ce *collectEnv) visitContent(content *sx.Pair) {
 			log.Printf("ELEM %T/%v", o, o)
 		}
 	}
-}
-
-func hasMermaidAttribute(args *sx.Pair) bool {
-	lst, isPair := sx.GetPair(args.Car())
-	if !isPair {
-		return false
-	}
-	attr, isPair := sx.GetPair(lst.Tail().Car())
-	if !isPair {
-		return false
-	}
-	a := sz.GetAttributes(attr)
-	if syntax, found := a.Get(""); found && syntax == SyntaxMermaid {
-		return true
-	}
-	return false
 }
 
 func (ce *collectEnv) visitZettel(zid api.ZettelID) {

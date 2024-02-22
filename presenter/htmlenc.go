@@ -29,11 +29,10 @@ import (
 )
 
 type htmlGenerator struct {
-	tr         *shtml.Evaluator
-	env        *shtml.Environment
-	s          *slideSet
-	curSlide   *slideInfo
-	hasMermaid bool
+	tr       *shtml.Evaluator
+	env      *shtml.Environment
+	s        *slideSet
+	curSlide *slideInfo
 }
 
 // embedImage, extZettelLinks
@@ -98,23 +97,6 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		return prevFn(args, env)
 	})
 
-	rebind(tr, sz.SymVerbatimEval, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
-		a := tr.GetAttributes(args[0], env)
-		if syntax, found := a.Get(""); found && syntax == SyntaxMermaid {
-			gen.hasMermaid = true
-			if mmCode, isString := sx.GetString(args[1]); isString {
-				return sx.MakeList(
-					shtml.SymDIV,
-					sx.MakeList(
-						sxhtml.SymAttr,
-						sx.Cons(shtml.SymAttrClass, sx.String("mermaid")),
-					),
-					mmCode,
-				)
-			}
-		}
-		return prevFn(args, env)
-	})
 	rebind(tr, sz.SymVerbatimComment, func(sx.Vector, *shtml.Environment, shtml.EvalFn) sx.Object { return sx.Nil() })
 	rebind(tr, sz.SymLinkZettel, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
 		obj := prevFn(args, env)
@@ -285,14 +267,6 @@ func (gen *htmlGenerator) writeHTMLDocument(w http.ResponseWriter, lang string, 
 	if lang != "" {
 		langAttr = sx.MakeList(sxhtml.SymAttr, sx.Cons(shtml.SymAttrLang, sx.String(lang)))
 	}
-	if gen.hasMermaid {
-		curr := bodyHtml.Tail().LastPair().AppendBang(sx.MakeList(
-			shtml.SymScript,
-			sx.String("//"),
-			sx.MakeList(sxhtml.SymCDATA, sx.String(mermaid)),
-		))
-		curr.AppendBang(getJSScript("mermaid.initialize({startOnLoad:true});"))
-	}
 	zettelHtml := sx.MakeList(
 		sxhtml.SymDoctype,
 		sx.MakeList(shtml.SymHtml, langAttr, headHtml, bodyHtml),
@@ -321,6 +295,3 @@ func addClass(alist *sx.Pair, val string) *sx.Pair {
 	}
 	return alist.Cons(sx.Cons(shtml.SymAttrClass, sx.String(val)))
 }
-
-//go:embed mermaid/mermaid.min.js
-var mermaid string
