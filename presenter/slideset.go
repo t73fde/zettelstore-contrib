@@ -134,7 +134,7 @@ func (si *slideInfo) SplitChildren() {
 			continue
 		}
 
-		nextTitle := levelPair.Tail().Tail().Tail().Tail().Head()
+		nextTitle := levelPair.Tail().Tail().Tail().Tail()
 		if nextTitle == nil {
 			content = append(content, bn)
 			continue
