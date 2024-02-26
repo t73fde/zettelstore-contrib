@@ -2,9 +2,9 @@ Copyright (c) 2020-present Detlef Stern
 
                           Licensed under the EUPL
 
-Zettelstore is licensed under the European Union Public License, version 1.2 or
-later (EUPL v. 1.2). The license is available in the official languages of the
-EU. The English version is included here. Please see
+Zettel Presenter is licensed under the European Union Public License,
+version 1.2 or later (EUPL v. 1.2). The license is available in the official
+languages of the EU. The English version is included here. Please see
 https://joinup.ec.europa.eu/community/eupl/og_page/eupl for official
 translations of the other languages.
 
