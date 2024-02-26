@@ -20,6 +20,8 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"slices"
+	"sync"
 	"time"
 
 	"zettelstore.de/sx.fossil"
@@ -123,13 +125,16 @@ func readConfiguration(cfg *appConfig) error {
 
 func createWebServer(cfg *appConfig) (s *http.Server) {
 	path := cfg.webPath
+	handler := &webHandler{mux: nil, uac: newUserAgentCollector()}
 	mux := http.NewServeMux()
 	mux.Handle("GET /", http.FileServer(http.Dir(path)))
+	mux.HandleFunc("GET /.ua/{$}", handler.handleUserAgents)
+	handler.mux = mux
 	addr := fmt.Sprintf(":%v", cfg.webPort)
 	if cfg.debug {
 		s = &http.Server{
 			Addr:         addr,
-			Handler:      &webHandler{mux: mux},
+			Handler:      handler,
 			ReadTimeout:  0,
 			WriteTimeout: 0,
 			IdleTimeout:  0,
@@ -139,7 +144,7 @@ func createWebServer(cfg *appConfig) (s *http.Server) {
 			Addr:         addr,
 			Handler:      mux,
 			ReadTimeout:  5 * time.Second,
-			WriteTimeout: 5 * time.Second,
+			WriteTimeout: 10 * time.Second,
 			IdleTimeout:  120 * time.Second,
 		}
 	}
@@ -148,9 +153,49 @@ func createWebServer(cfg *appConfig) (s *http.Server) {
 
 type webHandler struct {
 	mux *http.ServeMux
+	uac *userAgentCollector
 }
 
 func (h *webHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	slog.Debug("HTTP", "method", r.Method, "path", r.URL)
-	h.mux.ServeHTTP(w, r)
+	header := r.Header
+	slog.Debug("HTTP", "method", r.Method, "path", r.URL, "header", header)
+	if h.uac.add(header.Get("User-Agent")) {
+		h.mux.ServeHTTP(w, r)
+	}
+}
+
+func (h *webHandler) handleUserAgents(w http.ResponseWriter, r *http.Request) {
+	uas := h.uac.getAll()
+	for _, ua := range uas {
+		fmt.Fprintln(w, ua)
+	}
+}
+
+type userAgentCollector struct {
+	mx    sync.Mutex
+	uaSet map[string]struct{}
+}
+
+func newUserAgentCollector() *userAgentCollector {
+	return &userAgentCollector{
+		uaSet: map[string]struct{}{},
+	}
+}
+
+func (uac *userAgentCollector) add(ua string) bool {
+	uac.mx.Lock()
+	uac.uaSet[ua] = struct{}{}
+	uac.mx.Unlock()
+	return true
+}
+
+func (uac *userAgentCollector) getAll() []string {
+	uac.mx.Lock()
+	result := make([]string, 0, len(uac.uaSet))
+	for ua := range uac.uaSet {
+		result = append(result, ua)
+	}
+	uac.mx.Unlock()
+	slices.Sort(result)
+	return result
 }
