@@ -160,15 +160,21 @@ func (h *webHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if h.uac.add(userAgent) {
 		h.mux.ServeHTTP(&arw, r)
 	} else {
-		http.Error(w, http.StatusText(http.StatusGone), http.StatusGone)
+		http.Error(&arw, http.StatusText(http.StatusGone), http.StatusGone)
 	}
 	slog.Debug("HTTP", "status", arw.statusCode, "method", r.Method, "path", r.URL)
 }
 
 func (h *webHandler) handleUserAgents(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	uas := h.uac.getAll()
-	for _, ua := range uas {
+	uasT, uasF := h.uac.getAll()
+	for _, ua := range uasT {
+		fmt.Fprintln(w, ua)
+	}
+	if len(uasF) > 0 && len(uasT) > 0 {
+		fmt.Fprintln(w, "---")
+	}
+	for _, ua := range uasF {
 		fmt.Fprintln(w, ua)
 	}
 }
@@ -187,29 +193,36 @@ func (arw *appResponseWriter) WriteHeader(statusCode int) {
 
 type userAgentCollector struct {
 	mx    sync.Mutex
-	uaSet map[string]struct{}
+	uaSet map[string]bool
 }
 
 func newUserAgentCollector() *userAgentCollector {
 	return &userAgentCollector{
-		uaSet: map[string]struct{}{},
+		uaSet: map[string]bool{},
 	}
 }
 
 func (uac *userAgentCollector) add(ua string) bool {
+	allowed := ua != ""
 	uac.mx.Lock()
-	uac.uaSet[ua] = struct{}{}
+	uac.uaSet[ua] = allowed
 	uac.mx.Unlock()
-	return true
+	return allowed
 }
 
-func (uac *userAgentCollector) getAll() []string {
+func (uac *userAgentCollector) getAll() ([]string, []string) {
 	uac.mx.Lock()
-	result := make([]string, 0, len(uac.uaSet))
-	for ua := range uac.uaSet {
-		result = append(result, ua)
+	resultTrue := make([]string, 0, len(uac.uaSet))
+	resultFalse := make([]string, 0, len(uac.uaSet))
+	for ua, b := range uac.uaSet {
+		if b {
+			resultTrue = append(resultTrue, ua)
+		} else {
+			resultFalse = append(resultFalse, ua)
+		}
 	}
 	uac.mx.Unlock()
-	slices.Sort(result)
-	return result
+	slices.Sort(resultTrue)
+	slices.Sort(resultFalse)
+	return resultTrue, resultFalse
 }
