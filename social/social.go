@@ -39,12 +39,13 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+	slog.Debug("Configuration", "port", cfg.webPort, "path", cfg.webPath)
 	if cfg.debug {
 		slog.SetLogLoggerLevel(slog.LevelDebug)
 	}
-	slog.Debug("Configuration", "port", cfg.webPort, "path", cfg.webPath)
 
 	s := createWebServer(&cfg)
+	slog.Info("Start", "listen", s.Addr)
 	if err = s.ListenAndServe(); err != nil {
 		slog.Error("webStop", "error", err)
 	}
@@ -158,10 +159,12 @@ type webHandler struct {
 
 func (h *webHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	header := r.Header
-	slog.Debug("HTTP", "method", r.Method, "path", r.URL, "header", header)
+	slog.Debug("HTTP", "method", r.Method, "path", r.URL)
 	if h.uac.add(header.Get("User-Agent")) {
 		h.mux.ServeHTTP(w, r)
+		return
 	}
+	http.Error(w, http.StatusText(http.StatusGone), http.StatusGone)
 }
 
 func (h *webHandler) handleUserAgents(w http.ResponseWriter, r *http.Request) {
