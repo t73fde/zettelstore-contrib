@@ -30,10 +30,12 @@ import (
 
 func main() {
 	flag.Parse()
-	var cfg appConfig
-	cfg.webPort = *uPort
-	cfg.webPath = *sPath
-	cfg.debug = *bDebug
+	var cfg = appConfig{
+		webPort:   *uPort,
+		webPath:   *sPath,
+		debug:     *bDebug,
+		uberspace: *bUberspace,
+	}
 	err := aquireConfiguration(&cfg)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -52,17 +54,19 @@ func main() {
 }
 
 type appConfig struct {
-	webPort uint
-	webPath string
-	debug   bool
+	webPort   uint
+	webPath   string
+	debug     bool
+	uberspace bool
 }
 
 // Command line flags
 var (
-	sConfig = flag.String("c", "", "name of configuration file")
-	uPort   = flag.Uint("port", 23125, "http port")
-	sPath   = flag.String("path", "", "path of static web assets")
-	bDebug  = flag.Bool("debug", false, "debug mode")
+	sConfig    = flag.String("c", "", "name of configuration file")
+	uPort      = flag.Uint("port", 23125, "http port")
+	sPath      = flag.String("path", "", "path of static web assets")
+	bDebug     = flag.Bool("debug", false, "debug mode")
+	bUberspace = flag.Bool("uberspace", false, "uberspace mode")
 )
 
 func aquireConfiguration(cfg *appConfig) error {
@@ -132,7 +136,7 @@ func createWebServer(cfg *appConfig) (s *http.Server) {
 	mux.HandleFunc("GET /.ua/{$}", handler.handleUserAgents)
 	handler.mux = mux
 	addr := fmt.Sprintf(":%v", cfg.webPort)
-	if cfg.debug {
+	if cfg.debug || cfg.uberspace {
 		s = &http.Server{
 			Addr:         addr,
 			Handler:      handler,
