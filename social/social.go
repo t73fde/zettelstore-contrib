@@ -187,6 +187,10 @@ type appResponseWriter struct {
 func (arw *appResponseWriter) Header() http.Header            { return arw.w.Header() }
 func (arw *appResponseWriter) Write(data []byte) (int, error) { return arw.w.Write(data) }
 func (arw *appResponseWriter) WriteHeader(statusCode int) {
+	header := arw.w.Header()
+	if len(header.Values("Server")) == 0 {
+		header.Add("Server", "Zettel Social")
+	}
 	arw.statusCode = statusCode
 	arw.w.WriteHeader(statusCode)
 }
