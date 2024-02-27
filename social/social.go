@@ -158,20 +158,35 @@ type webHandler struct {
 }
 
 func (h *webHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	arw := appResponseWriter{w: w}
 	header := r.Header
-	slog.Debug("HTTP", "method", r.Method, "path", r.URL)
-	if h.uac.add(header.Get("User-Agent")) {
-		h.mux.ServeHTTP(w, r)
-		return
+	userAgent := header.Get("User-Agent")
+	if h.uac.add(userAgent) {
+		h.mux.ServeHTTP(&arw, r)
+	} else {
+		http.Error(w, http.StatusText(http.StatusGone), http.StatusGone)
 	}
-	http.Error(w, http.StatusText(http.StatusGone), http.StatusGone)
+	slog.Debug("HTTP", "status", arw.statusCode, "method", r.Method, "path", r.URL)
 }
 
 func (h *webHandler) handleUserAgents(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
 	uas := h.uac.getAll()
 	for _, ua := range uas {
 		fmt.Fprintln(w, ua)
 	}
+}
+
+type appResponseWriter struct {
+	w          http.ResponseWriter
+	statusCode int
+}
+
+func (arw *appResponseWriter) Header() http.Header            { return arw.w.Header() }
+func (arw *appResponseWriter) Write(data []byte) (int, error) { return arw.w.Write(data) }
+func (arw *appResponseWriter) WriteHeader(statusCode int) {
+	arw.statusCode = statusCode
+	arw.w.WriteHeader(statusCode)
 }
 
 type userAgentCollector struct {
