@@ -31,10 +31,9 @@ import (
 func main() {
 	flag.Parse()
 	var cfg = appConfig{
-		webPort:   *uPort,
-		webPath:   *sPath,
-		debug:     *bDebug,
-		uberspace: *bUberspace,
+		webPort: *uPort,
+		webPath: *sPath,
+		debug:   *bDebug,
 	}
 	err := aquireConfiguration(&cfg)
 	if err != nil {
@@ -54,19 +53,17 @@ func main() {
 }
 
 type appConfig struct {
-	webPort   uint
-	webPath   string
-	debug     bool
-	uberspace bool
+	webPort uint
+	webPath string
+	debug   bool
 }
 
 // Command line flags
 var (
-	sConfig    = flag.String("c", "", "name of configuration file")
-	uPort      = flag.Uint("port", 23125, "http port")
-	sPath      = flag.String("path", "", "path of static web assets")
-	bDebug     = flag.Bool("debug", false, "debug mode")
-	bUberspace = flag.Bool("uberspace", false, "uberspace mode")
+	sConfig = flag.String("c", "", "name of configuration file")
+	uPort   = flag.Uint("port", 23125, "http port")
+	sPath   = flag.String("path", "", "path of static web assets")
+	bDebug  = flag.Bool("debug", false, "debug mode")
 )
 
 func aquireConfiguration(cfg *appConfig) error {
@@ -128,7 +125,7 @@ func readConfiguration(cfg *appConfig) error {
 	return nil
 }
 
-func createWebServer(cfg *appConfig) (s *http.Server) {
+func createWebServer(cfg *appConfig) *http.Server {
 	path := cfg.webPath
 	handler := &webHandler{mux: nil, uac: newUserAgentCollector()}
 	mux := http.NewServeMux()
@@ -136,22 +133,17 @@ func createWebServer(cfg *appConfig) (s *http.Server) {
 	mux.HandleFunc("GET /.ua/{$}", handler.handleUserAgents)
 	handler.mux = mux
 	addr := fmt.Sprintf(":%v", cfg.webPort)
-	if cfg.debug || cfg.uberspace {
-		s = &http.Server{
-			Addr:         addr,
-			Handler:      handler,
-			ReadTimeout:  0,
-			WriteTimeout: 0,
-			IdleTimeout:  0,
-		}
-	} else {
-		s = &http.Server{
-			Addr:         addr,
-			Handler:      mux,
-			ReadTimeout:  5 * time.Second,
-			WriteTimeout: 10 * time.Second,
-			IdleTimeout:  120 * time.Second,
-		}
+	s := &http.Server{
+		Addr:         addr,
+		Handler:      handler,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  120 * time.Second,
+	}
+	if cfg.debug {
+		s.ReadTimeout = 0
+		s.WriteTimeout = 0
+		s.IdleTimeout = 0
 	}
 	return s
 }
