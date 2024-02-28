@@ -15,6 +15,7 @@
 package repository
 
 import (
+	"context"
 	"slices"
 	"sync"
 )
@@ -35,7 +36,7 @@ func MakeUACollector(statusFn func(string) int) *UACollector {
 }
 
 // Add an user agent and return if it is an allowed one.
-func (uac *UACollector) Add(ua string) int {
+func (uac *UACollector) AddUserAgent(_ context.Context, ua string) int {
 	status := uac.statusFn(ua)
 	uac.mx.Lock()
 	uac.uaSet[ua] = status
@@ -44,7 +45,7 @@ func (uac *UACollector) Add(ua string) int {
 }
 
 // GetAll collected user agent data, separated into allowed and unallowed ones.
-func (uac *UACollector) GetAll() ([]string, []string) {
+func (uac *UACollector) GetAllUserAgents(context.Context) ([]string, []string) {
 	uac.mx.Lock()
 	resultTrue := make([]string, 0, len(uac.uaSet))
 	resultFalse := make([]string, 0, len(uac.uaSet))

@@ -21,19 +21,19 @@ import (
 	"time"
 
 	"zettelstore.de/contrib/social/config"
-	"zettelstore.de/contrib/social/repository"
+	"zettelstore.de/contrib/social/usecase"
 )
 
 // Server encapsulates the HTTP web server
 type Server struct {
 	http.Server
 
-	mux *http.ServeMux
-	uac *repository.UACollector
+	mux   *http.ServeMux
+	addUA usecase.AddUserAgent
 }
 
 // CreateWebServer creates a new HTTP web server.
-func CreateWebServer(cfg *config.Config, uac *repository.UACollector) *Server {
+func CreateWebServer(cfg *config.Config, ucAddUA usecase.AddUserAgent) *Server {
 	addr := fmt.Sprintf(":%v", cfg.WebPort)
 	s := Server{
 		http.Server{
@@ -44,7 +44,7 @@ func CreateWebServer(cfg *config.Config, uac *repository.UACollector) *Server {
 			IdleTimeout:  120 * time.Second,
 		},
 		http.NewServeMux(),
-		uac,
+		ucAddUA,
 	}
 	if cfg.Debug {
 		s.ReadTimeout = 0
@@ -58,14 +58,13 @@ func CreateWebServer(cfg *config.Config, uac *repository.UACollector) *Server {
 // ServeHTTP serves the HTTP traffic for this server.
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	arw := appResponseWriter{w: w}
-	header := r.Header
-	userAgent := header.Get("User-Agent")
-	if status := s.uac.Add(userAgent); status == 0 {
+	ctx := r.Context()
+	if status := s.addUA.Run(ctx, r.Header.Values("User-Agent")); status == 0 {
 		s.mux.ServeHTTP(&arw, r)
 	} else {
 		http.Error(&arw, http.StatusText(status), status)
 	}
-	slog.Debug("HTTP", "status", arw.statusCode, "method", r.Method, "path", r.URL)
+	slog.DebugContext(ctx, "HTTP", "status", arw.statusCode, "method", r.Method, "path", r.URL)
 }
 
 // Handle registers the handler for the given pattern.
