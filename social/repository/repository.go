@@ -21,26 +21,26 @@ import (
 
 // UACollector collects user agent data.
 type UACollector struct {
-	allowed func(string) bool
-	mx      sync.Mutex
-	uaSet   map[string]bool
+	statusFn func(string) int
+	mx       sync.Mutex
+	uaSet    map[string]int
 }
 
 // MakeUACollector builds a new collector of user agent data.
-func MakeUACollector(allowed func(string) bool) *UACollector {
+func MakeUACollector(statusFn func(string) int) *UACollector {
 	return &UACollector{
-		allowed: allowed,
-		uaSet:   map[string]bool{},
+		statusFn: statusFn,
+		uaSet:    map[string]int{},
 	}
 }
 
 // Add an user agent and return if it is an allowed one.
-func (uac *UACollector) Add(ua string) bool {
-	allowed := uac.allowed(ua)
+func (uac *UACollector) Add(ua string) int {
+	status := uac.statusFn(ua)
 	uac.mx.Lock()
-	uac.uaSet[ua] = allowed
+	uac.uaSet[ua] = status
 	uac.mx.Unlock()
-	return allowed
+	return status
 }
 
 // GetAll collected user agent data, separated into allowed and unallowed ones.
@@ -48,8 +48,8 @@ func (uac *UACollector) GetAll() ([]string, []string) {
 	uac.mx.Lock()
 	resultTrue := make([]string, 0, len(uac.uaSet))
 	resultFalse := make([]string, 0, len(uac.uaSet))
-	for ua, b := range uac.uaSet {
-		if b {
+	for ua, status := range uac.uaSet {
+		if status == 0 {
 			resultTrue = append(resultTrue, ua)
 		} else {
 			resultFalse = append(resultFalse, ua)

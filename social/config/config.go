@@ -18,6 +18,8 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"regexp"
+	"strings"
 
 	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxreader"
@@ -25,9 +27,17 @@ import (
 
 // Config stores all relevant configuration data.
 type Config struct {
-	WebPort uint
-	WebPath string
-	Debug   bool
+	WebPort  uint
+	WebPath  string
+	Debug    bool
+	RejectUA *regexp.Regexp
+	ActionUA []UAAction
+}
+
+// UAAction stores the regexp match and the resulting values to produce a HTTP response.
+type UAAction struct {
+	Regexp *regexp.Regexp
+	Status int
 }
 
 // Command line flags
@@ -37,6 +47,8 @@ var (
 	sPath   = flag.String("path", "", "path of static web assets")
 	bDebug  = flag.Bool("debug", false, "debug mode")
 )
+
+const defaultUAStatus = 429
 
 // Initialize configuration values.
 func (cfg *Config) Initialize() error {
@@ -72,37 +84,101 @@ func (cfg *Config) read() error {
 	}
 	if lst, isPair := sx.GetPair(obj); isPair {
 		if pair := lst.Assoc(sx.MakeSymbol("PORT")); pair != nil {
-			val := assocValue(pair)
-			if nVal, isNumber := sx.GetNumber(val); isNumber {
-				if iVal, isInt64 := nVal.(sx.Int64); isInt64 {
-					if iVal > 0 {
-						cfg.WebPort = uint(iVal)
-					} else {
-						return fmt.Errorf("PORT value <= 0: %d", iVal)
-					}
+			val, valErr := assocValue(pair)
+			if valErr != nil {
+				return fmt.Errorf("PORT: %w", valErr)
+			}
+			if iVal, isInt64 := val.(sx.Int64); isInt64 {
+				if iVal > 0 {
+					cfg.WebPort = uint(iVal)
 				} else {
-					return fmt.Errorf("PORT is number, but not Int64: %T/%v", nVal, nVal)
+					return fmt.Errorf("PORT value <= 0: %d", iVal)
 				}
 			} else {
-				return fmt.Errorf("unknown value for PORT: %T/%v", val, val)
+				return fmt.Errorf("PORT is not Int64: %T/%v", val, val)
 			}
 		}
 		if pair := lst.Assoc(sx.MakeSymbol("PATH")); pair != nil {
-			val := assocValue(pair)
+			val, valErr := assocValue(pair)
+			if valErr != nil {
+				return fmt.Errorf("PORT: %w", valErr)
+			}
 			if sVal, isString := sx.GetString(val); isString {
 				cfg.WebPath = string(sVal)
 			} else {
 				return fmt.Errorf("unknown value for PATH: %T/%v", val, val)
 			}
 		}
+		if pair := lst.Assoc(sx.MakeSymbol("REJECT-UA")); pair != nil {
+			return cfg.parseRejectUA(pair.Tail())
+		}
 	}
 	return nil
 }
 
-func assocValue(pair *sx.Pair) sx.Object {
+func (cfg *Config) parseRejectUA(lst *sx.Pair) error {
+	var uaAction []UAAction
+	for node := lst; node != nil; node = node.Tail() {
+		obj := node.Car()
+		if sx.IsNil(obj) {
+			continue
+		}
+		if sVal, isString := sx.GetString(obj); isString {
+			re, err := regexp.Compile(string(sVal))
+			if err != nil {
+				return err
+			}
+			uaAction = append(uaAction, UAAction{re, defaultUAStatus})
+			continue
+		}
+		if pair, isPair := sx.GetPair(obj); isPair {
+			first := pair.Car()
+			if sVal, isString := sx.GetString(first); isString {
+				re, err := regexp.Compile(string(sVal))
+				if err != nil {
+					return err
+				}
+				status := defaultUAStatus
+
+				pair = pair.Tail()
+				second := pair.Car()
+				if iVal, isInt64 := second.(sx.Int64); isInt64 && 100 <= iVal && iVal <= 999 {
+					status = int(iVal)
+				}
+				uaAction = append(uaAction, UAAction{re, status})
+				continue
+			}
+		}
+	}
+	if len(uaAction) == 0 {
+		cfg.RejectUA = nil
+		cfg.ActionUA = nil
+		return nil
+	}
+
+	var expr strings.Builder
+	for i, action := range uaAction {
+		if i > 0 {
+			expr.WriteByte('|')
+		}
+		expr.WriteString(action.Regexp.String())
+	}
+	rex, err := regexp.Compile(expr.String())
+	if err != nil {
+		return err
+	}
+	cfg.RejectUA = rex
+	cfg.ActionUA = uaAction
+	return nil
+}
+
+func assocValue(pair *sx.Pair) (sx.Object, error) {
 	val := pair.Cdr()
 	if rest, isPair := sx.GetPair(val); isPair {
 		val = rest.Car()
 	}
-	return val
+	if sx.IsNil(val) {
+		return nil, fmt.Errorf("missing value")
+	}
+	return val, nil
 }

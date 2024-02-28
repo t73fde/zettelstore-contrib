@@ -36,7 +36,7 @@ func main() {
 		slog.SetLogLoggerLevel(slog.LevelDebug)
 	}
 
-	uaColl := repository.MakeUACollector(uaAllowed)
+	uaColl := repository.MakeUACollector(createUAStatusFunc(&cfg))
 	s := server.CreateWebServer(&cfg, uaColl)
 	s.Handle("GET /", http.FileServer(http.Dir(cfg.WebPath)))
 	s.HandleFunc("GET /.ua/{$}", makeGetAllUAHandler(uaColl))
@@ -46,7 +46,24 @@ func main() {
 	}
 }
 
-func uaAllowed(ua string) bool { return ua != "" }
+func createUAStatusFunc(cfg *config.Config) func(string) int {
+	re := cfg.RejectUA
+	uaAction := cfg.ActionUA
+	if len(uaAction) == 0 {
+		return func(string) int { return 0 }
+	}
+	return func(ua string) int {
+		if re.MatchString(ua) {
+			for _, action := range uaAction {
+				if action.Regexp.MatchString(ua) {
+					return action.Status
+				}
+			}
+			return 500
+		}
+		return 0
+	}
+}
 
 func makeGetAllUAHandler(uac *repository.UACollector) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

@@ -60,10 +60,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	arw := appResponseWriter{w: w}
 	header := r.Header
 	userAgent := header.Get("User-Agent")
-	if s.uac.Add(userAgent) {
+	if status := s.uac.Add(userAgent); status == 0 {
 		s.mux.ServeHTTP(&arw, r)
 	} else {
-		http.Error(&arw, http.StatusText(http.StatusGone), http.StatusGone)
+		http.Error(&arw, http.StatusText(status), status)
 	}
 	slog.Debug("HTTP", "status", arw.statusCode, "method", r.Method, "path", r.URL)
 }
