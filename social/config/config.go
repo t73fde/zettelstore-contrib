@@ -43,12 +43,15 @@ type UAAction struct {
 // Command line flags
 var (
 	sConfig = flag.String("c", "", "name of configuration file")
-	uPort   = flag.Uint("port", 23125, "http port")
+	uPort   = flag.Uint("port", defaultPort, "http port")
 	sPath   = flag.String("path", "", "path of static web assets")
-	bDebug  = flag.Bool("debug", false, "debug mode")
+	bDebug  = flag.Bool("debug", false, "enable debug mode")
 )
 
-const defaultUAStatus = 429
+const (
+	defaultPort     = 23125
+	defaultUAStatus = 429
+)
 
 // Initialize configuration values.
 func (cfg *Config) Initialize() error {
@@ -62,8 +65,11 @@ func (cfg *Config) Initialize() error {
 	if err := cfg.read(); err != nil {
 		return err
 	}
-	if uPort != nil && *uPort > 0 {
+	if port := *uPort; port > 0 && port != defaultPort {
 		cfg.WebPort = *uPort
+	}
+	if *bDebug {
+		cfg.Debug = true
 	}
 	return nil
 }
@@ -77,48 +83,71 @@ func (cfg *Config) read() error {
 		return err
 	}
 	rdr := sxreader.MakeReader(file)
-	obj, err := rdr.Read()
+	objs, err := rdr.ReadAll()
 	file.Close()
 	if err != nil {
 		return err
 	}
-	if lst, isPair := sx.GetPair(obj); isPair {
-		if pair := lst.Assoc(sx.MakeSymbol("PORT")); pair != nil {
-			val, valErr := assocValue(pair)
-			if valErr != nil {
-				return fmt.Errorf("PORT: %w", valErr)
-			}
-			if iVal, isInt64 := val.(sx.Int64); isInt64 {
-				if iVal > 0 {
-					cfg.WebPort = uint(iVal)
-				} else {
-					return fmt.Errorf("PORT value <= 0: %d", iVal)
+	for _, obj := range objs {
+		if sx.IsNil(obj) {
+			continue
+		}
+		lst, isPair := sx.GetPair(obj)
+		if !isPair {
+			continue
+		}
+		if sym, isSymbol := sx.GetSymbol(lst.Car()); isSymbol {
+			if fn, found := cmdMap[sym.GoString()]; found {
+				if err := fn(cfg, sym, lst.Tail()); err != nil {
+					return err
 				}
-			} else {
-				return fmt.Errorf("PORT is not Int64: %T/%v", val, val)
 			}
-		}
-		if pair := lst.Assoc(sx.MakeSymbol("PATH")); pair != nil {
-			val, valErr := assocValue(pair)
-			if valErr != nil {
-				return fmt.Errorf("PORT: %w", valErr)
-			}
-			if sVal, isString := sx.GetString(val); isString {
-				cfg.WebPath = string(sVal)
-			} else {
-				return fmt.Errorf("unknown value for PATH: %T/%v", val, val)
-			}
-		}
-		if pair := lst.Assoc(sx.MakeSymbol("REJECT-UA")); pair != nil {
-			return cfg.parseRejectUA(pair.Tail())
+			continue
 		}
 	}
 	return nil
 }
 
-func (cfg *Config) parseRejectUA(lst *sx.Pair) error {
+var cmdMap = map[string]func(*Config, *sx.Symbol, *sx.Pair) error{
+	"DEBUG":     parseDebug,
+	"PORT":      parsePort,
+	"PATH":      parsePath,
+	"REJECT-UA": parseRejectUA,
+}
+
+func parseDebug(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
+	debug := true
+	if args != nil {
+		debug = sx.IsTrue(args.Car())
+	}
+	cfg.Debug = debug
+	return nil
+}
+
+func parsePort(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
+	val := args.Car()
+	if iVal, isInt64 := val.(sx.Int64); isInt64 {
+		if iVal > 0 {
+			cfg.WebPort = uint(iVal)
+			return nil
+		}
+		return fmt.Errorf("%v value <= 0: %d", sym, iVal)
+	}
+	return fmt.Errorf("%v is not Int64: %T/%v", sym, val, val)
+}
+
+func parsePath(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
+	val := args.Car()
+	if sVal, isString := sx.GetString(val); isString {
+		cfg.WebPath = string(sVal)
+		return nil
+	}
+	return fmt.Errorf("unknown value for %v: %T/%v", sym, val, val)
+}
+
+func parseRejectUA(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
 	var uaAction []UAAction
-	for node := lst; node != nil; node = node.Tail() {
+	for node := args; node != nil; node = node.Tail() {
 		obj := node.Car()
 		if sx.IsNil(obj) {
 			continue
@@ -170,15 +199,4 @@ func (cfg *Config) parseRejectUA(lst *sx.Pair) error {
 	cfg.RejectUA = rex
 	cfg.ActionUA = uaAction
 	return nil
-}
-
-func assocValue(pair *sx.Pair) (sx.Object, error) {
-	val := pair.Cdr()
-	if rest, isPair := sx.GetPair(val); isPair {
-		val = rest.Car()
-	}
-	if sx.IsNil(val) {
-		return nil, fmt.Errorf("missing value")
-	}
-	return val, nil
 }

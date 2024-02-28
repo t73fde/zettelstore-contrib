@@ -31,10 +31,10 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	slog.Debug("Configuration", "port", cfg.WebPort, "path", cfg.WebPath)
 	if cfg.Debug {
 		slog.SetLogLoggerLevel(slog.LevelDebug)
 	}
+	slog.Debug("Configuration", "port", cfg.WebPort, "path", cfg.WebPath)
 
 	uaColl := repository.MakeUACollector(createUAStatusFunc(&cfg))
 	s := server.CreateWebServer(&cfg, uaColl)
