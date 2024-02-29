@@ -25,6 +25,14 @@ import (
 	"zettelstore.de/contrib/social/config"
 )
 
+// Server timeout values
+const (
+	shutdownTimeout = 5 * time.Second
+	readTimeout     = 5 * time.Second
+	writeTimeout    = 10 * time.Second
+	idleTimeout     = 120 * time.Second
+)
+
 // Server encapsulates the HTTP web server
 type Server struct {
 	http.Server
@@ -39,9 +47,9 @@ func CreateWebServer(cfg *config.Config, h *Handler) *Server {
 		http.Server{
 			Addr:         addr,
 			Handler:      h,
-			ReadTimeout:  5 * time.Second,
-			WriteTimeout: 10 * time.Second,
-			IdleTimeout:  120 * time.Second,
+			ReadTimeout:  readTimeout,
+			WriteTimeout: writeTimeout,
+			IdleTimeout:  idleTimeout,
 		},
 		cfg.MakeLogger("Web"),
 	}
@@ -66,7 +74,7 @@ func (s *Server) Start() error {
 
 // Stop the HTTP web server.
 func (s *Server) Stop() {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
 	s.Shutdown(ctx)
 }
