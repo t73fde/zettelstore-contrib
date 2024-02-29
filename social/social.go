@@ -23,8 +23,8 @@ import (
 	"zettelstore.de/contrib/social/kernel"
 	"zettelstore.de/contrib/social/repository"
 	"zettelstore.de/contrib/social/usecase"
-	"zettelstore.de/contrib/social/web/adapter"
 	"zettelstore.de/contrib/social/web/server"
+	"zettelstore.de/contrib/social/web/wui"
 )
 
 func main() {
@@ -69,11 +69,11 @@ func createUAStatusFunc(cfg *config.Config) func(string) int {
 }
 
 func setupRouting(h *server.Handler, uaColl *repository.UACollector, cfg *config.Config) {
-	wui := adapter.NewWebUI(cfg, cfg.MakeLogger("WebUI"))
+	webui := wui.NewWebUI(cfg.MakeLogger("WebUI"))
 
 	ucGetAllUserAgents := usecase.NewGetAllUserAgents(uaColl)
 
-	docRoot := wui.MakeDocumentHandler(cfg.DocumentRoot)
+	docRoot := webui.MakeDocumentHandler(cfg.DocumentRoot)
 	h.HandleFunc("GET /", docRoot)
-	h.HandleFunc("GET /.ua/{$}", wui.MakeGetAllUAHandler(ucGetAllUserAgents))
+	h.HandleFunc("GET /.ua/{$}", webui.MakeGetAllUAHandler(ucGetAllUserAgents))
 }

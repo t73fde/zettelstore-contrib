@@ -11,15 +11,30 @@
 // SPDX-FileCopyrightText: 2024-present Detlef Stern
 //-----------------------------------------------------------------------------
 
-package adapter
+package wui
 
-import "net/http"
+import (
+	"fmt"
+	"net/http"
 
-// MakeDocumentHandler creates a handler to serve static documents from a
-// given root directory.
-func (*WebUI) MakeDocumentHandler(root string) http.HandlerFunc {
-	h := http.FileServer(http.Dir(root))
+	"zettelstore.de/contrib/social/usecase"
+)
+
+// MakeGetAllUAHandler creates a new HTTP handler to display the list of found
+// user agents.
+func (*WebUI) MakeGetAllUAHandler(ucAllUA usecase.GetAllUserAgents) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		h.ServeHTTP(w, r)
+		uasT, uasF := ucAllUA.Run(r.Context())
+
+		w.WriteHeader(http.StatusOK)
+		for _, ua := range uasT {
+			fmt.Fprintln(w, ua)
+		}
+		if len(uasF) > 0 && len(uasT) > 0 {
+			fmt.Fprintln(w, "---")
+		}
+		for _, ua := range uasF {
+			fmt.Fprintln(w, ua)
+		}
 	}
 }

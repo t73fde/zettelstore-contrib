@@ -11,23 +11,15 @@
 // SPDX-FileCopyrightText: 2024-present Detlef Stern
 //-----------------------------------------------------------------------------
 
-// Package adapter connects use cases with http web handlers.
-package adapter
+package wui
 
-import (
-	"log/slog"
+import "net/http"
 
-	"zettelstore.de/contrib/social/config"
-)
-
-// WebUI stores data relevant to the web user interface adapter.
-type WebUI struct {
-	logger *slog.Logger
-}
-
-// NewWebUI creates a new adapter for the web user interface.
-func NewWebUI(cfg *config.Config, logger *slog.Logger) *WebUI {
-	return &WebUI{
-		logger: logger,
+// MakeDocumentHandler creates a handler to serve static documents from a
+// given root directory.
+func (*WebUI) MakeDocumentHandler(root string) http.HandlerFunc {
+	h := http.FileServer(http.Dir(root))
+	return func(w http.ResponseWriter, r *http.Request) {
+		h.ServeHTTP(w, r)
 	}
 }
