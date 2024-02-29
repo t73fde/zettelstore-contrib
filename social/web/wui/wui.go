@@ -15,6 +15,8 @@
 package wui
 
 import (
+	"bytes"
+	_ "embed"
 	"io"
 	"log/slog"
 	"os"
@@ -42,10 +44,10 @@ func NewWebUI(logger *slog.Logger, templateRoot string) (*WebUI, error) {
 	rootBinding.Freeze()
 	codeBinding := sxeval.MakeChildBinding(rootBinding, "code", 128)
 	env := sxeval.MakeExecutionEnvironment(codeBinding)
-	if err := wui.evalCode(env, templateRoot); err != nil {
+	if err := wui.evalCode(env); err != nil {
 		return nil, err
 	}
-	if err := wui.parseTemplates(env, templateRoot); err != nil {
+	if err := wui.parseAllTemplates(env, templateRoot); err != nil {
 		return nil, err
 	}
 	codeBinding.Freeze()
@@ -62,22 +64,20 @@ func (wui *WebUI) makeRenderBinding(name string) *sxeval.Binding {
 	return sxeval.MakeChildBinding(wui.baseBinding, name, 128)
 }
 
-func (wui *WebUI) evalCode(env *sxeval.Environment, dir string) error {
-	for _, name := range []string{"prelude"} {
-		if err := wui.evalFile(env, dir, name); err != nil {
+func (wui *WebUI) evalCode(env *sxeval.Environment) error {
+	for _, content := range [][]byte{contentPreludeSxc} {
+		if err := wui.evalFile(env, content); err != nil {
 			return err
 		}
 	}
 	return nil
 }
-func (wui *WebUI) evalFile(env *sxeval.Environment, dir, name string) error {
-	filename := filepath.Join(dir, name+".sxc")
-	f, ferr := os.Open(filename)
-	if ferr != nil {
-		return ferr
-	}
-	defer f.Close()
-	rdr := sxreader.MakeReader(f)
+
+//go:embed prelude.sxc
+var contentPreludeSxc []byte
+
+func (wui *WebUI) evalFile(env *sxeval.Environment, content []byte) error {
+	rdr := sxreader.MakeReader(bytes.NewReader(content))
 	for {
 		obj, err := rdr.Read()
 		if err != nil {
@@ -90,7 +90,7 @@ func (wui *WebUI) evalFile(env *sxeval.Environment, dir, name string) error {
 		if err != nil {
 			return err
 		}
-		wui.logger.Debug("Eval", "name", name, "result", obj)
+		wui.logger.Debug("Eval", "result", obj)
 	}
 	return nil
 }
@@ -100,8 +100,8 @@ const (
 	nameLayout = "layout"
 )
 
-// parseTemplates reads (parses, reworks) all needed templates.
-func (wui *WebUI) parseTemplates(env *sxeval.Environment, dir string) error {
+// parseAllTemplates reads (parses, reworks) all needed templates.
+func (wui *WebUI) parseAllTemplates(env *sxeval.Environment, dir string) error {
 	for _, name := range []string{nameLayout} {
 		t, err := wui.parseTemplate(env, dir, name)
 		if err != nil {
