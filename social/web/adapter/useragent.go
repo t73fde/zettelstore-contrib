@@ -22,7 +22,7 @@ import (
 
 // MakeGetAllUAHandler creates a new HTTP handler to display the list of found
 // user agents.
-func MakeGetAllUAHandler(ucAllUA usecase.GetAllUserAgents) http.HandlerFunc {
+func (*WebUI) MakeGetAllUAHandler(ucAllUA usecase.GetAllUserAgents) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		uasT, uasF := ucAllUA.Run(r.Context())
 

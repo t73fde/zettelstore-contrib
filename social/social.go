@@ -70,9 +70,10 @@ func createUAStatusFunc(cfg *config.Config) func(string) int {
 }
 
 func setupRouting(h *server.Handler, uaColl *repository.UACollector, cfg *config.Config) {
+	wui := adapter.NewWebUI(cfg, cfg.MakeLogger("WebUI"))
+
 	ucGetAllUserAgents := usecase.NewGetAllUserAgents(uaColl)
 
 	h.Handle("GET /", http.FileServer(http.Dir(cfg.DocumentRoot)))
-	h.HandleFunc("GET /.ua/{$}", adapter.MakeGetAllUAHandler(ucGetAllUserAgents))
-
+	h.HandleFunc("GET /.ua/{$}", wui.MakeGetAllUAHandler(ucGetAllUserAgents))
 }

@@ -13,3 +13,21 @@
 
 // Package adapter connects use cases with http web handlers.
 package adapter
+
+import (
+	"log/slog"
+
+	"zettelstore.de/contrib/social/config"
+)
+
+// WebUI stores data relevant to the web user interface adapter.
+type WebUI struct {
+	logger *slog.Logger
+}
+
+// NewWebUI creates a new adapter for the web user interface.
+func NewWebUI(cfg *config.Config, logger *slog.Logger) *WebUI {
+	return &WebUI{
+		logger: logger,
+	}
+}
