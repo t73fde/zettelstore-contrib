@@ -41,7 +41,10 @@ func main() {
 
 	uaColl := repository.MakeUACollector(createUAStatusFunc(&cfg))
 	h := server.NewHandler(cfg.MakeLogger("HTTP"), usecase.NewAddUserAgent(uaColl))
-	setupRouting(h, uaColl, &cfg)
+	if err := setupRouting(h, uaColl, &cfg); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 	k := kernel.NewKernel(&cfg, h)
 	if err := k.Start(); err != nil {
 		logger.Error("kernel", "error", err)
@@ -68,12 +71,17 @@ func createUAStatusFunc(cfg *config.Config) func(string) int {
 	}
 }
 
-func setupRouting(h *server.Handler, uaColl *repository.UACollector, cfg *config.Config) {
-	webui := wui.NewWebUI(cfg.MakeLogger("WebUI"))
+func setupRouting(h *server.Handler, uaColl *repository.UACollector, cfg *config.Config) error {
+	webui, err := wui.NewWebUI(cfg.MakeLogger("WebUI"), cfg.TemplateRoot)
+	if err != nil {
+		return err
+	}
 
 	ucGetAllUserAgents := usecase.NewGetAllUserAgents(uaColl)
 
 	docRoot := webui.MakeDocumentHandler(cfg.DocumentRoot)
 	h.HandleFunc("GET /", docRoot)
 	h.HandleFunc("GET /.ua/{$}", webui.MakeGetAllUAHandler(ucGetAllUserAgents))
+	h.HandleFunc("GET /.t/{$}", webui.MakeTestHandler())
+	return nil
 }

@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -30,6 +31,7 @@ import (
 type Config struct {
 	WebPort      uint
 	DocumentRoot string
+	TemplateRoot string
 	Debug        bool
 	RejectUA     *regexp.Regexp
 	ActionUA     []UAAction
@@ -68,6 +70,7 @@ func (cfg *Config) Initialize(logger *slog.Logger) error {
 	}
 	cfg.WebPort = *uPort
 	cfg.DocumentRoot = *sRoot
+	cfg.TemplateRoot = ".template"
 	cfg.Debug = *bDebug
 	cfg.logger = logger
 
@@ -123,6 +126,7 @@ var cmdMap = map[string]func(*Config, *sx.Symbol, *sx.Pair) error{
 	"DEBUG":         parseDebug,
 	"PORT":          parsePort,
 	"DOCUMENT-ROOT": parseDocumentRoot,
+	"TEMPLATE-ROOT": parseTemplateRoot,
 	"REJECT-UA":     parseRejectUA,
 }
 
@@ -148,12 +152,30 @@ func parsePort(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
 }
 
 func parseDocumentRoot(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
+	s, err := parseString(sym, args)
+	if err != nil {
+		return err
+	}
+	cfg.DocumentRoot = s
+	return nil
+}
+
+func parseTemplateRoot(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
+	s, err := parseString(sym, args)
+	if err != nil {
+		return err
+	}
+	cfg.TemplateRoot = filepath.Clean(s)
+	return nil
+}
+
+func parseString(sym *sx.Symbol, args *sx.Pair) (string, error) {
 	val := args.Car()
 	if sVal, isString := sx.GetString(val); isString {
-		cfg.DocumentRoot = string(sVal)
-		return nil
+		return string(sVal), nil
 	}
-	return fmt.Errorf("unknown value for %v: %T/%v", sym, val, val)
+	return "", fmt.Errorf("unknown value for %v: %T/%v", sym, val, val)
+
 }
 
 func parseRejectUA(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
