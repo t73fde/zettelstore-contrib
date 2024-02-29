@@ -17,6 +17,7 @@ package config
 import (
 	"flag"
 	"fmt"
+	"log/slog"
 	"os"
 	"regexp"
 	"strings"
@@ -27,11 +28,11 @@ import (
 
 // Config stores all relevant configuration data.
 type Config struct {
-	WebPort  uint
-	WebPath  string
-	Debug    bool
-	RejectUA *regexp.Regexp
-	ActionUA []UAAction
+	WebPort      uint
+	DocumentRoot string
+	Debug        bool
+	RejectUA     *regexp.Regexp
+	ActionUA     []UAAction
 }
 
 // UAAction stores the regexp match and the resulting values to produce a HTTP response.
@@ -44,7 +45,7 @@ type UAAction struct {
 var (
 	sConfig = flag.String("c", "", "name of configuration file")
 	uPort   = flag.Uint("port", defaultPort, "http port")
-	sPath   = flag.String("path", "", "path of static web assets")
+	sRoot   = flag.String("doc-root", "", "path of document root")
 	bDebug  = flag.Bool("debug", false, "enable debug mode")
 )
 
@@ -59,7 +60,7 @@ func (cfg *Config) Initialize() error {
 		flag.Parse()
 	}
 	cfg.WebPort = *uPort
-	cfg.WebPath = *sPath
+	cfg.DocumentRoot = *sRoot
 	cfg.Debug = *bDebug
 
 	if err := cfg.read(); err != nil {
@@ -101,6 +102,8 @@ func (cfg *Config) read() error {
 				if err := fn(cfg, sym, lst.Tail()); err != nil {
 					return err
 				}
+			} else {
+				slog.Warn("Unknown config", "entry", sym)
 			}
 			continue
 		}
@@ -109,10 +112,10 @@ func (cfg *Config) read() error {
 }
 
 var cmdMap = map[string]func(*Config, *sx.Symbol, *sx.Pair) error{
-	"DEBUG":     parseDebug,
-	"PORT":      parsePort,
-	"PATH":      parsePath,
-	"REJECT-UA": parseRejectUA,
+	"DEBUG":         parseDebug,
+	"PORT":          parsePort,
+	"DOCUMENT-ROOT": parseDocumentRoot,
+	"REJECT-UA":     parseRejectUA,
 }
 
 func parseDebug(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
@@ -136,10 +139,10 @@ func parsePort(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
 	return fmt.Errorf("%v is not Int64: %T/%v", sym, val, val)
 }
 
-func parsePath(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
+func parseDocumentRoot(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
 	val := args.Car()
 	if sVal, isString := sx.GetString(val); isString {
-		cfg.WebPath = string(sVal)
+		cfg.DocumentRoot = string(sVal)
 		return nil
 	}
 	return fmt.Errorf("unknown value for %v: %T/%v", sym, val, val)

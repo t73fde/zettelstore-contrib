@@ -36,7 +36,7 @@ func main() {
 	if cfg.Debug {
 		slog.SetLogLoggerLevel(slog.LevelDebug)
 	}
-	slog.Debug("Configuration", "port", cfg.WebPort, "path", cfg.WebPath)
+	slog.Debug("Configuration", "port", cfg.WebPort, "docroot", cfg.DocumentRoot)
 
 	uaColl := repository.MakeUACollector(createUAStatusFunc(&cfg))
 	s := server.CreateWebServer(&cfg, usecase.NewAddUserAgent(uaColl))
@@ -69,7 +69,7 @@ func createUAStatusFunc(cfg *config.Config) func(string) int {
 func setupRouting(s *server.Server, uaColl *repository.UACollector, cfg *config.Config) {
 	ucGetAllUserAgents := usecase.NewGetAllUserAgents(uaColl)
 
-	s.Handle("GET /", http.FileServer(http.Dir(cfg.WebPath)))
+	s.Handle("GET /", http.FileServer(http.Dir(cfg.DocumentRoot)))
 	s.HandleFunc("GET /.ua/{$}", adapter.MakeGetAllUAHandler(ucGetAllUserAgents))
 
 }
