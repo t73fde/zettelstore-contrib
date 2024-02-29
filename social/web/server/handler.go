@@ -23,15 +23,17 @@ import (
 
 // Handler is the base handler of the HTTP web service.
 type Handler struct {
-	mux   *http.ServeMux
-	addUA usecase.AddUserAgent
+	mux    *http.ServeMux
+	addUA  usecase.AddUserAgent
+	logger *slog.Logger
 }
 
 // NewHandler creates a new top-level handler to be used in the web service.
-func NewHandler(ucAddUA usecase.AddUserAgent) *Handler {
+func NewHandler(logger *slog.Logger, ucAddUA usecase.AddUserAgent) *Handler {
 	h := Handler{
-		mux:   http.NewServeMux(),
-		addUA: ucAddUA,
+		mux:    http.NewServeMux(),
+		addUA:  ucAddUA,
+		logger: logger,
 	}
 	return &h
 }
@@ -45,7 +47,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else {
 		http.Error(&arw, http.StatusText(status), status)
 	}
-	slog.DebugContext(ctx, "HTTP", "status", arw.statusCode, "method", r.Method, "path", r.URL)
+	h.logger.DebugContext(ctx, "Serve", "status", arw.statusCode, "method", r.Method, "url", r.URL)
 }
 
 // Handle registers the handler for the given pattern.

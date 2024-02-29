@@ -28,6 +28,7 @@ import (
 // Kernel is the central server for the whole application.
 // It consists of serveral services, which are implemented as servers as well.
 type Kernel struct {
+	logger     *slog.Logger
 	wg         sync.WaitGroup
 	interrupt  chan os.Signal
 	cfg        *config.Config
@@ -37,6 +38,7 @@ type Kernel struct {
 // NewKernel creates a new application server
 func NewKernel(cfg *config.Config, h *server.Handler) *Kernel {
 	k := Kernel{
+		logger:     cfg.MakeLogger("kernel"),
 		interrupt:  make(chan os.Signal, 5),
 		cfg:        cfg,
 		webService: server.CreateWebServer(cfg, h),
@@ -55,7 +57,7 @@ func (k *Kernel) Start() error {
 		// Wait for interrupt.
 		sig := <-k.interrupt
 		if strSig := sig.String(); strSig != "" {
-			slog.Info("Shut down", "signal", strSig)
+			k.logger.Info("Shut down", "signal", strSig)
 		}
 		k.doShutdown()
 		k.wg.Done()

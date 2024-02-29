@@ -33,6 +33,13 @@ type Config struct {
 	Debug        bool
 	RejectUA     *regexp.Regexp
 	ActionUA     []UAAction
+
+	logger *slog.Logger
+}
+
+// MakeLogger creates a sub-logger for the given subsystem.
+func (cfg *Config) MakeLogger(system string) *slog.Logger {
+	return cfg.logger.With("system", system)
 }
 
 // UAAction stores the regexp match and the resulting values to produce a HTTP response.
@@ -55,13 +62,14 @@ const (
 )
 
 // Initialize configuration values.
-func (cfg *Config) Initialize() error {
+func (cfg *Config) Initialize(logger *slog.Logger) error {
 	if !flag.Parsed() {
 		flag.Parse()
 	}
 	cfg.WebPort = *uPort
 	cfg.DocumentRoot = *sRoot
 	cfg.Debug = *bDebug
+	cfg.logger = logger
 
 	if err := cfg.read(); err != nil {
 		return err
@@ -103,7 +111,7 @@ func (cfg *Config) read() error {
 					return err
 				}
 			} else {
-				slog.Warn("Unknown config", "entry", sym)
+				cfg.logger.Warn("Unknown config", "entry", sym)
 			}
 			continue
 		}

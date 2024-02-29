@@ -28,6 +28,8 @@ import (
 // Server encapsulates the HTTP web server
 type Server struct {
 	http.Server
+
+	logger *slog.Logger
 }
 
 // CreateWebServer creates a new HTTP web server.
@@ -41,6 +43,7 @@ func CreateWebServer(cfg *config.Config, h *Handler) *Server {
 			WriteTimeout: 10 * time.Second,
 			IdleTimeout:  120 * time.Second,
 		},
+		cfg.MakeLogger("Web"),
 	}
 	if cfg.Debug {
 		s.ReadTimeout = 0
@@ -52,7 +55,7 @@ func CreateWebServer(cfg *config.Config, h *Handler) *Server {
 
 // Start the HTTP web server.
 func (s *Server) Start() error {
-	slog.Info("Start", "listen", s.Addr)
+	s.logger.Info("Start", "listen", s.Addr)
 	ln, err := net.Listen("tcp", s.Addr)
 	if err != nil {
 		return err

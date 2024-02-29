@@ -30,21 +30,22 @@ import (
 
 func main() {
 	var cfg config.Config
-	if err := cfg.Initialize(); err != nil {
+	logger := slog.Default()
+	if err := cfg.Initialize(logger); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 	if cfg.Debug {
 		slog.SetLogLoggerLevel(slog.LevelDebug)
 	}
-	slog.Debug("Configuration", "port", cfg.WebPort, "docroot", cfg.DocumentRoot)
+	logger.Debug("Configuration", "port", cfg.WebPort, "docroot", cfg.DocumentRoot)
 
 	uaColl := repository.MakeUACollector(createUAStatusFunc(&cfg))
-	h := server.NewHandler(usecase.NewAddUserAgent(uaColl))
+	h := server.NewHandler(cfg.MakeLogger("HTTP"), usecase.NewAddUserAgent(uaColl))
 	setupRouting(h, uaColl, &cfg)
 	k := kernel.NewKernel(&cfg, h)
 	if err := k.Start(); err != nil {
-		slog.Error("kernel", "error", err)
+		logger.Error("kernel", "error", err)
 	}
 	k.WaitForShutdown()
 }
