@@ -15,68 +15,58 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"time"
 
 	"zettelstore.de/contrib/social/config"
-	"zettelstore.de/contrib/social/usecase"
 )
 
 // Server encapsulates the HTTP web server
 type Server struct {
 	http.Server
-
-	mux   *http.ServeMux
-	addUA usecase.AddUserAgent
 }
 
 // CreateWebServer creates a new HTTP web server.
-func CreateWebServer(cfg *config.Config, ucAddUA usecase.AddUserAgent) *Server {
+func CreateWebServer(cfg *config.Config, h *Handler) *Server {
 	addr := fmt.Sprintf(":%v", cfg.WebPort)
 	s := Server{
 		http.Server{
 			Addr:         addr,
-			Handler:      nil,
+			Handler:      h,
 			ReadTimeout:  5 * time.Second,
 			WriteTimeout: 10 * time.Second,
 			IdleTimeout:  120 * time.Second,
 		},
-		http.NewServeMux(),
-		ucAddUA,
 	}
 	if cfg.Debug {
 		s.ReadTimeout = 0
 		s.WriteTimeout = 0
 		s.IdleTimeout = 0
 	}
-	s.Handler = &s
 	return &s
 }
 
-// ServeHTTP serves the HTTP traffic for this server.
-func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	arw := appResponseWriter{w: w}
-	ctx := r.Context()
-	if status := s.addUA.Run(ctx, r.Header.Values("User-Agent")); status == 0 {
-		s.mux.ServeHTTP(&arw, r)
-	} else {
-		http.Error(&arw, http.StatusText(status), status)
-	}
-	slog.DebugContext(ctx, "HTTP", "status", arw.statusCode, "method", r.Method, "path", r.URL)
-}
-
-// Handle registers the handler for the given pattern.
-func (s *Server) Handle(pattern string, handler http.Handler) { s.mux.Handle(pattern, handler) }
-
-// HandleFunc registers the handler function for the given pattern.
-func (s *Server) HandleFunc(pattern string, handler http.HandlerFunc) {
-	s.mux.HandleFunc(pattern, handler)
-}
-
 // Start the HTTP web server.
-func (s *Server) Start() error { return s.ListenAndServe() }
+func (s *Server) Start() error {
+	slog.Info("Start", "listen", s.Addr)
+	ln, err := net.Listen("tcp", s.Addr)
+	if err != nil {
+		return err
+	}
+	go func() { s.Serve(ln) }()
+	return nil
+}
+
+// Stop the HTTP web server.
+func (s *Server) Stop() {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	s.Shutdown(ctx)
+}
 
 type appResponseWriter struct {
 	w          http.ResponseWriter

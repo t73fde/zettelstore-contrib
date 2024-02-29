@@ -21,6 +21,7 @@ import (
 	"os"
 
 	"zettelstore.de/contrib/social/config"
+	"zettelstore.de/contrib/social/kernel"
 	"zettelstore.de/contrib/social/repository"
 	"zettelstore.de/contrib/social/usecase"
 	"zettelstore.de/contrib/social/web/adapter"
@@ -39,12 +40,13 @@ func main() {
 	slog.Debug("Configuration", "port", cfg.WebPort, "docroot", cfg.DocumentRoot)
 
 	uaColl := repository.MakeUACollector(createUAStatusFunc(&cfg))
-	s := server.CreateWebServer(&cfg, usecase.NewAddUserAgent(uaColl))
-	setupRouting(s, uaColl, &cfg)
-	slog.Info("Start", "listen", s.Addr)
-	if err := s.Start(); err != nil {
-		slog.Error("webStop", "error", err)
+	h := server.NewHandler(usecase.NewAddUserAgent(uaColl))
+	setupRouting(h, uaColl, &cfg)
+	k := kernel.NewKernel(&cfg, h)
+	if err := k.Start(); err != nil {
+		slog.Error("kernel", "error", err)
 	}
+	k.WaitForShutdown()
 }
 
 func createUAStatusFunc(cfg *config.Config) func(string) int {
@@ -66,10 +68,10 @@ func createUAStatusFunc(cfg *config.Config) func(string) int {
 	}
 }
 
-func setupRouting(s *server.Server, uaColl *repository.UACollector, cfg *config.Config) {
+func setupRouting(h *server.Handler, uaColl *repository.UACollector, cfg *config.Config) {
 	ucGetAllUserAgents := usecase.NewGetAllUserAgents(uaColl)
 
-	s.Handle("GET /", http.FileServer(http.Dir(cfg.DocumentRoot)))
-	s.HandleFunc("GET /.ua/{$}", adapter.MakeGetAllUAHandler(ucGetAllUserAgents))
+	h.Handle("GET /", http.FileServer(http.Dir(cfg.DocumentRoot)))
+	h.HandleFunc("GET /.ua/{$}", adapter.MakeGetAllUAHandler(ucGetAllUserAgents))
 
 }
