@@ -17,7 +17,6 @@ package main
 import (
 	"fmt"
 	"log/slog"
-	"net/http"
 	"os"
 
 	"zettelstore.de/contrib/social/config"
@@ -74,6 +73,7 @@ func setupRouting(h *server.Handler, uaColl *repository.UACollector, cfg *config
 
 	ucGetAllUserAgents := usecase.NewGetAllUserAgents(uaColl)
 
-	h.Handle("GET /", http.FileServer(http.Dir(cfg.DocumentRoot)))
+	docRoot := wui.MakeDocumentHandler(cfg.DocumentRoot)
+	h.HandleFunc("GET /", docRoot)
 	h.HandleFunc("GET /.ua/{$}", wui.MakeGetAllUAHandler(ucGetAllUserAgents))
 }

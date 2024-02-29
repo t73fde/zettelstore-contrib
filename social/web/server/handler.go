@@ -50,9 +50,6 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.logger.DebugContext(ctx, "Serve", "status", arw.statusCode, "method", r.Method, "url", r.URL)
 }
 
-// Handle registers the handler for the given pattern.
-func (h *Handler) Handle(pattern string, handler http.Handler) { h.mux.Handle(pattern, handler) }
-
 // HandleFunc registers the handler function for the given pattern.
 func (h *Handler) HandleFunc(pattern string, handler http.HandlerFunc) {
 	h.mux.HandleFunc(pattern, handler)
