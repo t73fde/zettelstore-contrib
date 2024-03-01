@@ -51,6 +51,7 @@ func (wui *WebUI) MakeTestHandler() http.HandlerFunc {
 		rb.Bind(sx.MakeSymbol("title"), sx.String("Test page"))
 		rb.Bind(sx.MakeSymbol("CONTENT"), sx.String("Some content"))
 		if err := wui.renderTemplateStatus(w, 200, rb); err != nil {
+			wui.logger.Error("Render", "error", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

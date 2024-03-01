@@ -59,10 +59,14 @@ func (ub *URLBuilder) AddQuery(key, value string) *URLBuilder {
 func (ub *URLBuilder) String() string {
 	var sb strings.Builder
 
-	sb.WriteString(ub.prefix)
-	for _, p := range ub.path {
+	if prefix := ub.prefix; prefix == "" && len(ub.path) == 0 {
 		sb.WriteByte('/')
-		sb.WriteString(url.PathEscape(p))
+	} else {
+		sb.WriteString(ub.prefix)
+		for _, p := range ub.path {
+			sb.WriteByte('/')
+			sb.WriteString(url.PathEscape(p))
+		}
 	}
 	if ub.fragment != "" {
 		sb.WriteByte('#')

@@ -14,6 +14,7 @@
 package wui
 
 import (
+	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxbuiltins"
 	"zettelstore.de/sx.fossil/sxeval"
 )
@@ -26,6 +27,7 @@ func (wui *WebUI) createRootBinding() *sxeval.Binding {
 	for _, b := range builtins {
 		root.BindBuiltin(b)
 	}
+	wui.bindExtra(root)
 	return root
 }
 
@@ -33,32 +35,35 @@ var (
 	specials = []*sxeval.Special{
 		&sxbuiltins.QuoteS, &sxbuiltins.QuasiquoteS, // quote, quasiquote
 		&sxbuiltins.UnquoteS, &sxbuiltins.UnquoteSplicingS, // unquote, unquote-splicing
-		&sxbuiltins.DefVarS, &sxbuiltins.DefConstS, // defvar, defconst
-		&sxbuiltins.DefunS, &sxbuiltins.LambdaS, // defun, lambda
-		&sxbuiltins.SetXS,     // set!
+		&sxbuiltins.DefConstS, // defvar, defconst
 		&sxbuiltins.CondS,     // cond
 		&sxbuiltins.IfS,       // if
-		&sxbuiltins.BeginS,    // begin
 		&sxbuiltins.DefMacroS, // defmacro
 	}
 	builtins = []*sxeval.Builtin{
-		&sxbuiltins.Identical,            // ==
-		&sxbuiltins.NumGreater,           // >
+		&sxbuiltins.Equal,                // =
 		&sxbuiltins.NullP,                // null?
-		&sxbuiltins.PairP,                // pair?
 		&sxbuiltins.Car, &sxbuiltins.Cdr, // car, cdr
-		&sxbuiltins.Caar, &sxbuiltins.Cadr, &sxbuiltins.Cdar, &sxbuiltins.Cddr,
-		&sxbuiltins.Caaar, &sxbuiltins.Caadr, &sxbuiltins.Cadar, &sxbuiltins.Caddr,
-		&sxbuiltins.Cdaar, &sxbuiltins.Cdadr, &sxbuiltins.Cddar, &sxbuiltins.Cdddr,
-		&sxbuiltins.List,           // list
-		&sxbuiltins.Append,         // append
-		&sxbuiltins.Assoc,          // assoc
-		&sxbuiltins.Map,            // map
-		&sxbuiltins.Apply,          // apply
-		&sxbuiltins.Concat,         // concat
-		&sxbuiltins.BoundP,         // bound?
-		&sxbuiltins.Defined,        // defined?
-		&sxbuiltins.CurrentBinding, // current-binding
-		&sxbuiltins.BindingLookup,  // binding-lookup
+		&sxbuiltins.BoundP, // bound?
 	}
 )
+
+func (wui *WebUI) bindExtra(root *sxeval.Binding) {
+	root.BindBuiltin(&sxeval.Builtin{
+		Name:     "make-url",
+		MinArity: 0,
+		MaxArity: -1,
+		TestPure: sxeval.AssertPure,
+		Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
+			ub := wui.NewURLBuilder()
+			for i := 0; i < len(args); i++ {
+				sVal, err := sxbuiltins.GetString(args, i)
+				if err != nil {
+					return nil, err
+				}
+				ub = ub.AddPath(string(sVal))
+			}
+			return sx.String(ub.String()), nil
+		},
+	})
+}

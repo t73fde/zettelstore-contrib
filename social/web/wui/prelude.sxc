@@ -17,14 +17,11 @@
 (defconst NIL ())
 (defconst T   'T)
 
-;; defunconst macro to define functions that are bound as a constant.
-;;
-;; (defunconst NAME ARGS EXPR ...)
-(defmacro defunconst (name args . body)
-    `(begin (defun ,name ,args ,@body) (defconst ,name ,name)))
+;; Macro not
+(defmacro not (x) `(if ,x NIL T))
 
-;; Function not
-(defunconst not (x) (if x NIL T))
+;; Macro not= to negate an equivalence
+(defmacro not= args `(not (= ,@args)))
 
 ;; let macro
 ;;
