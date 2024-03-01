@@ -36,7 +36,7 @@ var (
 		&sxbuiltins.QuoteS, &sxbuiltins.QuasiquoteS, // quote, quasiquote
 		&sxbuiltins.UnquoteS, &sxbuiltins.UnquoteSplicingS, // unquote, unquote-splicing
 		&sxbuiltins.DefConstS, // defvar, defconst
-		&sxbuiltins.CondS,     // cond
+		&sxbuiltins.LambdaS,   // lambda
 		&sxbuiltins.IfS,       // if
 		&sxbuiltins.DefMacroS, // defmacro
 	}
@@ -44,6 +44,8 @@ var (
 		&sxbuiltins.Equal,                // =
 		&sxbuiltins.NullP,                // null?
 		&sxbuiltins.Car, &sxbuiltins.Cdr, // car, cdr
+		&sxbuiltins.Caar, &sxbuiltins.Cadr, // caar, cadr
+		&sxbuiltins.Cadar,  // cadar
 		&sxbuiltins.BoundP, // bound?
 	}
 )

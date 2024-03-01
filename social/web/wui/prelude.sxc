@@ -17,10 +17,10 @@
 (defconst NIL ())
 (defconst T   'T)
 
-;; Macro not
+;; not macro
 (defmacro not (x) `(if ,x NIL T))
 
-;; Macro not= to negate an equivalence
+;; not= macro, to negate an equivalence
 (defmacro not= args `(not (= ,@args)))
 
 ;; let macro
@@ -39,6 +39,20 @@
         `((lambda (,(caar bindings))
                   (let* ,(cdr bindings) ,@body))
                   ,(cadar bindings))))
+
+;; cond macro
+;;
+;; (cond ((COND EXPR) ...))
+(defmacro cond clauses
+    (if (null? clauses)
+        ()
+        (let* ((clause (car clauses))
+               (the-cond (car clause)))
+              (if (= the-cond T)
+                  (cadr clause)
+                  `(if ,the-cond
+                       ,(cadr clause)
+                       (cond ,@(cdr clauses)))))))
 
 ;; and macro
 ;;

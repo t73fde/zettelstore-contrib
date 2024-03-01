@@ -110,8 +110,8 @@ func (cfg *Config) read() error {
 		}
 		if sym, isSymbol := sx.GetSymbol(lst.Car()); isSymbol {
 			if fn, found := cmdMap[sym.GoString()]; found {
-				if err := fn(cfg, sym, lst.Tail()); err != nil {
-					return err
+				if errFn := fn(cfg, sym, lst.Tail()); errFn != nil {
+					return errFn
 				}
 			} else {
 				cfg.logger.Warn("Unknown config", "entry", sym)
@@ -130,7 +130,7 @@ var cmdMap = map[string]func(*Config, *sx.Symbol, *sx.Pair) error{
 	"REJECT-UA":     parseRejectUA,
 }
 
-func parseDebug(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
+func parseDebug(cfg *Config, _ *sx.Symbol, args *sx.Pair) error {
 	debug := true
 	if args != nil {
 		debug = sx.IsTrue(args.Car())
@@ -178,7 +178,7 @@ func parseString(sym *sx.Symbol, args *sx.Pair) (string, error) {
 
 }
 
-func parseRejectUA(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
+func parseRejectUA(cfg *Config, _ *sx.Symbol, args *sx.Pair) error {
 	var uaAction []UAAction
 	for node := args; node != nil; node = node.Tail() {
 		obj := node.Car()
