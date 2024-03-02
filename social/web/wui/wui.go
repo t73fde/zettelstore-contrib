@@ -47,7 +47,7 @@ func NewWebUI(logger *slog.Logger, templateRoot string) (*WebUI, error) {
 	if err := wui.evalCode(env); err != nil {
 		return nil, err
 	}
-	if err := wui.parseAllTemplates(env, templateRoot); err != nil {
+	if err := wui.compileAllTemplates(env, templateRoot); err != nil {
 		return nil, err
 	}
 	codeBinding.Freeze()
@@ -100,10 +100,10 @@ const (
 	nameLayout = "layout"
 )
 
-// parseAllTemplates reads (parses, reworks) all needed templates.
-func (wui *WebUI) parseAllTemplates(env *sxeval.Environment, dir string) error {
+// compileAllTemplates compiles (parses, reworks) all needed templates.
+func (wui *WebUI) compileAllTemplates(env *sxeval.Environment, dir string) error {
 	for _, name := range []string{nameLayout} {
-		t, err := wui.parseTemplate(env, dir, name)
+		t, err := wui.compileTemplate(env, dir, name)
 		if err != nil {
 			return err
 		}
@@ -116,7 +116,7 @@ type template struct {
 	expr sxeval.Expr
 }
 
-func (wui *WebUI) parseTemplate(env *sxeval.Environment, dir, name string) (*template, error) {
+func (wui *WebUI) compileTemplate(env *sxeval.Environment, dir, name string) (*template, error) {
 	filename := filepath.Join(dir, name+".sxt")
 	f, err := os.Open(filename)
 	if err != nil {
@@ -129,12 +129,12 @@ func (wui *WebUI) parseTemplate(env *sxeval.Environment, dir, name string) (*tem
 		return nil, err
 	}
 	wui.logger.Debug("Template", "name", name, "sx", obj)
-	expr, err := env.Parse(obj)
+	expr, err := env.Compile(obj)
 	if err != nil {
 		return nil, err
 	}
 	t := template{
-		expr: env.Rework(expr),
+		expr: expr,
 	}
 	return &t, nil
 }
