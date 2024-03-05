@@ -14,6 +14,7 @@
 package wui
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 
@@ -26,15 +27,17 @@ func (*WebUI) MakeGetAllUAHandler(ucAllUA usecase.GetAllUserAgents) http.Handler
 	return func(w http.ResponseWriter, r *http.Request) {
 		uasT, uasF := ucAllUA.Run(r.Context())
 
-		w.WriteHeader(http.StatusOK)
+		var buf bytes.Buffer
 		for _, ua := range uasT {
-			fmt.Fprintln(w, ua)
+			fmt.Fprintln(&buf, ua)
 		}
 		if len(uasF) > 0 && len(uasT) > 0 {
-			fmt.Fprintln(w, "---")
+			fmt.Fprintln(&buf, "---")
 		}
 		for _, ua := range uasF {
-			fmt.Fprintln(w, ua)
+			fmt.Fprintln(&buf, ua)
 		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(buf.Bytes())
 	}
 }

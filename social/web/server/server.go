@@ -68,15 +68,15 @@ func (s *Server) Start() error {
 	if err != nil {
 		return err
 	}
-	go func() { s.Serve(ln) }()
+	go func() { _ = s.Serve(ln) }()
 	return nil
 }
 
 // Stop the HTTP web server.
-func (s *Server) Stop() {
+func (s *Server) Stop() error {
 	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
-	s.Shutdown(ctx)
+	return s.Shutdown(ctx)
 }
 
 type appResponseWriter struct {

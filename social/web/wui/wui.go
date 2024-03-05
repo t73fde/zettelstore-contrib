@@ -40,14 +40,17 @@ func NewWebUI(logger *slog.Logger, templateRoot string) (*WebUI, error) {
 		logger:    logger,
 		templates: make(map[string]*template, 7),
 	}
-	rootBinding := wui.createRootBinding()
-	rootBinding.Freeze()
-	codeBinding := sxeval.MakeChildBinding(rootBinding, "code", 128)
-	env := sxeval.MakeExecutionEnvironment(codeBinding)
-	if err := wui.evalCode(env); err != nil {
+	rootBinding, err := wui.createRootBinding()
+	if err != nil {
 		return nil, err
 	}
-	if err := wui.compileAllTemplates(env, templateRoot); err != nil {
+	rootBinding.Freeze()
+	codeBinding := rootBinding.MakeChildBinding("code", 128)
+	env := sxeval.MakeExecutionEnvironment(codeBinding)
+	if err = wui.evalCode(env); err != nil {
+		return nil, err
+	}
+	if err = wui.compileAllTemplates(env, templateRoot); err != nil {
 		return nil, err
 	}
 	codeBinding.Freeze()
@@ -61,7 +64,7 @@ func (*WebUI) NewURLBuilder() *web.URLBuilder {
 }
 
 func (wui *WebUI) makeRenderBinding(name string) *sxeval.Binding {
-	return sxeval.MakeChildBinding(wui.baseBinding, name, 128)
+	return wui.baseBinding.MakeChildBinding(name, 128)
 }
 
 func (wui *WebUI) evalCode(env *sxeval.Environment) error {
@@ -122,9 +125,9 @@ func (wui *WebUI) compileTemplate(env *sxeval.Environment, dir, name string) (*t
 	if err != nil {
 		return nil, err
 	}
+	defer f.Close()
 	rdr := sxreader.MakeReader(f)
 	obj, err := rdr.Read()
-	f.Close()
 	if err != nil {
 		return nil, err
 	}

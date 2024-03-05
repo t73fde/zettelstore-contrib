@@ -66,7 +66,7 @@ func (k *Kernel) Start() error {
 }
 
 func (k *Kernel) doShutdown() {
-	k.webService.Stop()
+	_ = k.webService.Stop()
 }
 
 // WaitForShutdown waits until a shutdown event is detected.

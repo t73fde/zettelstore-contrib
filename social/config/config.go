@@ -94,9 +94,9 @@ func (cfg *Config) read() error {
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 	rdr := sxreader.MakeReader(file)
 	objs, err := rdr.ReadAll()
-	file.Close()
 	if err != nil {
 		return err
 	}

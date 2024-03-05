@@ -19,16 +19,22 @@ import (
 	"zettelstore.de/sx.fossil/sxeval"
 )
 
-func (wui *WebUI) createRootBinding() *sxeval.Binding {
+func (wui *WebUI) createRootBinding() (*sxeval.Binding, error) {
 	root := sxeval.MakeRootBinding(len(specials) + len(builtins))
 	for _, syntax := range specials {
-		root.BindSpecial(syntax)
+		if err := root.BindSpecial(syntax); err != nil {
+			return nil, err
+		}
 	}
 	for _, b := range builtins {
-		root.BindBuiltin(b)
+		if err := root.BindBuiltin(b); err != nil {
+			return nil, err
+		}
 	}
-	wui.bindExtra(root)
-	return root
+	if err := wui.bindExtra(root); err != nil {
+		return nil, err
+	}
+	return root, nil
 }
 
 var (
@@ -37,8 +43,10 @@ var (
 		&sxbuiltins.UnquoteS, &sxbuiltins.UnquoteSplicingS, // unquote, unquote-splicing
 		&sxbuiltins.DefConstS, // defvar, defconst
 		&sxbuiltins.LambdaS,   // lambda
+		&sxbuiltins.LetS,      // let
 		&sxbuiltins.IfS,       // if
 		&sxbuiltins.DefMacroS, // defmacro
+		&sxbuiltins.BeginS,    // begin
 	}
 	builtins = []*sxeval.Builtin{
 		&sxbuiltins.Equal,                // =
@@ -50,8 +58,8 @@ var (
 	}
 )
 
-func (wui *WebUI) bindExtra(root *sxeval.Binding) {
-	root.BindBuiltin(&sxeval.Builtin{
+func (wui *WebUI) bindExtra(root *sxeval.Binding) error {
+	err := root.BindBuiltin(&sxeval.Builtin{
 		Name:     "make-url",
 		MinArity: 0,
 		MaxArity: -1,
@@ -68,4 +76,5 @@ func (wui *WebUI) bindExtra(root *sxeval.Binding) {
 			return sx.String(ub.String()), nil
 		},
 	})
+	return err
 }
