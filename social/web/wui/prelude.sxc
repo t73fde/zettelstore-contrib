@@ -11,7 +11,7 @@
 ;;; SPDX-FileCopyrightText: 2024-present Detlef Stern
 ;;;----------------------------------------------------------------------------
 
-;;; This zettel contains definitions that are needed by the templates.
+;;; This file contains general definitions to work with Sx.
 
 ;; Constants NIL and T
 (defconst NIL ())

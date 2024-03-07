@@ -42,7 +42,7 @@ var (
 		&sxbuiltins.QuoteS, &sxbuiltins.QuasiquoteS, // quote, quasiquote
 		&sxbuiltins.UnquoteS, &sxbuiltins.UnquoteSplicingS, // unquote, unquote-splicing
 		&sxbuiltins.DefConstS, // defvar, defconst
-		&sxbuiltins.LambdaS,   // lambda
+		&sxbuiltins.DefDynS,   // defdyn
 		&sxbuiltins.LetS,      // let
 		&sxbuiltins.IfS,       // if
 		&sxbuiltins.DefMacroS, // defmacro

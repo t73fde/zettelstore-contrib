@@ -30,15 +30,13 @@ import (
 // WebUI stores data relevant to the web user interface adapter.
 type WebUI struct {
 	logger      *slog.Logger
-	templates   map[string]*template
 	baseBinding *sxeval.Binding
 }
 
 // NewWebUI creates a new adapter for the web user interface.
 func NewWebUI(logger *slog.Logger, templateRoot string) (*WebUI, error) {
 	wui := WebUI{
-		logger:    logger,
-		templates: make(map[string]*template, 7),
+		logger: logger,
 	}
 	rootBinding, err := wui.createRootBinding()
 	if err != nil {
@@ -68,8 +66,9 @@ func (wui *WebUI) makeRenderBinding(name string) *sxeval.Binding {
 }
 
 func (wui *WebUI) evalCode(env *sxeval.Environment) error {
-	for _, content := range [][]byte{contentPreludeSxc} {
-		if err := wui.evalFile(env, content); err != nil {
+	for _, content := range [][]byte{contentPreludeSxc, contentTemplateSxc, contentLayoutSxc} {
+		rdr := sxreader.MakeReader(bytes.NewReader(content))
+		if err := wui.evalReader(env, rdr); err != nil {
 			return err
 		}
 	}
@@ -79,8 +78,13 @@ func (wui *WebUI) evalCode(env *sxeval.Environment) error {
 //go:embed prelude.sxc
 var contentPreludeSxc []byte
 
-func (wui *WebUI) evalFile(env *sxeval.Environment, content []byte) error {
-	rdr := sxreader.MakeReader(bytes.NewReader(content))
+//go:embed template.sxc
+var contentTemplateSxc []byte
+
+//go:embed layout.sxc
+var contentLayoutSxc []byte
+
+func (wui *WebUI) evalReader(env *sxeval.Environment, rdr *sxreader.Reader) error {
 	for {
 		obj, err := rdr.Read()
 		if err != nil {
@@ -106,38 +110,20 @@ const (
 // compileAllTemplates compiles (parses, reworks) all needed templates.
 func (wui *WebUI) compileAllTemplates(env *sxeval.Environment, dir string) error {
 	for _, name := range []string{nameLayout} {
-		t, err := wui.compileTemplate(env, dir, name)
-		if err != nil {
+		if err := wui.evalTemplate(env, dir, name); err != nil {
 			return err
 		}
-		wui.templates[name] = t
 	}
 	return nil
 }
 
-type template struct {
-	expr sxeval.Expr
-}
-
-func (wui *WebUI) compileTemplate(env *sxeval.Environment, dir, name string) (*template, error) {
-	filename := filepath.Join(dir, name+".sxt")
+func (wui *WebUI) evalTemplate(env *sxeval.Environment, dir, name string) error {
+	filename := filepath.Join(dir, name+".sxc")
 	f, err := os.Open(filename)
 	if err != nil {
-		return nil, err
+		return nil
 	}
 	defer f.Close()
 	rdr := sxreader.MakeReader(f)
-	obj, err := rdr.Read()
-	if err != nil {
-		return nil, err
-	}
-	wui.logger.Debug("Template", "name", name, "sx", obj)
-	expr, err := env.Compile(obj)
-	if err != nil {
-		return nil, err
-	}
-	t := template{
-		expr: expr,
-	}
-	return &t, nil
+	return wui.evalReader(env, rdr)
 }

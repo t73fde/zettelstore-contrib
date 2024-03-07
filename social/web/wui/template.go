@@ -24,7 +24,7 @@ import (
 
 func (wui *WebUI) renderTemplateStatus(w http.ResponseWriter, code int, binding *sxeval.Binding) error {
 	env := sxeval.MakeExecutionEnvironment(binding)
-	obj, err := env.Run(wui.templates[nameLayout].expr)
+	obj, err := env.Eval(sx.MakeList(sx.MakeSymbol("render-template"), sx.MakeSymbol("layout")))
 	if err != nil {
 		return err
 	}
@@ -47,8 +47,8 @@ func (wui *WebUI) renderTemplateStatus(w http.ResponseWriter, code int, binding 
 func (wui *WebUI) MakeTestHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rb := wui.makeRenderBinding("test")
-		_ = rb.Bind(sx.MakeSymbol("lang"), sx.String("en"))
-		_ = rb.Bind(sx.MakeSymbol("title"), sx.String("Test page"))
+		_ = rb.Bind(sx.MakeSymbol("LANG"), sx.String("en"))
+		_ = rb.Bind(sx.MakeSymbol("TITLE"), sx.String("Test page"))
 		_ = rb.Bind(sx.MakeSymbol("CONTENT"), sx.String("Some content"))
 		if err := wui.renderTemplateStatus(w, 200, rb); err != nil {
 			wui.logger.Error("Render", "error", err)
