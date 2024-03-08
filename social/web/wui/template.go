@@ -15,6 +15,8 @@ package wui
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"net/http"
 
 	"zettelstore.de/sx.fossil"
@@ -29,7 +31,7 @@ func (wui *WebUI) renderTemplateStatus(w http.ResponseWriter, code int, binding 
 		return err
 	}
 	wui.logger.Debug("Render", "sx", obj)
-	gen := sxhtml.NewGenerator(sxhtml.WithNewline)
+	gen := sxhtml.NewGenerator().SetNewline()
 	var sb bytes.Buffer
 	_, err = gen.WriteHTML(&sb, obj)
 	if err != nil {
@@ -51,9 +53,32 @@ func (wui *WebUI) MakeTestHandler() http.HandlerFunc {
 		_ = rb.Bind(sx.MakeSymbol("TITLE"), sx.String("Test page"))
 		_ = rb.Bind(sx.MakeSymbol("CONTENT"), sx.String("Some content"))
 		if err := wui.renderTemplateStatus(w, 200, rb); err != nil {
-			wui.logger.Error("Render", "error", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			wui.handleError(w, "Render", err)
 			return
 		}
 	}
+}
+
+func (wui *WebUI) handleError(w http.ResponseWriter, subsystem string, err error) {
+	wui.logger.Error(subsystem, "error", err)
+	var execErr sxeval.ExecuteError
+	if errors.As(err, &execErr) {
+		var buf bytes.Buffer
+		fmt.Fprintf(&buf, "Error: %v\n\n", err)
+		for i, elem := range execErr.Stack {
+			val := elem.Expr.Unparse()
+			wui.logger.Debug(subsystem, "env", elem.Env, "expr", val)
+			fmt.Fprintf(&buf, "%d: env: %v, expr: %T/%v\n", i, elem.Env, val, val)
+			buf.WriteString("   exp: ")
+			elem.Expr.Print(&buf)
+			buf.WriteByte('\n')
+		}
+		h := w.Header()
+		h.Set("Content-Type", "text/plain; charset=utf-8")
+		h.Set("X-Content-Type-Options", "nosniff")
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(buf.Bytes())
+		return
+	}
+	http.Error(w, err.Error(), http.StatusInternalServerError)
 }
