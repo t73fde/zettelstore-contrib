@@ -271,8 +271,8 @@ func (gen *htmlGenerator) writeHTMLDocument(w http.ResponseWriter, lang string, 
 		sxhtml.SymDoctype,
 		sx.MakeList(shtml.SymHtml, langAttr, headHtml, bodyHtml),
 	)
-	g := sxhtml.NewGenerator(sxhtml.WithNewline)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	g := sxhtml.NewGenerator().SetNewline()
 	g.WriteHTML(w, zettelHtml)
 }
 
