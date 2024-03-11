@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 
 	"zettelstore.de/contrib/social/web"
+	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxeval"
 	"zettelstore.de/sx.fossil/sxreader"
 )
@@ -42,7 +43,10 @@ func NewWebUI(logger *slog.Logger, templateRoot string) (*WebUI, error) {
 	if err != nil {
 		return nil, err
 	}
+	_ = rootBinding.Bind(sx.MakeSymbol("NIL"), sx.Nil())
+	_ = rootBinding.Bind(sx.MakeSymbol("T"), sx.MakeSymbol("T"))
 	rootBinding.Freeze()
+
 	codeBinding := rootBinding.MakeChildBinding("code", 128)
 	env := sxeval.MakeExecutionEnvironment(codeBinding)
 	if err = wui.evalCode(env); err != nil {

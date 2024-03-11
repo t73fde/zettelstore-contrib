@@ -41,7 +41,6 @@ var (
 	specials = []*sxeval.Special{
 		&sxbuiltins.QuoteS, &sxbuiltins.QuasiquoteS, // quote, quasiquote
 		&sxbuiltins.UnquoteS, &sxbuiltins.UnquoteSplicingS, // unquote, unquote-splicing
-		&sxbuiltins.DefConstS, // defvar, defconst
 		&sxbuiltins.DefDynS,   // defdyn
 		&sxbuiltins.LetS,      // let
 		&sxbuiltins.IfS,       // if

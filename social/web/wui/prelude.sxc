@@ -12,10 +12,7 @@
 ;;;----------------------------------------------------------------------------
 
 ;;; This file contains general definitions to work with Sx.
-
-;; Constants NIL and T
-(defconst NIL ())
-(defconst T   'T)
+;;; It assumes bindings to NIL and T
 
 ;; not macro
 (defmacro not (x) `(if ,x NIL T))
