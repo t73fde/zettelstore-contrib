@@ -63,10 +63,36 @@ func (wui *WebUI) bindExtra(root *sxeval.Binding) error {
 		MinArity: 0,
 		MaxArity: -1,
 		TestPure: sxeval.AssertPure,
+		Fn0: func(_ *sxeval.Environment) (sx.Object, error) {
+			return sx.String(wui.NewURLBuilder().String()), nil
+		},
+		Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
+			ub := wui.NewURLBuilder()
+			s, err := sxbuiltins.GetString(arg, 0)
+			if err != nil {
+				return nil, err
+			}
+			ub = ub.AddPath(string(s))
+			return sx.String(ub.String()), nil
+		},
+		Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
+			ub := wui.NewURLBuilder()
+			s, err := sxbuiltins.GetString(arg0, 0)
+			if err != nil {
+				return nil, err
+			}
+			ub = ub.AddPath(string(s))
+			s, err = sxbuiltins.GetString(arg1, 1)
+			if err != nil {
+				return nil, err
+			}
+			ub = ub.AddPath(string(s))
+			return sx.String(ub.String()), nil
+		},
 		Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 			ub := wui.NewURLBuilder()
 			for i := 0; i < len(args); i++ {
-				sVal, err := sxbuiltins.GetString(args, i)
+				sVal, err := sxbuiltins.GetString(args[i], i)
 				if err != nil {
 					return nil, err
 				}
