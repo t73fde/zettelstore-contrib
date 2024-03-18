@@ -14,4 +14,4 @@
 .PHONY: linux
 
 linux:
-	GOOS=linux GOARCH=amd64 go build -tags osusergo,netgo -trimpath .
+	GOOS=linux GOARCH=amd64 go build -tags osusergo,netgo -trimpath -ldflags "-w" .
