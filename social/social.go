@@ -72,7 +72,7 @@ func createUAStatusFunc(cfg *config.Config) func(string) int {
 }
 
 func setupRouting(h *server.Handler, uaColl *repository.UACollector, cfg *config.Config) error {
-	webui, err := wui.NewWebUI(cfg.MakeLogger("WebUI"), cfg.TemplateRoot)
+	webui, err := wui.NewWebUI(cfg.MakeLogger("WebUI"), cfg.TemplateRoot, cfg.Site)
 	if err != nil {
 		return err
 	}
@@ -82,6 +82,10 @@ func setupRouting(h *server.Handler, uaColl *repository.UACollector, cfg *config
 	docRoot := webui.MakeDocumentHandler(cfg.DocumentRoot)
 	h.HandleFunc("GET /", docRoot)
 	h.HandleFunc("GET /.ua/{$}", webui.MakeGetAllUAHandler(ucGetAllUserAgents))
-	h.HandleFunc("GET /.t/{$}", webui.MakeTestHandler())
+	testHandler := webui.MakeTestHandler()
+	h.HandleFunc("GET /.t/{$}", testHandler)
+	h.HandleFunc("GET /.test/{$}", testHandler)
+	h.HandleFunc("GET /.test/test/{$}", testHandler)
+	h.HandleFunc("GET /.test/test/toast/{$}", testHandler)
 	return nil
 }

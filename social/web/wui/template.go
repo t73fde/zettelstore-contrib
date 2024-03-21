@@ -48,10 +48,10 @@ func (wui *WebUI) renderTemplateStatus(w http.ResponseWriter, code int, binding 
 
 func (wui *WebUI) MakeTestHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		rb := wui.makeRenderBinding("test")
+		rb := wui.makeRenderBinding("test", r)
 		_ = rb.Bind(sx.MakeSymbol("LANG"), sx.String("en"))
 		_ = rb.Bind(sx.MakeSymbol("TITLE"), sx.String("Test page"))
-		_ = rb.Bind(sx.MakeSymbol("CONTENT"), sx.String("Some content"))
+		_ = rb.Bind(sx.MakeSymbol("CONTENT"), sx.String(fmt.Sprintf("Some content, url is: %q", r.URL)))
 		if err := wui.renderTemplateStatus(w, 200, rb); err != nil {
 			wui.handleError(w, "Render", err)
 			return

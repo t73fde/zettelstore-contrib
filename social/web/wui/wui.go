@@ -19,9 +19,11 @@ import (
 	_ "embed"
 	"io"
 	"log/slog"
+	"net/http"
 	"os"
 	"path/filepath"
 
+	"zettelstore.de/contrib/social/site"
 	"zettelstore.de/contrib/social/web"
 	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxeval"
@@ -32,12 +34,14 @@ import (
 type WebUI struct {
 	logger      *slog.Logger
 	baseBinding *sxeval.Binding
+	site        *site.Site
 }
 
 // NewWebUI creates a new adapter for the web user interface.
-func NewWebUI(logger *slog.Logger, templateRoot string) (*WebUI, error) {
+func NewWebUI(logger *slog.Logger, templateRoot string, st *site.Site) (*WebUI, error) {
 	wui := WebUI{
 		logger: logger,
+		site:   st,
 	}
 	rootBinding, err := wui.createRootBinding()
 	if err != nil {
@@ -65,8 +69,11 @@ func (*WebUI) NewURLBuilder() *web.URLBuilder {
 	return web.NewURLBuilder("")
 }
 
-func (wui *WebUI) makeRenderBinding(name string) *sxeval.Binding {
-	return wui.baseBinding.MakeChildBinding(name, 128)
+func (wui *WebUI) makeRenderBinding(name string, r *http.Request) *sxeval.Binding {
+	bind := wui.baseBinding.MakeChildBinding(name, 128)
+	urlPath := r.URL.Path
+	_ = bind.Bind(sx.MakeSymbol("URL-PATH"), sx.String(urlPath))
+	return bind
 }
 
 func (wui *WebUI) evalCode(env *sxeval.Environment) error {

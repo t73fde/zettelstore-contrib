@@ -23,6 +23,7 @@ import (
 	"regexp"
 	"strings"
 
+	"zettelstore.de/contrib/social/site"
 	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxreader"
 )
@@ -35,6 +36,7 @@ type Config struct {
 	Debug        bool
 	RejectUA     *regexp.Regexp
 	ActionUA     []UAAction
+	Site         *site.Site
 
 	logger *slog.Logger
 }
@@ -127,6 +129,7 @@ var cmdMap = map[string]func(*Config, *sx.Symbol, *sx.Pair) error{
 	"PORT":          parsePort,
 	"DOCUMENT-ROOT": parseDocumentRoot,
 	"TEMPLATE-ROOT": parseTemplateRoot,
+	"SITE-LAYOUT":   parseSiteLayout,
 	"REJECT-UA":     parseRejectUA,
 }
 
@@ -169,13 +172,76 @@ func parseTemplateRoot(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
 	return nil
 }
 
-func parseString(sym *sx.Symbol, args *sx.Pair) (string, error) {
+func parseString(obj sx.Object, args *sx.Pair) (string, error) {
+	if sx.IsNil(args) {
+		return "", fmt.Errorf("missing string value for %v", obj.GoString())
+	}
 	val := args.Car()
 	if sVal, isString := sx.GetString(val); isString {
 		return string(sVal), nil
 	}
-	return "", fmt.Errorf("unknown value for %v: %T/%v", sym, val, val)
+	return "", fmt.Errorf("expected string value in %v, but got: %T/%v", obj.GoString(), val, val)
+}
 
+func parseSiteLayout(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
+	name, err := parseString(sym, args)
+	if err != nil {
+		return err
+	}
+	curr := args.Tail()
+	path, err := parseString(sym, curr)
+	if err != nil {
+		return err
+	}
+	curr = curr.Tail()
+	rootTitle, err := parseString(sym, curr)
+	if err != nil {
+		return err
+	}
+	rootNode := site.CreateRootNode(rootTitle)
+	st, err := site.CreateSite(name, path, rootNode)
+	if err != nil {
+		return err
+	}
+	if err = parseNodeChildren(sym, rootNode, curr.Tail()); err != nil {
+		return err
+	}
+	cfg.Site = st
+	return nil
+}
+func parseNode(sym *sx.Symbol, parent *site.Node, args *sx.Pair) error {
+	car := args.Car()
+	lst, isPair := sx.GetPair(car)
+	if !isPair {
+		return fmt.Errorf("node list expected in %v, but got: %T/%v", sym.GoString(), car, car)
+	}
+	title, err := parseString(lst, lst)
+	if err != nil {
+		return err
+	}
+	curr := lst.Tail()
+	path, err := parseString(lst, curr)
+	if err != nil {
+		return err
+	}
+	curr = curr.Tail()
+	if !sx.IsNil(curr) {
+		// LATER: parse a-list for additional attributes
+		curr = curr.Tail()
+	}
+	node, err := parent.CreateNode(title, path)
+	if err != nil {
+		return err
+	}
+	return parseNodeChildren(sym, node, curr)
+}
+func parseNodeChildren(sym *sx.Symbol, parent *site.Node, args *sx.Pair) error {
+	for curr := args; curr != nil; curr = curr.Tail() {
+		if err := parseNode(sym, parent, curr); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func parseRejectUA(cfg *Config, _ *sx.Symbol, args *sx.Pair) error {
