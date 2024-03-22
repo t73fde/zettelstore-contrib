@@ -71,6 +71,10 @@ func (*WebUI) NewURLBuilder() *web.URLBuilder {
 
 func (wui *WebUI) makeRenderBinding(name string, r *http.Request) *sxeval.Binding {
 	bind := wui.baseBinding.MakeChildBinding(name, 128)
+	site := wui.site
+	if site != nil {
+		_ = bind.Bind(sx.MakeSymbol("SITE-LANGUAGE"), sx.String(site.Language()))
+	}
 	urlPath := r.URL.Path
 	_ = bind.Bind(sx.MakeSymbol("URL-PATH"), sx.String(urlPath))
 	return bind

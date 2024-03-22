@@ -17,7 +17,7 @@
   (let ((TITLE (if (and (bound? 'TITLE) TITLE) TITLE "Welcome")))
 
 `(@@@@
-(html (@ (lang "en"))
+(html (@ (lang ,SITE-LANGUAGE))
 (head
   (meta (@ (charset "utf-8")))
   (meta (@ (name "viewport") (content "width=device-width, initial-scale=1.0")))

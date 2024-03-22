@@ -65,14 +65,8 @@ func (wui *WebUI) handleError(w http.ResponseWriter, subsystem string, err error
 	if errors.As(err, &execErr) {
 		var buf bytes.Buffer
 		fmt.Fprintf(&buf, "Error: %v\n\n", err)
-		for i, elem := range execErr.Stack {
-			val := elem.Expr.Unparse()
-			wui.logger.Debug(subsystem, "env", elem.Env, "expr", val)
-			fmt.Fprintf(&buf, "%d: env: %v, expr: %T/%v\n", i, elem.Env, val, val)
-			buf.WriteString("   exp: ")
-			elem.Expr.Print(&buf)
-			buf.WriteByte('\n')
-		}
+		execErr.PrintStack(&buf, "", wui.logger, subsystem)
+
 		h := w.Header()
 		h.Set("Content-Type", "text/plain; charset=utf-8")
 		h.Set("X-Content-Type-Options", "nosniff")

@@ -194,19 +194,39 @@ func parseSiteLayout(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
 		return err
 	}
 	curr = curr.Tail()
+	dummy := site.CreateRootNode("")
+	if err = parseNodeAttributes(dummy, curr); err != nil {
+		return err
+	}
+	curr = curr.Tail()
 	rootTitle, err := parseString(sym, curr)
 	if err != nil {
 		return err
 	}
-	rootNode := site.CreateRootNode(rootTitle)
-	st, err := site.CreateSite(name, path, rootNode)
+	curr = curr.Tail()
+	root := site.CreateRootNode(rootTitle)
+	if err = parseNodeAttributes(root, curr); err != nil {
+		return err
+	}
+	curr = curr.Tail()
+
+	st, err := site.CreateSite(name, path, root)
 	if err != nil {
 		return err
 	}
-	if err = parseNodeChildren(sym, rootNode, curr.Tail()); err != nil {
+	if err = parseNodeChildren(sym, root, curr.Tail()); err != nil {
 		return err
 	}
+	st = st.SetLanguage(dummy.Language())
 	cfg.Site = st
+	return nil
+}
+func parseNodeChildren(sym *sx.Symbol, parent *site.Node, args *sx.Pair) error {
+	for curr := args; curr != nil; curr = curr.Tail() {
+		if err := parseNode(sym, parent, curr); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 func parseNode(sym *sx.Symbol, parent *site.Node, args *sx.Pair) error {
@@ -224,21 +244,53 @@ func parseNode(sym *sx.Symbol, parent *site.Node, args *sx.Pair) error {
 	if err != nil {
 		return err
 	}
-	curr = curr.Tail()
-	if !sx.IsNil(curr) {
-		// LATER: parse a-list for additional attributes
-		curr = curr.Tail()
-	}
 	node, err := parent.CreateNode(title, path)
 	if err != nil {
 		return err
 	}
+	curr = curr.Tail()
+	if !sx.IsNil(curr) {
+		if err = parseNodeAttributes(node, curr); err != nil {
+			return err
+		}
+		curr = curr.Tail()
+	}
 	return parseNodeChildren(sym, node, curr)
 }
-func parseNodeChildren(sym *sx.Symbol, parent *site.Node, args *sx.Pair) error {
-	for curr := args; curr != nil; curr = curr.Tail() {
-		if err := parseNode(sym, parent, curr); err != nil {
-			return err
+func parseNodeAttributes(node *site.Node, curr *sx.Pair) error {
+	attrObj := curr.Car()
+	attrs, isPair := sx.GetPair(attrObj)
+	if !isPair {
+		return fmt.Errorf("attribute list for node path %q expected, but got: %T/%v", node.Path(), attrObj, attrObj)
+	}
+	for curr := attrs; curr != nil; curr = curr.Tail() {
+		attrObj := curr.Car()
+		if attrObj.IsNil() {
+			continue
+		}
+		attr, isPair := sx.GetPair(attrObj)
+		if !isPair {
+			return fmt.Errorf("attribute for node %q must be a list, but is: %T/%v", node.Path(), attrObj, attrObj)
+		}
+		keyObj := attr.Car()
+		sym, isSymbol := sx.GetSymbol(keyObj)
+		if !isSymbol {
+			return fmt.Errorf("attribute key of node %q must be a symbol, but is: %T/%v", node.Path(), keyObj, keyObj)
+		}
+		val := attr.Cdr()
+		if !sx.IsNil(val) {
+			if next, isList := sx.GetPair(val); isList {
+				val = next.Car()
+			}
+		}
+		if sym.IsEqual(sx.MakeSymbol("invisible")) {
+			node = node.SetInvisible()
+		} else if sym.IsEqual(sx.MakeSymbol("language")) {
+			sVal, isString := sx.GetString(val)
+			if !isString || sVal == "" {
+				return fmt.Errorf("language value for node %q must be a non-empty string, but is: %T/%v", node.Path(), val, val)
+			}
+			node = node.SetLanguage(string(sVal))
 		}
 	}
 	return nil

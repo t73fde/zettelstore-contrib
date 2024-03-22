@@ -131,29 +131,43 @@ func (wui *WebUI) bindExtra(root *sxeval.Binding) error {
 }
 
 func buildNavList(st *site.Site, node *site.Node) *sx.Pair {
-	if node.Parent() == nil {
+	if node.Parent() == nil && node.IsVisible() {
 		// node is root node
 		var lb sx.ListBuilder
 		lb.Add(symUL)
 		lb.Add(makeNavItem(st, node, node))
 		for _, child := range node.Children() {
-			lb.Add(makeNavItem(st, child, nil))
+			if child.IsVisible() {
+				lb.Add(makeNavItem(st, child, nil))
+			}
 		}
 		return lb.List()
 	}
 	ancestors := node.Ancestors()
 	slices.Reverse(ancestors)
-	currRoot := ancestors[0]
+	for i, n := range ancestors {
+		if !n.IsVisible() {
+			ancestors = ancestors[0:i]
+			break
+		}
+	}
+	if len(ancestors) == 0 {
+		return nil
+	}
+	root := ancestors[0]
 	var lb sx.ListBuilder
 	lb.Add(symUL)
-	lb.Add(makeNavItem(st, currRoot, nil))
-	buildNavLevel(st, &lb, ancestors[1:], currRoot.Children())
+	lb.Add(makeNavItem(st, root, nil))
+	buildNavLevel(st, &lb, ancestors[1:], root.Children())
 	return lb.List()
 }
 
 func buildNavLevel(st *site.Site, lb *sx.ListBuilder, ancestors, children []*site.Node) {
 	root := ancestors[0]
 	for _, child := range children {
+		if !child.IsVisible() {
+			continue
+		}
 		lb.Add(makeNavItem(st, child, root))
 		if child != root {
 			continue
@@ -165,7 +179,9 @@ func buildNavLevel(st *site.Site, lb *sx.ListBuilder, ancestors, children []*sit
 				buildNavLevel(st, &sub, ancestors[1:], grandchildren)
 			} else {
 				for _, grand := range grandchildren {
-					sub.Add(makeNavItem(st, grand, nil))
+					if grand.IsVisible() {
+						sub.Add(makeNavItem(st, grand, nil))
+					}
 				}
 			}
 			lb.Add(sx.MakeList(

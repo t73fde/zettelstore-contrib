@@ -23,6 +23,7 @@ import (
 type Site struct {
 	name     string
 	basepath string
+	language string
 	root     *Node
 }
 
@@ -38,12 +39,19 @@ func CreateSite(name, path string, root *Node) (*Site, error) {
 	return &Site{
 		name:     name,
 		basepath: path,
+		language: "en",
 		root:     root,
 	}, nil
 }
 
 // Name returns the name of the site.
 func (st *Site) Name() string { return st.name }
+
+// SetLanguage sets the default language of the site.
+func (st *Site) SetLanguage(lang string) *Site { st.language = lang; return st }
+
+// Language returns the language code of the site.
+func (st *Site) Language() string { return st.language }
 
 // Path returns the absolute path of the given node.
 func (st *Site) Path(n *Node) string { return "/" + n.Path() }
@@ -68,6 +76,8 @@ type Node struct {
 	children []*Node
 	title    string
 	nodepath string
+	language string
+	visible  bool
 }
 
 // CreateRootNode creates a root node to be given as a argument to [CreateSite].
@@ -77,6 +87,8 @@ func CreateRootNode(title string) *Node {
 		children: nil,
 		title:    title,
 		nodepath: "",
+		language: "en",
+		visible:  true,
 	}
 }
 
@@ -99,10 +111,33 @@ func (n *Node) CreateNode(title, nodepath string) (*Node, error) {
 		parent:   n,
 		title:    title,
 		nodepath: nodepath,
+		language: n.language,
+		visible:  n.visible,
 	}
 	n.children = append(n.children, node)
 	return node, nil
 }
+
+// SetLanguage sets the language attribute of the node.
+func (n *Node) SetLanguage(lang string) *Node {
+	n.language = lang
+	return n
+}
+
+// Language returns the language of this node.
+func (n *Node) Language() string { return n.language }
+
+// SetInvisible makes the node and its children invisible.
+func (n *Node) SetInvisible() *Node {
+	n.visible = false
+	for _, child := range n.children {
+		child.SetInvisible()
+	}
+	return n
+}
+
+// IsVisible reports wheter the node should be visible.
+func (n *Node) IsVisible() bool { return n.visible }
 
 // Parent returns the parent node.
 func (n *Node) Parent() *Node { return n.parent }

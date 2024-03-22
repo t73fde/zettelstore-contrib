@@ -15,6 +15,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -25,6 +26,7 @@ import (
 	"zettelstore.de/contrib/social/usecase"
 	"zettelstore.de/contrib/social/web/server"
 	"zettelstore.de/contrib/social/web/wui"
+	"zettelstore.de/sx.fossil/sxeval"
 )
 
 func main() {
@@ -43,6 +45,10 @@ func main() {
 	h := server.NewHandler(cfg.MakeLogger("HTTP"), usecase.NewAddUserAgent(uaColl))
 	if err := setupRouting(h, uaColl, &cfg); err != nil {
 		fmt.Fprintln(os.Stderr, err)
+		var execErr sxeval.ExecuteError
+		if errors.As(err, &execErr) {
+			execErr.PrintStack(os.Stderr, "", nil, "")
+		}
 		os.Exit(1)
 	}
 	k := kernel.NewKernel(&cfg, h)
