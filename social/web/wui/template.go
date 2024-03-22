@@ -24,18 +24,28 @@ import (
 	"zettelstore.de/sx.fossil/sxhtml"
 )
 
-func (wui *WebUI) renderTemplateStatus(w http.ResponseWriter, code int, rb *renderBinding) error {
+func (wui *WebUI) renderTemplateStatus(w http.ResponseWriter, code int, templateSym *sx.Symbol, rb *renderBinding) error {
 	if err := rb.err; err != nil {
 		return err
 	}
 	binding := rb.bind
 	wui.logger.Debug("Render", "binding", binding.Bindings())
 	env := sxeval.MakeExecutionEnvironment(binding)
-	obj, err := env.Eval(sx.MakeList(sx.MakeSymbol("render-template"), sx.MakeSymbol("layout")))
+	if _, bound := env.Resolve(templateSym); bound {
+		obj, err := env.Eval(sx.MakeList(sx.MakeSymbol("render-template"), templateSym))
+		if err != nil {
+			return err
+		}
+		wui.logger.Debug("Render", "content", obj)
+		rb.bindObject("CONTENT", obj)
+	} else if templateSym != nil {
+		rb.bindObject("CONTENT", sx.MakeList(symP, sx.String(templateSym.GoString())))
+	}
+	obj, err := env.Eval(sx.MakeList(sx.MakeSymbol("render-template"), sx.MakeSymbol(nameLayout)))
 	if err != nil {
 		return err
 	}
-	wui.logger.Debug("Render", "sx", obj)
+	wui.logger.Debug("Render", "sxhtml", obj)
 	gen := sxhtml.NewGenerator().SetNewline()
 	var sb bytes.Buffer
 	_, err = gen.WriteHTML(&sb, obj)
@@ -54,8 +64,8 @@ func (wui *WebUI) renderTemplateStatus(w http.ResponseWriter, code int, rb *rend
 func (wui *WebUI) MakeTestHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rb := wui.makeRenderBinding("test", r)
-		rb.bindString("CONTENT", fmt.Sprintf("Some content, url is: %q", r.URL))
-		if err := wui.renderTemplateStatus(w, 200, rb); err != nil {
+		rb.bindObject("CONTENT", sx.MakeList(sx.String(fmt.Sprintf("Some content, url is: %q", r.URL))))
+		if err := wui.renderTemplateStatus(w, 200, nil, rb); err != nil {
 			wui.handleError(w, "Render", err)
 			return
 		}

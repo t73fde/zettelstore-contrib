@@ -97,6 +97,11 @@ type renderBinding struct {
 	bind *sxeval.Binding
 }
 
+func (rb *renderBinding) bindObject(key string, obj sx.Object) {
+	if rb.err == nil {
+		rb.err = rb.bind.Bind(sx.MakeSymbol(key), obj)
+	}
+}
 func (rb *renderBinding) bindString(key, val string) {
 	if rb.err == nil {
 		rb.err = rb.bind.Bind(sx.MakeSymbol(key), sx.String(val))
@@ -147,7 +152,7 @@ const (
 
 // compileAllTemplates compiles (parses, reworks) all needed templates.
 func (wui *WebUI) compileAllTemplates(env *sxeval.Environment, dir string) error {
-	for _, name := range []string{nameLayout} {
+	for _, name := range []string{nameLayout, "useragent"} {
 		if err := wui.evalTemplate(env, dir, name); err != nil {
 			return err
 		}

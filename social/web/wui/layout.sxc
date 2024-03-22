@@ -28,7 +28,7 @@
     (h1 ,TITLE)
   )
   (main
-    (div ,CONTENT)
+    (div ,@CONTENT)
   )
 )))
 )

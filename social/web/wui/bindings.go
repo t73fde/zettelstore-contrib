@@ -45,7 +45,7 @@ var (
 	specials = []*sxeval.Special{
 		&sxbuiltins.QuoteS, &sxbuiltins.QuasiquoteS, // quote, quasiquote
 		&sxbuiltins.UnquoteS, &sxbuiltins.UnquoteSplicingS, // unquote, unquote-splicing
-		&sxbuiltins.DefDynS,   // defdyn
+		&sxbuiltins.DefunS, &sxbuiltins.DefDynS, // defun, defdyn
 		&sxbuiltins.LetS,      // let
 		&sxbuiltins.IfS,       // if
 		&sxbuiltins.DefMacroS, // defmacro
@@ -57,6 +57,8 @@ var (
 		&sxbuiltins.Car, &sxbuiltins.Cdr, // car, cdr
 		&sxbuiltins.Caar, &sxbuiltins.Cadr, // caar, cadr
 		&sxbuiltins.Cadar,  // cadar
+		&sxbuiltins.List,   // list
+		&sxbuiltins.Map,    // map
 		&sxbuiltins.BoundP, // bound?
 	}
 )
@@ -163,7 +165,10 @@ func buildNavList(st *site.Site, node *site.Node) *sx.Pair {
 }
 
 func buildNavLevel(st *site.Site, lb *sx.ListBuilder, ancestors, children []*site.Node) {
-	root := ancestors[0]
+	var root *site.Node
+	if len(ancestors) > 0 {
+		root = ancestors[0]
+	}
 	for _, child := range children {
 		if !child.IsVisible() {
 			continue
@@ -206,6 +211,7 @@ var (
 	symClass = sx.MakeSymbol("class")
 	symHref  = sx.MakeSymbol("href")
 	symLI    = sx.MakeSymbol("li")
+	symP     = sx.MakeSymbol("p")
 	symUL    = sx.MakeSymbol("ul")
 )
 

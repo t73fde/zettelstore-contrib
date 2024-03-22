@@ -19,13 +19,25 @@ import (
 	"net/http"
 
 	"zettelstore.de/contrib/social/usecase"
+	"zettelstore.de/sx.fossil"
 )
 
 // MakeGetAllUAHandler creates a new HTTP handler to display the list of found
 // user agents.
-func (*WebUI) MakeGetAllUAHandler(ucAllUA usecase.GetAllUserAgents) http.HandlerFunc {
+func (wui *WebUI) MakeGetAllUAHandler(ucAllUA usecase.GetAllUserAgents) http.HandlerFunc {
+	symUserAgents := sx.MakeSymbol("user-agents")
 	return func(w http.ResponseWriter, r *http.Request) {
 		uasT, uasF := ucAllUA.Run(r.Context())
+
+		if len(r.URL.Query()) == 0 {
+			rb := wui.makeRenderBinding("user-agent", r)
+			rb.bindObject("ALLOWED-AGENTS", stringsTosxList(uasT))
+			rb.bindObject("BLOCKED-AGENTS", stringsTosxList(uasF))
+			if err := wui.renderTemplateStatus(w, 200, symUserAgents, rb); err != nil {
+				wui.handleError(w, "Render", err)
+			}
+			return
+		}
 
 		var buf bytes.Buffer
 		for _, ua := range uasT {
@@ -40,4 +52,12 @@ func (*WebUI) MakeGetAllUAHandler(ucAllUA usecase.GetAllUserAgents) http.Handler
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write(buf.Bytes())
 	}
+}
+
+func stringsTosxList(sl []string) *sx.Pair {
+	var lb sx.ListBuilder
+	for _, s := range sl {
+		lb.Add(sx.String(s))
+	}
+	return lb.List()
 }
