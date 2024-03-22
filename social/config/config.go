@@ -204,7 +204,7 @@ func parseSiteLayout(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
 		return err
 	}
 	curr = curr.Tail()
-	root := site.CreateRootNode(rootTitle)
+	root := site.CreateRootNode(rootTitle).SetLanguage(dummy.Language())
 	if err = parseNodeAttributes(root, curr); err != nil {
 		return err
 	}

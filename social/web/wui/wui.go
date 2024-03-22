@@ -69,15 +69,33 @@ func (*WebUI) NewURLBuilder() *web.URLBuilder {
 	return web.NewURLBuilder("")
 }
 
-func (wui *WebUI) makeRenderBinding(name string, r *http.Request) *sxeval.Binding {
-	bind := wui.baseBinding.MakeChildBinding(name, 128)
-	site := wui.site
-	if site != nil {
-		_ = bind.Bind(sx.MakeSymbol("SITE-LANGUAGE"), sx.String(site.Language()))
+func (wui *WebUI) makeRenderBinding(name string, r *http.Request) *renderBinding {
+	rb := renderBinding{
+		err:  nil,
+		bind: wui.baseBinding.MakeChildBinding(name, 128),
 	}
 	urlPath := r.URL.Path
-	_ = bind.Bind(sx.MakeSymbol("URL-PATH"), sx.String(urlPath))
-	return bind
+	rb.bindString("URL-PATH", urlPath)
+
+	site := wui.site
+	if site != nil {
+		rb.bindString("SITE-LANGUAGE", site.Language())
+		node := site.BestNode(urlPath)
+		rb.bindString("TITLE", node.Title())
+		rb.bindString("LANGUAGE", node.Language())
+	}
+	return &rb
+}
+
+type renderBinding struct {
+	err  error
+	bind *sxeval.Binding
+}
+
+func (rb *renderBinding) bindString(key, val string) {
+	if rb.err == nil {
+		rb.err = rb.bind.Bind(sx.MakeSymbol(key), sx.String(val))
+	}
 }
 
 func (wui *WebUI) evalCode(env *sxeval.Environment) error {

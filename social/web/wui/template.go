@@ -24,7 +24,12 @@ import (
 	"zettelstore.de/sx.fossil/sxhtml"
 )
 
-func (wui *WebUI) renderTemplateStatus(w http.ResponseWriter, code int, binding *sxeval.Binding) error {
+func (wui *WebUI) renderTemplateStatus(w http.ResponseWriter, code int, rb *renderBinding) error {
+	if err := rb.err; err != nil {
+		return err
+	}
+	binding := rb.bind
+	wui.logger.Debug("Render", "binding", binding.Bindings())
 	env := sxeval.MakeExecutionEnvironment(binding)
 	obj, err := env.Eval(sx.MakeList(sx.MakeSymbol("render-template"), sx.MakeSymbol("layout")))
 	if err != nil {
@@ -49,9 +54,7 @@ func (wui *WebUI) renderTemplateStatus(w http.ResponseWriter, code int, binding 
 func (wui *WebUI) MakeTestHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rb := wui.makeRenderBinding("test", r)
-		_ = rb.Bind(sx.MakeSymbol("LANG"), sx.String("en"))
-		_ = rb.Bind(sx.MakeSymbol("TITLE"), sx.String("Test page"))
-		_ = rb.Bind(sx.MakeSymbol("CONTENT"), sx.String(fmt.Sprintf("Some content, url is: %q", r.URL)))
+		rb.bindString("CONTENT", fmt.Sprintf("Some content, url is: %q", r.URL))
 		if err := wui.renderTemplateStatus(w, 200, rb); err != nil {
 			wui.handleError(w, "Render", err)
 			return
