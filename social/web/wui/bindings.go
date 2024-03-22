@@ -119,6 +119,9 @@ func (wui *WebUI) bindExtra(root *sxeval.Binding) error {
 				return nil, errString
 			}
 			site := wui.site
+			if site == nil {
+				return sx.Nil(), nil
+			}
 			node := site.BestNode(string(sPath))
 			topLevel := buildNavList(site, node)
 			return topLevel, nil
