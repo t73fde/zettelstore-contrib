@@ -77,12 +77,17 @@ func (wui *WebUI) makeRenderBinding(name string, r *http.Request) *renderBinding
 	urlPath := r.URL.Path
 	rb.bindString("URL-PATH", urlPath)
 
-	site := wui.site
-	if site != nil {
+	if site := wui.site; site != nil {
 		rb.bindString("SITE-LANGUAGE", site.Language())
+		rb.bindString("SITE-NAME", site.Name())
 		node := site.BestNode(urlPath)
 		rb.bindString("TITLE", node.Title())
 		rb.bindString("LANGUAGE", node.Language())
+	} else {
+		rb.bindString("SITE-LANGUAGE", "en")
+		rb.bindString("SITE-NAME", "Site without a name")
+		rb.bindString("TITLE", "Welcome")
+		rb.bindString("LANGUAGE", "en")
 	}
 	return &rb
 }

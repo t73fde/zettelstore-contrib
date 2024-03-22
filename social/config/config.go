@@ -257,11 +257,11 @@ func parseNode(sym *sx.Symbol, parent *site.Node, args *sx.Pair) error {
 	}
 	return parseNodeChildren(sym, node, curr)
 }
-func parseNodeAttributes(node *site.Node, curr *sx.Pair) error {
-	attrObj := curr.Car()
-	attrs, isPair := sx.GetPair(attrObj)
-	if !isPair {
-		return fmt.Errorf("attribute list for node path %q expected, but got: %T/%v", node.Path(), attrObj, attrObj)
+func parseNodeAttributes(node *site.Node, args *sx.Pair) error {
+	attrsObj := args.Car()
+	attrs, isAttrsPair := sx.GetPair(attrsObj)
+	if !isAttrsPair {
+		return fmt.Errorf("attribute list for node path %q expected, but got: %T/%v", node.Path(), attrsObj, attrsObj)
 	}
 	for curr := attrs; curr != nil; curr = curr.Tail() {
 		attrObj := curr.Car()

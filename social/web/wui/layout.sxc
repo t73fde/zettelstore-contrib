@@ -14,8 +14,6 @@
 ;;; Base layout
 
 (define-template layout
-  (let ((TITLE (if (and (bound? 'TITLE) TITLE) TITLE "Welcome")))
-
 `(@@@@
 (html (@ (lang ,SITE-LANGUAGE))
 (head
@@ -33,5 +31,4 @@
     (div ,CONTENT)
   )
 )))
-)
 )

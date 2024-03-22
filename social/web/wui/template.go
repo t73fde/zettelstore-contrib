@@ -74,7 +74,7 @@ func (wui *WebUI) handleError(w http.ResponseWriter, subsystem string, err error
 		h.Set("Content-Type", "text/plain; charset=utf-8")
 		h.Set("X-Content-Type-Options", "nosniff")
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(buf.Bytes())
+		_, _ = w.Write(buf.Bytes())
 		return
 	}
 	http.Error(w, err.Error(), http.StatusInternalServerError)
