@@ -33,6 +33,7 @@ type Config struct {
 	WebPort      uint
 	DocumentRoot string
 	TemplateRoot string
+	PageRoot     string
 	Debug        bool
 	RejectUA     *regexp.Regexp
 	ActionUA     []UAAction
@@ -73,6 +74,7 @@ func (cfg *Config) Initialize(logger *slog.Logger) error {
 	cfg.WebPort = *uPort
 	cfg.DocumentRoot = *sRoot
 	cfg.TemplateRoot = ".template"
+	cfg.PageRoot = ".page"
 	cfg.Debug = *bDebug
 	cfg.logger = logger
 
@@ -129,6 +131,7 @@ var cmdMap = map[string]func(*Config, *sx.Symbol, *sx.Pair) error{
 	"PORT":          parsePort,
 	"DOCUMENT-ROOT": parseDocumentRoot,
 	"TEMPLATE-ROOT": parseTemplateRoot,
+	"PAGE-ROOT":     parsePageRoot,
 	"SITE-LAYOUT":   parseSiteLayout,
 	"REJECT-UA":     parseRejectUA,
 }
@@ -159,7 +162,7 @@ func parseDocumentRoot(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
 	if err != nil {
 		return err
 	}
-	cfg.DocumentRoot = s
+	cfg.DocumentRoot = filepath.Clean(s)
 	return nil
 }
 
@@ -169,6 +172,15 @@ func parseTemplateRoot(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
 		return err
 	}
 	cfg.TemplateRoot = filepath.Clean(s)
+	return nil
+}
+
+func parsePageRoot(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
+	s, err := parseString(sym, args)
+	if err != nil {
+		return err
+	}
+	cfg.PageRoot = filepath.Clean(s)
 	return nil
 }
 

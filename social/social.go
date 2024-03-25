@@ -84,12 +84,15 @@ func setupRouting(h *server.Handler, uaColl *repository.UACollector, cfg *config
 	}
 
 	ucGetAllUserAgents := usecase.NewGetAllUserAgents(uaColl)
+	htmlPageHandler := webui.MakeGetPageHandler(cfg.PageRoot)
 
 	docRoot := webui.MakeDocumentHandler(cfg.DocumentRoot)
 	h.HandleFunc("GET /", docRoot)
-	testHandler := webui.MakeTestHandler()
-	h.HandleFunc("GET /social/{$}", testHandler)
+	h.HandleFunc("GET /{pagepath}/{$}", htmlPageHandler)
 	h.HandleFunc("GET /social/ua/{$}", webui.MakeGetAllUAHandler(ucGetAllUserAgents))
+	h.HandleFunc("GET /social/{pagepath}/{$}", htmlPageHandler)
+	h.HandleFunc("GET /social/page/{$}", htmlPageHandler)
+	testHandler := webui.MakeTestHandler()
 	h.HandleFunc("GET /.t/{$}", testHandler)
 	h.HandleFunc("GET /.test/{$}", testHandler)
 	h.HandleFunc("GET /.test/test/{$}", testHandler)

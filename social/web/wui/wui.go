@@ -127,6 +127,9 @@ var contentTemplateSxc []byte
 //go:embed layout.sxc
 var contentLayoutSxc []byte
 
+//go:embed page.sxc
+var contentPageSec []byte
+
 //go:embed useragent.sxc
 var contentUseragentSxc []byte
 
@@ -134,6 +137,7 @@ var staticSxc = [][]byte{
 	contentPreludeSxc,
 	contentTemplateSxc,
 	contentLayoutSxc,
+	contentPageSec,
 	contentUseragentSxc,
 }
 
