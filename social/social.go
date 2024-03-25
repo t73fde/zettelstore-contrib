@@ -87,8 +87,9 @@ func setupRouting(h *server.Handler, uaColl *repository.UACollector, cfg *config
 
 	docRoot := webui.MakeDocumentHandler(cfg.DocumentRoot)
 	h.HandleFunc("GET /", docRoot)
-	h.HandleFunc("GET /.ua/{$}", webui.MakeGetAllUAHandler(ucGetAllUserAgents))
 	testHandler := webui.MakeTestHandler()
+	h.HandleFunc("GET /social/{$}", testHandler)
+	h.HandleFunc("GET /social/ua/{$}", webui.MakeGetAllUAHandler(ucGetAllUserAgents))
 	h.HandleFunc("GET /.t/{$}", testHandler)
 	h.HandleFunc("GET /.test/{$}", testHandler)
 	h.HandleFunc("GET /.test/test/{$}", testHandler)

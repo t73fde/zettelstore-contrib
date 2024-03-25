@@ -24,6 +24,8 @@ import (
 	"zettelstore.de/sx.fossil/sxhtml"
 )
 
+const contentName = "CONTENT"
+
 func (wui *WebUI) renderTemplateStatus(w http.ResponseWriter, code int, templateSym *sx.Symbol, rb *renderBinding) error {
 	if err := rb.err; err != nil {
 		return err
@@ -31,15 +33,33 @@ func (wui *WebUI) renderTemplateStatus(w http.ResponseWriter, code int, template
 	binding := rb.bind
 	wui.logger.Debug("Render", "binding", binding.Bindings())
 	env := sxeval.MakeExecutionEnvironment(binding)
-	if _, bound := env.Resolve(templateSym); bound {
+	if _, templateBound := env.Resolve(templateSym); templateBound {
 		obj, err := env.Eval(sx.MakeList(sx.MakeSymbol("render-template"), templateSym))
 		if err != nil {
 			return err
 		}
 		wui.logger.Debug("Render", "content", obj)
-		rb.bindObject("CONTENT", obj)
+		rb.bindObject(contentName, obj)
+
+	} else if obj, contentBound := env.Resolve(sx.MakeSymbol(contentName)); contentBound && !sx.IsNil(obj) {
+		if _, isList := sx.GetPair(obj); !isList {
+			obj = sx.MakeList(symP, obj)
+		}
+		obj = sx.Cons(obj, sx.Nil())
+		wui.logger.Debug("Render", "obj", obj)
+		rb.bindObject(contentName, obj)
+
 	} else if templateSym != nil {
-		rb.bindObject("CONTENT", sx.MakeList(symP, sx.String(templateSym.GoString())))
+		rb.bindObject(
+			contentName,
+			sx.MakeList(
+				symP,
+				sx.String("Template "),
+				sx.String(templateSym.GoString()),
+				sx.String(" not found."),
+			))
+	} else {
+		rb.bindObject(contentName, sx.MakeList(symP, sx.String("No template given.")))
 	}
 	obj, err := env.Eval(sx.MakeList(sx.MakeSymbol("render-template"), sx.MakeSymbol(nameLayout)))
 	if err != nil {
@@ -64,7 +84,7 @@ func (wui *WebUI) renderTemplateStatus(w http.ResponseWriter, code int, template
 func (wui *WebUI) MakeTestHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rb := wui.makeRenderBinding("test", r)
-		rb.bindObject("CONTENT", sx.MakeList(sx.String(fmt.Sprintf("Some content, url is: %q", r.URL))))
+		rb.bindObject("CONTENT", sx.MakeList(symP, sx.String(fmt.Sprintf("Some content, url is: %q", r.URL))))
 		if err := wui.renderTemplateStatus(w, 200, nil, rb); err != nil {
 			wui.handleError(w, "Render", err)
 			return

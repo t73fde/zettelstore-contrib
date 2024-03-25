@@ -56,10 +56,11 @@ var (
 		&sxbuiltins.NullP,                // null?
 		&sxbuiltins.Car, &sxbuiltins.Cdr, // car, cdr
 		&sxbuiltins.Caar, &sxbuiltins.Cadr, // caar, cadr
-		&sxbuiltins.Cadar,  // cadar
-		&sxbuiltins.List,   // list
-		&sxbuiltins.Map,    // map
-		&sxbuiltins.BoundP, // bound?
+		&sxbuiltins.Cadar,         // cadar
+		&sxbuiltins.LengthGreater, // length>
+		&sxbuiltins.List,          // list
+		&sxbuiltins.Map,           // map
+		&sxbuiltins.BoundP,        // bound?
 	}
 )
 

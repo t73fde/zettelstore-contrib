@@ -109,7 +109,7 @@ func (rb *renderBinding) bindString(key, val string) {
 }
 
 func (wui *WebUI) evalCode(env *sxeval.Environment) error {
-	for _, content := range [][]byte{contentPreludeSxc, contentTemplateSxc, contentLayoutSxc} {
+	for _, content := range staticSxc {
 		rdr := sxreader.MakeReader(bytes.NewReader(content))
 		if err := wui.evalReader(env, rdr); err != nil {
 			return err
@@ -126,6 +126,16 @@ var contentTemplateSxc []byte
 
 //go:embed layout.sxc
 var contentLayoutSxc []byte
+
+//go:embed useragent.sxc
+var contentUseragentSxc []byte
+
+var staticSxc = [][]byte{
+	contentPreludeSxc,
+	contentTemplateSxc,
+	contentLayoutSxc,
+	contentUseragentSxc,
+}
 
 func (wui *WebUI) evalReader(env *sxeval.Environment, rdr *sxreader.Reader) error {
 	for {
@@ -152,7 +162,7 @@ const (
 
 // compileAllTemplates compiles (parses, reworks) all needed templates.
 func (wui *WebUI) compileAllTemplates(env *sxeval.Environment, dir string) error {
-	for _, name := range []string{nameLayout, "useragent"} {
+	for _, name := range []string{nameLayout} {
 		if err := wui.evalTemplate(env, dir, name); err != nil {
 			return err
 		}

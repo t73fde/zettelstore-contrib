@@ -29,28 +29,33 @@ func (wui *WebUI) MakeGetAllUAHandler(ucAllUA usecase.GetAllUserAgents) http.Han
 	return func(w http.ResponseWriter, r *http.Request) {
 		uasT, uasF := ucAllUA.Run(r.Context())
 
-		if len(r.URL.Query()) == 0 {
+		q := r.URL.Query()
+		if len(q) == 0 {
 			rb := wui.makeRenderBinding("user-agent", r)
 			rb.bindObject("ALLOWED-AGENTS", stringsTosxList(uasT))
 			rb.bindObject("BLOCKED-AGENTS", stringsTosxList(uasF))
-			if err := wui.renderTemplateStatus(w, 200, symUserAgents, rb); err != nil {
+			if err := wui.renderTemplateStatus(w, http.StatusOK, symUserAgents, rb); err != nil {
 				wui.handleError(w, "Render", err)
 			}
 			return
 		}
+		if q.Has("plain") {
+			var buf bytes.Buffer
+			for _, ua := range uasT {
+				fmt.Fprintln(&buf, ua)
+			}
+			if len(uasF) > 0 && len(uasT) > 0 {
+				fmt.Fprintln(&buf, "---")
+			}
+			for _, ua := range uasF {
+				fmt.Fprintln(&buf, ua)
+			}
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write(buf.Bytes())
+			return
+		}
 
-		var buf bytes.Buffer
-		for _, ua := range uasT {
-			fmt.Fprintln(&buf, ua)
-		}
-		if len(uasF) > 0 && len(uasT) > 0 {
-			fmt.Fprintln(&buf, "---")
-		}
-		for _, ua := range uasF {
-			fmt.Fprintln(&buf, ua)
-		}
-		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write(buf.Bytes())
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 	}
 }
 
