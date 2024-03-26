@@ -15,6 +15,7 @@
 package server
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -53,4 +54,15 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // HandleFunc registers the handler function for the given pattern.
 func (h *Handler) HandleFunc(pattern string, handler http.HandlerFunc) {
 	h.mux.HandleFunc(pattern, handler)
+}
+
+// ------
+
+// Error writes a standard error message.
+func Error(w http.ResponseWriter, code int) {
+	text := http.StatusText(code)
+	if text == "" {
+		text = fmt.Sprintf("Unknown HTTP status code %d", code)
+	}
+	http.Error(w, text, code)
 }

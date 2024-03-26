@@ -19,6 +19,7 @@ import (
 	"net/http"
 
 	"zettelstore.de/contrib/social/usecase"
+	"zettelstore.de/contrib/social/web/server"
 	"zettelstore.de/sx.fossil"
 )
 
@@ -34,9 +35,7 @@ func (wui *WebUI) MakeGetAllUAHandler(ucAllUA usecase.GetAllUserAgents) http.Han
 			rb := wui.makeRenderBinding("user-agent", r)
 			rb.bindObject("ALLOWED-AGENTS", stringsTosxList(uasT))
 			rb.bindObject("BLOCKED-AGENTS", stringsTosxList(uasF))
-			if err := wui.renderTemplateStatus(w, http.StatusOK, symUserAgents, rb); err != nil {
-				wui.handleError(w, "Render", err)
-			}
+			wui.renderTemplate(w, symUserAgents, rb)
 			return
 		}
 		if q.Has("plain") {
@@ -55,7 +54,7 @@ func (wui *WebUI) MakeGetAllUAHandler(ucAllUA usecase.GetAllUserAgents) http.Han
 			return
 		}
 
-		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		server.Error(w, http.StatusBadRequest)
 	}
 }
 
