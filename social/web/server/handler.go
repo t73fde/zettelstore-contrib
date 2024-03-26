@@ -41,14 +41,16 @@ func NewHandler(logger *slog.Logger, ucAddUA usecase.AddUserAgent) *Handler {
 
 // ServeHTTP serves the HTTP traffic for this server.
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	arw := appResponseWriter{w: w}
 	ctx := r.Context()
-	if status := h.addUA.Run(ctx, r.Header.Values("User-Agent")); status == 0 {
+	status := h.addUA.Run(ctx, r.Header.Values("User-Agent"))
+	if status == 0 {
+		arw := appResponseWriter{w: w}
 		h.mux.ServeHTTP(&arw, r)
+		status = arw.code
 	} else {
-		http.Error(&arw, http.StatusText(status), status)
+		Error(w, status)
 	}
-	h.logger.DebugContext(ctx, "Serve", "status", arw.statusCode, "method", r.Method, "url", r.URL)
+	h.logger.DebugContext(ctx, "Serve", "status", status, "method", r.Method, "url", r.URL)
 }
 
 // HandleFunc registers the handler function for the given pattern.

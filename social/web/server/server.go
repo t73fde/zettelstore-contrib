@@ -80,21 +80,20 @@ func (s *Server) Stop() error {
 }
 
 type appResponseWriter struct {
-	w          http.ResponseWriter
-	statusCode int
+	w    http.ResponseWriter
+	code int
 }
 
-func (arw *appResponseWriter) Header() http.Header {
-	return arw.w.Header()
-}
+func (arw *appResponseWriter) Header() http.Header { return arw.w.Header() }
+
 func (arw *appResponseWriter) Write(data []byte) (int, error) {
 	return arw.w.Write(data)
 }
-func (arw *appResponseWriter) WriteHeader(statusCode int) {
-	header := arw.w.Header()
-	if len(header.Values("Server")) == 0 {
+func (arw *appResponseWriter) WriteHeader(code int) {
+	header := arw.Header()
+	if _, found := header["Server"]; !found {
 		header.Add("Server", "Zettel Social")
 	}
-	arw.statusCode = statusCode
-	arw.w.WriteHeader(statusCode)
+	arw.code = code
+	arw.w.WriteHeader(code)
 }
