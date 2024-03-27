@@ -127,13 +127,19 @@ func (cfg *Config) read() error {
 }
 
 var cmdMap = map[string]func(*Config, *sx.Symbol, *sx.Pair) error{
-	"DEBUG":         parseDebug,
-	"PORT":          parsePort,
-	"DOCUMENT-ROOT": parseDocumentRoot,
-	"TEMPLATE-ROOT": parseTemplateRoot,
-	"DATA-ROOT":     parseDataRoot,
-	"SITE-LAYOUT":   parseSiteLayout,
-	"REJECT-UA":     parseRejectUA,
+	"DEBUG": parseDebug,
+	"PORT":  parsePort,
+	"DOCUMENT-ROOT": func(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
+		return parseSetFilePath(&cfg.DocumentRoot, sym, args)
+	},
+	"TEMPLATE-ROOT": func(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
+		return parseSetFilePath(&cfg.TemplateRoot, sym, args)
+	},
+	"DATA-ROOT": func(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
+		return parseSetFilePath(&cfg.DataRoot, sym, args)
+	},
+	"SITE-LAYOUT": parseSiteLayout,
+	"REJECT-UA":   parseRejectUA,
 }
 
 func parseDebug(cfg *Config, _ *sx.Symbol, args *sx.Pair) error {
@@ -157,30 +163,12 @@ func parsePort(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
 	return fmt.Errorf("%v is not Int64: %T/%v", sym, val, val)
 }
 
-func parseDocumentRoot(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
+func parseSetFilePath(target *string, sym *sx.Symbol, args *sx.Pair) error {
 	s, err := parseString(sym, args)
 	if err != nil {
 		return err
 	}
-	cfg.DocumentRoot = filepath.Clean(s)
-	return nil
-}
-
-func parseTemplateRoot(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
-	s, err := parseString(sym, args)
-	if err != nil {
-		return err
-	}
-	cfg.TemplateRoot = filepath.Clean(s)
-	return nil
-}
-
-func parseDataRoot(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
-	s, err := parseString(sym, args)
-	if err != nil {
-		return err
-	}
-	cfg.DataRoot = filepath.Clean(s)
+	*target = filepath.Clean(s)
 	return nil
 }
 
