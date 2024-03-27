@@ -28,13 +28,13 @@ import (
 
 // MakeGetPageHandler creates a new HTTP handler to show the content of a
 // SxHTML file.
-func (wui *WebUI) MakeGetPageHandler(pageRoot string) http.HandlerFunc {
+func (wui *WebUI) MakeGetPageHandler(dataRoot string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		pagePath := r.PathValue("pagepath")
 		if pagePath == "" {
 			pagePath = path.Base(r.URL.Path)
 		}
-		pageFilename := filepath.Join(pageRoot, pagePath) + ".sxhtml"
+		pageFilename := filepath.Join(dataRoot, pagePath) + ".sxhtml"
 		pageFile, err := os.Open(pageFilename)
 		if err != nil {
 			wui.logger.Error("Page", "error", err)

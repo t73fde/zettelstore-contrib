@@ -87,6 +87,7 @@ func setupRouting(h *server.Handler, uaColl *repository.UACollector, cfg *config
 
 	userAgentsHandler := webui.MakeGetAllUAHandler(usecase.NewGetAllUserAgents(uaColl))
 	var handlerMap = map[string]http.HandlerFunc{
+		"blogroll":    webui.MakeBlogrollHandler(cfg.DataRoot),
 		"header":      webui.MakeHeaderHandler(),
 		"html":        webui.MakeGetPageHandler(cfg.DataRoot),
 		"test":        webui.MakeTestHandler(),

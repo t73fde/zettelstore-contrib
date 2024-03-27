@@ -13,6 +13,18 @@
 
 ;;; SXC code for social nodes.
 
+;;; Blogroll
+
+(define-template blogroll
+`((h1 ,TITLE)
+  (ul ,@(map pair->link BLOGROLL))
+ )
+)
+
+(defun pair->link (p)
+    `(li (a (@ (href ,(cdr p))) ,(car p)))
+)
+
 ;;; Node "User Agents"
 
 (defun string->item (s) `(li ,s))
@@ -30,6 +42,4 @@
 
 ;;; Node "HTTP Header"
 
-(define-template http-header
-    `((h1 ,TITLE) ,HEADER-DL)
-)
+(define-template http-header `((h1 ,TITLE) ,HEADER-DL))
