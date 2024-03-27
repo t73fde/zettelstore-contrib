@@ -47,6 +47,9 @@ func CreateSite(name, path string, root *Node) (*Site, error) {
 // Name returns the name of the site.
 func (st *Site) Name() string { return st.name }
 
+// Root returns the root node of the site.
+func (st *Site) Root() *Node { return st.root }
+
 // SetLanguage sets the default language of the site.
 func (st *Site) SetLanguage(lang string) *Site { st.language = lang; return st }
 
@@ -72,23 +75,25 @@ func (st *Site) BestNode(path string) *Node {
 // Node contains all data about a node within a site, identified by the path of
 // its parent and its own path.
 type Node struct {
-	parent   *Node
-	children []*Node
-	title    string
-	nodepath string
-	language string
-	visible  bool
+	parent     *Node
+	children   []*Node
+	title      string
+	nodepath   string
+	properties map[string]string
+	language   string
+	visible    bool
 }
 
 // CreateRootNode creates a root node to be given as a argument to [CreateSite].
 func CreateRootNode(title string) *Node {
 	return &Node{
-		parent:   nil,
-		children: nil,
-		title:    title,
-		nodepath: "",
-		language: "en",
-		visible:  true,
+		parent:     nil,
+		children:   nil,
+		title:      title,
+		nodepath:   "",
+		properties: nil,
+		language:   "en",
+		visible:    true,
 	}
 }
 
@@ -108,14 +113,34 @@ func (n *Node) CreateNode(title, nodepath string) (*Node, error) {
 		}
 	}
 	node := &Node{
-		parent:   n,
-		title:    title,
-		nodepath: nodepath,
-		language: n.language,
-		visible:  n.visible,
+		parent:     n,
+		title:      title,
+		nodepath:   nodepath,
+		properties: nil,
+		language:   n.language,
+		visible:    n.visible,
 	}
 	n.children = append(n.children, node)
 	return node, nil
+}
+
+// SetProperty sets the given property key with the given value.
+func (n *Node) SetProperty(key, val string) {
+	if n.properties == nil {
+		n.properties = map[string]string{key: val}
+		return
+	}
+	n.properties[key] = val
+}
+
+// GetProperty returns the property value of the given key, plus an indication,
+// whether there was such a key/value.
+func (n *Node) GetProperty(key string) (string, bool) {
+	if props := n.properties; props != nil {
+		val, found := props[key]
+		return val, found
+	}
+	return "", false
 }
 
 // SetLanguage sets the language attribute of the node.
@@ -155,6 +180,9 @@ func (n *Node) Title() string { return n.title }
 
 // Children returns the ordered list of children nodes.
 func (n *Node) Children() []*Node { return n.children }
+
+// NodePath returns the local path of the node.
+func (n *Node) NodePath() string { return n.nodepath }
 
 // Path returns the full relative path of the node.
 func (n *Node) Path() string {

@@ -18,11 +18,13 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 
 	"zettelstore.de/contrib/social/config"
 	"zettelstore.de/contrib/social/kernel"
 	"zettelstore.de/contrib/social/repository"
+	"zettelstore.de/contrib/social/site"
 	"zettelstore.de/contrib/social/usecase"
 	"zettelstore.de/contrib/social/web/server"
 	"zettelstore.de/contrib/social/web/wui"
@@ -83,18 +85,31 @@ func setupRouting(h *server.Handler, uaColl *repository.UACollector, cfg *config
 		return err
 	}
 
-	ucGetAllUserAgents := usecase.NewGetAllUserAgents(uaColl)
-	htmlPageHandler := webui.MakeGetPageHandler(cfg.PageRoot)
+	var handlerMap = map[string]http.HandlerFunc{
+		"html":       webui.MakeGetPageHandler(cfg.PageRoot),
+		"test":       webui.MakeTestHandler(),
+		"user-agent": webui.MakeGetAllUAHandler(usecase.NewGetAllUserAgents(uaColl)),
+	}
 
 	docRoot := webui.MakeDocumentHandler(cfg.DocumentRoot)
 	h.HandleFunc("GET /", docRoot)
-	h.HandleFunc("GET /social/ua/{$}", webui.MakeGetAllUAHandler(ucGetAllUserAgents))
-	h.HandleFunc("GET /social/{pagepath}/{$}", htmlPageHandler)
-	h.HandleFunc("GET /social/page/{$}", htmlPageHandler)
-	testHandler := webui.MakeTestHandler()
-	h.HandleFunc("GET /.t/{$}", testHandler)
-	h.HandleFunc("GET /.test/{$}", testHandler)
-	h.HandleFunc("GET /.test/test/{$}", testHandler)
-	h.HandleFunc("GET /.test/test/toast/{$}", testHandler)
+	if site := cfg.Site; site != nil {
+		registerHandler(h, handlerMap, "/", site.Root())
+	}
 	return nil
+}
+
+func registerHandler(h *server.Handler, hd map[string]http.HandlerFunc, basepath string, n *site.Node) {
+	path := basepath + n.NodePath()
+	if handlerType, hasType := n.GetProperty("handler"); hasType {
+		if handler, found := hd[handlerType]; found {
+			h.HandleFunc("GET "+path, handler)
+		} else {
+			slog.Error("unknown handler", "type", handlerType)
+		}
+	}
+
+	for _, child := range n.Children() {
+		registerHandler(h, hd, path, child)
+	}
 }

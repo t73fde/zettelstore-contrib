@@ -295,6 +295,7 @@ func parseNodeAttributes(node *site.Node, args *sx.Pair) error {
 				val = next.Car()
 			}
 		}
+
 		if sym.IsEqual(sx.MakeSymbol("invisible")) {
 			node = node.SetInvisible()
 		} else if sym.IsEqual(sx.MakeSymbol("language")) {
@@ -303,6 +304,14 @@ func parseNodeAttributes(node *site.Node, args *sx.Pair) error {
 				return fmt.Errorf("language value for node %q must be a non-empty string, but is: %T/%v", node.Path(), val, val)
 			}
 			node = node.SetLanguage(string(sVal))
+		} else if sx.IsNil(val) {
+			node.SetProperty(sym.GoString(), "")
+		} else {
+			sVal, isString := sx.GetString(val)
+			if !isString {
+				return fmt.Errorf("attribute %q for node %q must be a string, but is: %T/%v", sym.GoString(), node.Path(), val, val)
+			}
+			node.SetProperty(sym.GoString(), string(sVal))
 		}
 	}
 	return nil
