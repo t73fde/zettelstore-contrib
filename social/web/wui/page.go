@@ -29,7 +29,6 @@ import (
 // MakeGetPageHandler creates a new HTTP handler to show the content of a
 // SxHTML file.
 func (wui *WebUI) MakeGetPageHandler(pageRoot string) http.HandlerFunc {
-	symHTMLPage := sx.MakeSymbol("html-page")
 	return func(w http.ResponseWriter, r *http.Request) {
 		pagePath := r.PathValue("pagepath")
 		if pagePath == "" {

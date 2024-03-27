@@ -218,6 +218,8 @@ var (
 	symLI    = sx.MakeSymbol("li")
 	symP     = sx.MakeSymbol("p")
 	symUL    = sx.MakeSymbol("ul")
+
+	symHTMLPage = sx.MakeSymbol("html-page")
 )
 
 func makeSimpleLink(href, text sx.String) *sx.Pair {

@@ -32,3 +32,7 @@
   )
 )))
 )
+
+;;; Template to emit raw SxHTML content.
+
+(define-template html-page HTML-CONTENT)
