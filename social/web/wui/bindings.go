@@ -56,6 +56,7 @@ var (
 		&sxbuiltins.NullP,                // null?
 		&sxbuiltins.Car, &sxbuiltins.Cdr, // car, cdr
 		&sxbuiltins.Caar, &sxbuiltins.Cadr, // caar, cadr
+		&sxbuiltins.Cdar,          // cdar
 		&sxbuiltins.Cadar,         // cadar
 		&sxbuiltins.LengthGreater, // length>
 		&sxbuiltins.List,          // list
@@ -210,6 +211,9 @@ func makeNavItem(st *site.Site, node, active *site.Node) *sx.Pair {
 var (
 	symA     = sx.MakeSymbol("a")
 	symClass = sx.MakeSymbol("class")
+	symDD    = sx.MakeSymbol("dd")
+	symDL    = sx.MakeSymbol("dl")
+	symDT    = sx.MakeSymbol("dt")
 	symHref  = sx.MakeSymbol("href")
 	symLI    = sx.MakeSymbol("li")
 	symP     = sx.MakeSymbol("p")

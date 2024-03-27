@@ -130,15 +130,15 @@ var contentLayoutSxc []byte
 //go:embed page.sxc
 var contentPageSec []byte
 
-//go:embed useragent.sxc
-var contentUseragentSxc []byte
+//go:embed social.sxc
+var contentSocialSxc []byte
 
 var staticSxc = [][]byte{
 	contentPreludeSxc,
 	contentTemplateSxc,
 	contentLayoutSxc,
 	contentPageSec,
-	contentUseragentSxc,
+	contentSocialSxc,
 }
 
 func (wui *WebUI) evalReader(env *sxeval.Environment, rdr *sxreader.Reader) error {

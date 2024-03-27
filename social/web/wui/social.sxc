@@ -11,17 +11,25 @@
 ;;; SPDX-FileCopyrightText: 2024-present Detlef Stern
 ;;;----------------------------------------------------------------------------
 
+;;; SXC code for social nodes.
+
 ;;; Node "User Agents"
 
-(defun string-item (s) `(li ,s))
+(defun string->item (s) `(li ,s))
 
 (define-template user-agents
 `(
-  (h1 "User Agents")
-  (ul ,@(map string-item ALLOWED-AGENTS))
+  (h1 ,TITLE)
+  (ul ,@(map string->item ALLOWED-AGENTS))
   ,@(if (length> BLOCKED-AGENTS 0)
         `((h2 "Blockiert")
-          (ul ,@(map string-item BLOCKED-AGENTS))))
+          (ul ,@(map string->item BLOCKED-AGENTS))))
   (a (@ (href "?plain")) "plain")
  )
+)
+
+;;; Node "HTTP Header"
+
+(define-template http-header
+    `((h1 ,TITLE) ,HEADER-DL)
 )
