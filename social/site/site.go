@@ -19,6 +19,9 @@ import (
 	"strings"
 )
 
+// DefaultLanguage is the language value used as a default.
+const DefaultLanguage = "en"
+
 // Site manages the website as a whole.
 type Site struct {
 	name     string
@@ -39,13 +42,16 @@ func CreateSite(name, path string, root *Node) (*Site, error) {
 	return &Site{
 		name:     name,
 		basepath: path,
-		language: "en",
+		language: DefaultLanguage,
 		root:     root,
 	}, nil
 }
 
 // Name returns the name of the site.
 func (st *Site) Name() string { return st.name }
+
+// BasePath return the base path of the site.
+func (st *Site) BasePath() string { return st.basepath }
 
 // Root returns the root node of the site.
 func (st *Site) Root() *Node { return st.root }
@@ -57,7 +63,7 @@ func (st *Site) SetLanguage(lang string) *Site { st.language = lang; return st }
 func (st *Site) Language() string { return st.language }
 
 // Path returns the absolute path of the given node.
-func (st *Site) Path(n *Node) string { return "/" + n.Path() }
+func (st *Site) Path(n *Node) string { return st.basepath + n.Path() }
 
 // BestNode returns the node that matches the given path at best. If an
 // absolute path (starting with '/') is given, a nil result indicates
@@ -92,7 +98,7 @@ func CreateRootNode(title string) *Node {
 		title:      title,
 		nodepath:   "",
 		properties: nil,
-		language:   "en",
+		language:   DefaultLanguage,
 		visible:    true,
 	}
 }

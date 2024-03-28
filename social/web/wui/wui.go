@@ -65,7 +65,10 @@ func NewWebUI(logger *slog.Logger, templateRoot string, st *site.Site) (*WebUI, 
 }
 
 // NewURLBuilder creates a new URL builder for this web user interface.
-func (*WebUI) NewURLBuilder() *web.URLBuilder {
+func (wui *WebUI) NewURLBuilder() *web.URLBuilder {
+	if st := wui.site; st != nil {
+		return web.NewURLBuilder(st.BasePath())
+	}
 	return web.NewURLBuilder("")
 }
 
@@ -77,17 +80,17 @@ func (wui *WebUI) makeRenderBinding(name string, r *http.Request) *renderBinding
 	urlPath := r.URL.Path
 	rb.bindString("URL-PATH", urlPath)
 
-	if site := wui.site; site != nil {
-		rb.bindString("SITE-LANGUAGE", site.Language())
-		rb.bindString("SITE-NAME", site.Name())
-		node := site.BestNode(urlPath)
+	if st := wui.site; st != nil {
+		rb.bindString("SITE-LANGUAGE", st.Language())
+		rb.bindString("SITE-NAME", st.Name())
+		node := st.BestNode(urlPath)
 		rb.bindString("TITLE", node.Title())
 		rb.bindString("LANGUAGE", node.Language())
 	} else {
-		rb.bindString("SITE-LANGUAGE", "en")
+		rb.bindString("SITE-LANGUAGE", site.DefaultLanguage)
 		rb.bindString("SITE-NAME", "Site without a name")
 		rb.bindString("TITLE", "Welcome")
-		rb.bindString("LANGUAGE", "en")
+		rb.bindString("LANGUAGE", site.DefaultLanguage)
 	}
 	return &rb
 }

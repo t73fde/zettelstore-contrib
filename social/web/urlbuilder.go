@@ -27,8 +27,11 @@ type URLBuilder struct {
 }
 type urlQuery struct{ key, val string }
 
-// NewURLBuilder creates a new URL builder with the fiven prefix.
+// NewURLBuilder creates a new URL builder with the given prefix.
 func NewURLBuilder(prefix string) *URLBuilder {
+	if pl := len(prefix); pl > 0 && prefix[pl-1] == '/' {
+		prefix = prefix[0 : pl-1]
+	}
 	return &URLBuilder{prefix: prefix}
 }
 

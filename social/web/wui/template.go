@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxeval"
@@ -81,10 +82,12 @@ func (wui *WebUI) internRenderTemplateStatus(w http.ResponseWriter, code int, te
 	if err != nil {
 		return err
 	}
+	content := sb.Bytes()
 	h := w.Header()
 	h.Set("Content-Type", "text/html; charset=utf-8")
+	h.Set("Content-Length", strconv.Itoa(len(content)))
 	w.WriteHeader(code)
-	if _, err = w.Write(sb.Bytes()); err != nil {
+	if _, err = w.Write(content); err != nil {
 		wui.logger.Error("Unable to write HTML", "error", err)
 	}
 	return nil
