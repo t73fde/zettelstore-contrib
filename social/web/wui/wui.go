@@ -16,7 +16,7 @@ package wui
 
 import (
 	"bytes"
-	_ "embed"
+	"embed"
 	"io"
 	"log/slog"
 	"net/http"
@@ -111,33 +111,30 @@ func (rb *renderBinding) bindString(key, val string) {
 	}
 }
 
+//go:embed sxc/*.sxc
+var fsSxc embed.FS
+
 func (wui *WebUI) evalCode(env *sxeval.Environment) error {
-	for _, content := range staticSxc {
+	entries, errFS := fsSxc.ReadDir("sxc")
+	if errFS != nil {
+		return errFS
+	}
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		filename := filepath.Join("sxc", entry.Name())
+		wui.logger.Debug("Read", "filename", filename)
+		content, err := fsSxc.ReadFile(filename)
+		if err != nil {
+			return err
+		}
 		rdr := sxreader.MakeReader(bytes.NewReader(content))
 		if err := wui.evalReader(env, rdr); err != nil {
 			return err
 		}
 	}
 	return nil
-}
-
-//go:embed prelude.sxc
-var contentPreludeSxc []byte
-
-//go:embed template.sxc
-var contentTemplateSxc []byte
-
-//go:embed layout.sxc
-var contentLayoutSxc []byte
-
-//go:embed social.sxc
-var contentSocialSxc []byte
-
-var staticSxc = [][]byte{
-	contentPreludeSxc,
-	contentTemplateSxc,
-	contentLayoutSxc,
-	contentSocialSxc,
 }
 
 func (wui *WebUI) evalReader(env *sxeval.Environment, rdr *sxreader.Reader) error {
