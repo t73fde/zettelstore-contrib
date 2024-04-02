@@ -16,6 +16,9 @@ package repository
 
 import (
 	"context"
+	"io"
+	"os"
+	"path/filepath"
 	"slices"
 	"sync"
 )
@@ -60,4 +63,25 @@ func (uac *UACollector) GetAllUserAgents(context.Context) ([]string, []string) {
 	slices.Sort(resultTrue)
 	slices.Sort(resultFalse)
 	return resultTrue, resultFalse
+}
+
+// OPMLReader fetches OPML data from a file.
+type OPMLReader struct {
+	name string
+}
+
+// NewOPMLReader creates a new OPMLReader.
+func NewOPMLReader(dataRoot string) *OPMLReader {
+	return &OPMLReader{name: filepath.Join(dataRoot, "feeds.opml")}
+}
+
+// GetOPML returns the OPML data.
+func (or *OPMLReader) GetOPML() ([]byte, error) {
+	opmlFile, err := os.Open(or.name)
+	if err != nil {
+		return nil, err
+	}
+	data, err := io.ReadAll(opmlFile)
+	_ = opmlFile.Close()
+	return data, err
 }

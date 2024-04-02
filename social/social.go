@@ -44,8 +44,9 @@ func main() {
 	logger.Debug("Configuration", "port", cfg.WebPort, "docroot", cfg.DocumentRoot)
 
 	uaColl := repository.MakeUACollector(createUAStatusFunc(&cfg))
+	or := repository.NewOPMLReader(cfg.DataRoot)
 	h := server.NewHandler(cfg.MakeLogger("HTTP"), usecase.NewAddUserAgent(uaColl))
-	if err := setupRouting(h, uaColl, &cfg); err != nil {
+	if err := setupRouting(h, uaColl, or, &cfg); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		var execErr sxeval.ExecuteError
 		if errors.As(err, &execErr) {
@@ -79,7 +80,7 @@ func createUAStatusFunc(cfg *config.Config) func(string) int {
 	}
 }
 
-func setupRouting(h *server.Handler, uaColl *repository.UACollector, cfg *config.Config) error {
+func setupRouting(h *server.Handler, uaColl *repository.UACollector, or *repository.OPMLReader, cfg *config.Config) error {
 	webui, err := wui.NewWebUI(cfg.MakeLogger("WebUI"), cfg.TemplateRoot, cfg.Site)
 	if err != nil {
 		return err
@@ -87,7 +88,7 @@ func setupRouting(h *server.Handler, uaColl *repository.UACollector, cfg *config
 
 	userAgentsHandler := webui.MakeGetAllUAHandler(usecase.NewGetAllUserAgents(uaColl))
 	var handlerMap = map[string]http.HandlerFunc{
-		"blogroll":    webui.MakeBlogrollHandler(cfg.DataRoot),
+		"blogroll":    webui.MakeBlogrollHandler(usecase.NewGetBlogroll(or)),
 		"header":      webui.MakeHeaderHandler(),
 		"html":        webui.MakeGetPageHandler(cfg.DataRoot),
 		"test":        webui.MakeTestHandler(),
