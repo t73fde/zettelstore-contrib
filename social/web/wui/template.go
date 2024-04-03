@@ -27,20 +27,30 @@ import (
 
 const contentName = "CONTENT"
 
-func (wui *WebUI) renderTemplate(w http.ResponseWriter, templateSym *sx.Symbol, rb *renderData) {
-	wui.renderTemplateStatus(w, http.StatusOK, templateSym, rb)
+func (wui *WebUI) renderTemplate(w http.ResponseWriter, templateSym *sx.Symbol, rdat *renderData) {
+	wui.renderTemplateStatus(w, http.StatusOK, templateSym, rdat)
 }
-func (wui *WebUI) renderTemplateStatus(w http.ResponseWriter, code int, templateSym *sx.Symbol, rb *renderData) {
-	if err := wui.internRenderTemplateStatus(w, code, templateSym, rb); err != nil {
+func (wui *WebUI) renderTemplateStatus(w http.ResponseWriter, code int, templateSym *sx.Symbol, rdat *renderData) {
+	if err := wui.internRenderTemplateStatus(w, code, templateSym, rdat); err != nil {
 		wui.handleError(w, "Render", err)
 	}
 }
 
-func (wui *WebUI) internRenderTemplateStatus(w http.ResponseWriter, code int, templateSym *sx.Symbol, rb *renderData) error {
-	if err := rb.err; err != nil {
+func (wui *WebUI) internRenderTemplateStatus(w http.ResponseWriter, code int, templateSym *sx.Symbol, rdat *renderData) error {
+	if err := rdat.err; err != nil {
 		return err
 	}
-	binding := rb.bind
+	rdat.calcETag()
+	wui.logger.Debug("Render", "If-None-Match", rdat.reqETag, "ETag", rdat.etag)
+	for _, etag := range rdat.reqETag {
+		if rdat.etag == etag {
+			h := w.Header()
+			h.Set("ETag", rdat.etag)
+			w.WriteHeader(http.StatusNotModified)
+			return nil
+		}
+	}
+	binding := rdat.bind
 	wui.logger.Debug("Render", "binding", binding.Bindings())
 	env := sxeval.MakeExecutionEnvironment(binding)
 	if _, templateBound := env.Resolve(templateSym); templateBound {
@@ -49,7 +59,7 @@ func (wui *WebUI) internRenderTemplateStatus(w http.ResponseWriter, code int, te
 			return err
 		}
 		wui.logger.Debug("Render", "content", obj)
-		rb.bindObject(contentName, obj)
+		rdat.bindObject(contentName, obj)
 
 	} else if obj, contentBound := env.Resolve(sx.MakeSymbol(contentName)); contentBound && !sx.IsNil(obj) {
 		if _, isList := sx.GetPair(obj); !isList {
@@ -57,10 +67,10 @@ func (wui *WebUI) internRenderTemplateStatus(w http.ResponseWriter, code int, te
 		}
 		obj = sx.Cons(obj, sx.Nil())
 		wui.logger.Debug("Render", "obj", obj)
-		rb.bindObject(contentName, obj)
+		rdat.bindObject(contentName, obj)
 
 	} else if templateSym != nil {
-		rb.bindObject(
+		rdat.bindObject(
 			contentName,
 			sx.MakeList(
 				symP,
@@ -69,7 +79,7 @@ func (wui *WebUI) internRenderTemplateStatus(w http.ResponseWriter, code int, te
 				sx.String(" not found."),
 			))
 	} else {
-		rb.bindObject(contentName, sx.MakeList(symP, sx.String("No template given.")))
+		rdat.bindObject(contentName, sx.MakeList(symP, sx.String("No template given.")))
 	}
 	obj, err := env.Eval(sx.MakeList(sx.MakeSymbol("render-template"), sx.MakeSymbol(nameLayout)))
 	if err != nil {
@@ -86,6 +96,7 @@ func (wui *WebUI) internRenderTemplateStatus(w http.ResponseWriter, code int, te
 	h := w.Header()
 	h.Set("Content-Type", "text/html; charset=utf-8")
 	h.Set("Content-Length", strconv.Itoa(len(content)))
+	h.Set("ETag", rdat.etag)
 	w.WriteHeader(code)
 	if _, err = w.Write(content); err != nil {
 		wui.logger.Error("Unable to write HTML", "error", err)

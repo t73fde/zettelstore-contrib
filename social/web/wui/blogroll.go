@@ -36,6 +36,5 @@ func (wui *WebUI) MakeBlogrollHandler(ucBlogroll usecase.GetBlogroll) http.Handl
 		rdat := wui.makeRenderData("user-agent", r)
 		rdat.bindObject("BLOGROLL", lb.List())
 		wui.renderTemplate(w, symBlogroll, rdat)
-
 	}
 }

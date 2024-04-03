@@ -16,7 +16,9 @@ package wui
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"embed"
+	"encoding/base64"
 	"io"
 	"log/slog"
 	"net/http"
@@ -74,8 +76,10 @@ func (wui *WebUI) NewURLBuilder() *web.URLBuilder {
 
 func (wui *WebUI) makeRenderData(name string, r *http.Request) *renderData {
 	rdat := renderData{
-		err:  nil,
-		bind: wui.baseBinding.MakeChildBinding(name, 128),
+		reqETag: r.Header.Values("If-None-Match"),
+		err:     nil,
+		bind:    wui.baseBinding.MakeChildBinding(name, 128),
+		etag:    "",
 	}
 	urlPath := r.URL.Path
 	rdat.bindString("URL-PATH", urlPath)
@@ -96,8 +100,10 @@ func (wui *WebUI) makeRenderData(name string, r *http.Request) *renderData {
 }
 
 type renderData struct {
-	err  error
-	bind *sxeval.Binding
+	reqETag []string
+	err     error
+	bind    *sxeval.Binding
+	etag    string
 }
 
 func (rdat *renderData) bindObject(key string, obj sx.Object) {
@@ -109,6 +115,20 @@ func (rdat *renderData) bindString(key, val string) {
 	if rdat.err == nil {
 		rdat.err = rdat.bind.Bind(sx.MakeSymbol(key), sx.String(val))
 	}
+}
+
+func (rdat *renderData) calcETag() {
+	var buf bytes.Buffer
+	for _, sym := range rdat.bind.Symbols() {
+		val, found := rdat.bind.Lookup(sym)
+		if !found {
+			continue
+		}
+		buf.WriteString(sym.GoString())
+		buf.WriteString(val.GoString())
+	}
+	h := sha256.Sum256(buf.Bytes())
+	rdat.etag = base64.RawStdEncoding.EncodeToString(h[:])
 }
 
 //go:embed sxc/*.sxc
