@@ -80,14 +80,17 @@ func (s *Server) Stop() error {
 }
 
 type appResponseWriter struct {
-	w    http.ResponseWriter
-	code int
+	w      http.ResponseWriter
+	code   int
+	length int
 }
 
 func (arw *appResponseWriter) Header() http.Header { return arw.w.Header() }
 
 func (arw *appResponseWriter) Write(data []byte) (int, error) {
-	return arw.w.Write(data)
+	length, err := arw.w.Write(data)
+	arw.length += length
+	return length, err
 }
 func (arw *appResponseWriter) WriteHeader(code int) {
 	header := arw.Header()

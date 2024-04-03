@@ -46,11 +46,11 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if status == 0 {
 		arw := appResponseWriter{w: w}
 		h.mux.ServeHTTP(&arw, r)
-		status = arw.code
+		h.logger.DebugContext(ctx, "Serve", "status", arw.code, "method", r.Method, "length", arw.length, "url", r.URL)
 	} else {
 		Error(w, status)
+		h.logger.DebugContext(ctx, "Serve", "status", status, "method", r.Method, "url", r.URL)
 	}
-	h.logger.DebugContext(ctx, "Serve", "status", status, "method", r.Method, "url", r.URL)
 }
 
 // HandleFunc registers the handler function for the given pattern.

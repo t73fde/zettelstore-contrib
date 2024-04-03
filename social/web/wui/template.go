@@ -41,11 +41,11 @@ func (wui *WebUI) internRenderTemplateStatus(w http.ResponseWriter, code int, te
 		return err
 	}
 	rdat.calcETag()
-	wui.logger.Debug("Render", "If-None-Match", rdat.reqETag, "ETag", rdat.etag)
+	wui.logger.Debug("Render", "If-None-Match", rdat.reqETag, "Etag", rdat.etag)
 	for _, etag := range rdat.reqETag {
 		if rdat.etag == etag {
 			h := w.Header()
-			h.Set("ETag", rdat.etag)
+			h.Set("Etag", rdat.etag)
 			w.WriteHeader(http.StatusNotModified)
 			return nil
 		}
@@ -96,7 +96,7 @@ func (wui *WebUI) internRenderTemplateStatus(w http.ResponseWriter, code int, te
 	h := w.Header()
 	h.Set("Content-Type", "text/html; charset=utf-8")
 	h.Set("Content-Length", strconv.Itoa(len(content)))
-	h.Set("ETag", rdat.etag)
+	h.Set("Etag", rdat.etag)
 	w.WriteHeader(code)
 	if _, err = w.Write(content); err != nil {
 		wui.logger.Error("Unable to write HTML", "error", err)
