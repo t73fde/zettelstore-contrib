@@ -32,10 +32,10 @@ func (wui *WebUI) MakeGetAllUAHandler(ucAllUA usecase.GetAllUserAgents) http.Han
 
 		q := r.URL.Query()
 		if len(q) == 0 {
-			rb := wui.makeRenderBinding("user-agent", r)
-			rb.bindObject("ALLOWED-AGENTS", stringsTosxList(uasT))
-			rb.bindObject("BLOCKED-AGENTS", stringsTosxList(uasF))
-			wui.renderTemplate(w, symUserAgents, rb)
+			rdat := wui.makeRenderData("user-agent", r)
+			rdat.bindObject("ALLOWED-AGENTS", stringsTosxList(uasT))
+			rdat.bindObject("BLOCKED-AGENTS", stringsTosxList(uasF))
+			wui.renderTemplate(w, symUserAgents, rdat)
 			return
 		}
 		if q.Has("plain") {

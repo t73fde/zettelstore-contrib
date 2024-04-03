@@ -72,42 +72,42 @@ func (wui *WebUI) NewURLBuilder() *web.URLBuilder {
 	return web.NewURLBuilder("")
 }
 
-func (wui *WebUI) makeRenderBinding(name string, r *http.Request) *renderBinding {
-	rb := renderBinding{
+func (wui *WebUI) makeRenderData(name string, r *http.Request) *renderData {
+	rdat := renderData{
 		err:  nil,
 		bind: wui.baseBinding.MakeChildBinding(name, 128),
 	}
 	urlPath := r.URL.Path
-	rb.bindString("URL-PATH", urlPath)
+	rdat.bindString("URL-PATH", urlPath)
 
 	if st := wui.site; st != nil {
-		rb.bindString("SITE-LANGUAGE", st.Language())
-		rb.bindString("SITE-NAME", st.Name())
+		rdat.bindString("SITE-LANGUAGE", st.Language())
+		rdat.bindString("SITE-NAME", st.Name())
 		node := st.BestNode(urlPath)
-		rb.bindString("TITLE", node.Title())
-		rb.bindString("LANGUAGE", node.Language())
+		rdat.bindString("TITLE", node.Title())
+		rdat.bindString("LANGUAGE", node.Language())
 	} else {
-		rb.bindString("SITE-LANGUAGE", site.DefaultLanguage)
-		rb.bindString("SITE-NAME", "Site without a name")
-		rb.bindString("TITLE", "Welcome")
-		rb.bindString("LANGUAGE", site.DefaultLanguage)
+		rdat.bindString("SITE-LANGUAGE", site.DefaultLanguage)
+		rdat.bindString("SITE-NAME", "Site without a name")
+		rdat.bindString("TITLE", "Welcome")
+		rdat.bindString("LANGUAGE", site.DefaultLanguage)
 	}
-	return &rb
+	return &rdat
 }
 
-type renderBinding struct {
+type renderData struct {
 	err  error
 	bind *sxeval.Binding
 }
 
-func (rb *renderBinding) bindObject(key string, obj sx.Object) {
-	if rb.err == nil {
-		rb.err = rb.bind.Bind(sx.MakeSymbol(key), obj)
+func (rdat *renderData) bindObject(key string, obj sx.Object) {
+	if rdat.err == nil {
+		rdat.err = rdat.bind.Bind(sx.MakeSymbol(key), obj)
 	}
 }
-func (rb *renderBinding) bindString(key, val string) {
-	if rb.err == nil {
-		rb.err = rb.bind.Bind(sx.MakeSymbol(key), sx.String(val))
+func (rdat *renderData) bindString(key, val string) {
+	if rdat.err == nil {
+		rdat.err = rdat.bind.Bind(sx.MakeSymbol(key), sx.String(val))
 	}
 }
 

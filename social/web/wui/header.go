@@ -39,8 +39,8 @@ func (wui *WebUI) MakeHeaderHandler() http.HandlerFunc {
 			}
 		}
 
-		rb := wui.makeRenderBinding("user-agent", r)
-		rb.bindObject("HEADER-DL", headerList.List())
-		wui.renderTemplate(w, symHTTPHeader, rb)
+		rdat := wui.makeRenderData("user-agent", r)
+		rdat.bindObject("HEADER-DL", headerList.List())
+		wui.renderTemplate(w, symHTTPHeader, rdat)
 	}
 }

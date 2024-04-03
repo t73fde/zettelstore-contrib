@@ -27,16 +27,16 @@ import (
 
 const contentName = "CONTENT"
 
-func (wui *WebUI) renderTemplate(w http.ResponseWriter, templateSym *sx.Symbol, rb *renderBinding) {
+func (wui *WebUI) renderTemplate(w http.ResponseWriter, templateSym *sx.Symbol, rb *renderData) {
 	wui.renderTemplateStatus(w, http.StatusOK, templateSym, rb)
 }
-func (wui *WebUI) renderTemplateStatus(w http.ResponseWriter, code int, templateSym *sx.Symbol, rb *renderBinding) {
+func (wui *WebUI) renderTemplateStatus(w http.ResponseWriter, code int, templateSym *sx.Symbol, rb *renderData) {
 	if err := wui.internRenderTemplateStatus(w, code, templateSym, rb); err != nil {
 		wui.handleError(w, "Render", err)
 	}
 }
 
-func (wui *WebUI) internRenderTemplateStatus(w http.ResponseWriter, code int, templateSym *sx.Symbol, rb *renderBinding) error {
+func (wui *WebUI) internRenderTemplateStatus(w http.ResponseWriter, code int, templateSym *sx.Symbol, rb *renderData) error {
 	if err := rb.err; err != nil {
 		return err
 	}
@@ -95,9 +95,9 @@ func (wui *WebUI) internRenderTemplateStatus(w http.ResponseWriter, code int, te
 
 func (wui *WebUI) MakeTestHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		rb := wui.makeRenderBinding("test", r)
-		rb.bindObject("CONTENT", sx.MakeList(symP, sx.String(fmt.Sprintf("Some content, url is: %q", r.URL))))
-		wui.renderTemplate(w, nil, rb)
+		rdat := wui.makeRenderData("test", r)
+		rdat.bindObject("CONTENT", sx.MakeList(symP, sx.String(fmt.Sprintf("Some content, url is: %q", r.URL))))
+		wui.renderTemplate(w, nil, rdat)
 	}
 }
 

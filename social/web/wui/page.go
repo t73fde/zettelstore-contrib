@@ -55,8 +55,8 @@ func (wui *WebUI) MakeGetPageHandler(dataRoot string) http.HandlerFunc {
 			return
 		}
 
-		rb := wui.makeRenderBinding("user-agent", r)
-		rb.bindObject("HTML-CONTENT", sx.MakeList(objs...))
-		wui.renderTemplate(w, symHTMLPage, rb)
+		rdat := wui.makeRenderData("user-agent", r)
+		rdat.bindObject("HTML-CONTENT", sx.MakeList(objs...))
+		wui.renderTemplate(w, symHTMLPage, rdat)
 	}
 }
