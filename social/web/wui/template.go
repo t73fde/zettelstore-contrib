@@ -40,11 +40,11 @@ func (wui *WebUI) internRenderTemplateStatus(w http.ResponseWriter, code int, te
 	if err := rdat.err; err != nil {
 		return err
 	}
+	h := w.Header()
 	rdat.calcETag()
 	wui.logger.Debug("Render", "If-None-Match", rdat.reqETag, "Etag", rdat.etag)
 	for _, etag := range rdat.reqETag {
 		if rdat.etag == etag {
-			h := w.Header()
 			h.Set("Etag", rdat.etag)
 			w.WriteHeader(http.StatusNotModified)
 			return nil
@@ -93,10 +93,7 @@ func (wui *WebUI) internRenderTemplateStatus(w http.ResponseWriter, code int, te
 		return err
 	}
 	content := sb.Bytes()
-	h := w.Header()
-	h.Set("Content-Type", "text/html; charset=utf-8")
-	h.Set("Content-Length", strconv.Itoa(len(content)))
-	h.Set("Etag", rdat.etag)
+	setResponseHeader(h, "text/html; charset=utf-8", len(content), rdat.etag)
 	w.WriteHeader(code)
 	if _, err = w.Write(content); err != nil {
 		wui.logger.Error("Unable to write HTML", "error", err)
@@ -120,12 +117,20 @@ func (wui *WebUI) handleError(w http.ResponseWriter, subsystem string, err error
 		fmt.Fprintf(&buf, "Error: %v\n\n", err)
 		execErr.PrintStack(&buf, "", wui.logger, subsystem)
 
-		h := w.Header()
-		h.Set("Content-Type", "text/plain; charset=utf-8")
-		h.Set("X-Content-Type-Options", "nosniff")
+		content := buf.Bytes()
+		setResponseHeader(w.Header(), "text/plain; charset=utf-8", len(content), "")
 		w.WriteHeader(http.StatusInternalServerError)
-		_, _ = w.Write(buf.Bytes())
+		_, _ = w.Write(content)
 		return
 	}
 	http.Error(w, err.Error(), http.StatusInternalServerError)
+}
+
+func setResponseHeader(h http.Header, contentType string, contentLength int, etag string) {
+	h.Set("Content-Type", contentType)
+	h.Set("Content-Length", strconv.Itoa(contentLength))
+	h.Set("X-Content-Type-Options", "nosniff")
+	if etag != "" {
+		h.Set("Etag", etag)
+	}
 }

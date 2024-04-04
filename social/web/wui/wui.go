@@ -127,8 +127,12 @@ func (rdat *renderData) calcETag() {
 		buf.WriteString(sym.GoString())
 		buf.WriteString(val.GoString())
 	}
-	h := sha256.Sum256(buf.Bytes())
-	rdat.etag = "\"zs-" + base64.RawStdEncoding.EncodeToString(h[:]) + "\""
+	rdat.etag = etagFromBytes(buf.Bytes())
+}
+
+func etagFromBytes(content []byte) string {
+	h := sha256.Sum256(content)
+	return "\"zs-" + base64.RawStdEncoding.EncodeToString(h[:]) + "\""
 }
 
 //go:embed sxc/*.sxc

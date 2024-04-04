@@ -38,6 +38,7 @@ func (wui *WebUI) MakeGetAllUAHandler(ucAllUA usecase.GetAllUserAgents) http.Han
 			wui.renderTemplate(w, symUserAgents, rdat)
 			return
 		}
+
 		if q.Has("plain") {
 			var buf bytes.Buffer
 			for _, ua := range uasT {
@@ -49,8 +50,20 @@ func (wui *WebUI) MakeGetAllUAHandler(ucAllUA usecase.GetAllUserAgents) http.Han
 			for _, ua := range uasF {
 				fmt.Fprintln(&buf, ua)
 			}
+			content := buf.Bytes()
+
+			h := w.Header()
+			etag := etagFromBytes(content)
+			for _, reqEtag := range r.Header.Values("If-None-Match") {
+				if etag == reqEtag {
+					h.Set("Etag", etag)
+					w.WriteHeader(http.StatusNotModified)
+					return
+				}
+			}
+			setResponseHeader(h, "text/plain; charset=utf-8", len(content), etag)
 			w.WriteHeader(http.StatusOK)
-			_, _ = w.Write(buf.Bytes())
+			_, _ = w.Write(content)
 			return
 		}
 
