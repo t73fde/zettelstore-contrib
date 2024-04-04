@@ -15,34 +15,23 @@ package wui
 
 import (
 	"bytes"
-	"io"
 	"net/http"
-	"os"
 	"path"
-	"path/filepath"
 
-	"zettelstore.de/contrib/social/web/server"
+	"zettelstore.de/contrib/social/usecase"
 	"zettelstore.de/sx.fossil"
 	"zettelstore.de/sx.fossil/sxreader"
 )
 
 // MakeGetPageHandler creates a new HTTP handler to show the content of a
 // SxHTML file.
-func (wui *WebUI) MakeGetPageHandler(dataRoot string) http.HandlerFunc {
+func (wui *WebUI) MakeGetPageHandler(ucGetPage usecase.GetPage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		pagePath := r.PathValue("pagepath")
 		if pagePath == "" {
 			pagePath = path.Base(r.URL.Path)
 		}
-		pageFilename := filepath.Join(dataRoot, pagePath) + ".sxhtml"
-		pageFile, err := os.Open(pageFilename)
-		if err != nil {
-			wui.logger.Error("Page", "error", err)
-			server.Error(w, http.StatusNotFound)
-			return
-		}
-		content, err := io.ReadAll(pageFile)
-		_ = pageFile.Close()
+		content, err := ucGetPage.RunSxHTML(pagePath)
 		if err != nil {
 			wui.handleError(w, "Page", err)
 			return

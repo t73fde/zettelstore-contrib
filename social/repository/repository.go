@@ -65,23 +65,36 @@ func (uac *UACollector) GetAllUserAgents(context.Context) ([]string, []string) {
 	return resultTrue, resultFalse
 }
 
-// OPMLReader fetches OPML data from a file.
-type OPMLReader struct {
-	name string
+// FileReader fetches OPML data from a file.
+type FileReader struct {
+	dataRoot string
+	opmlName string
 }
 
-// NewOPMLReader creates a new OPMLReader.
-func NewOPMLReader(dataRoot string) *OPMLReader {
-	return &OPMLReader{name: filepath.Join(dataRoot, "feeds.opml")}
+// NewFileReader creates a new FileReader.
+func NewFileReader(dataRoot string) *FileReader {
+	return &FileReader{
+		dataRoot: dataRoot,
+		opmlName: filepath.Join(dataRoot, "feeds.opml"),
+	}
+}
+
+// GetSxHTML returns the content of a SxHTML page file.
+func (fr *FileReader) GetSxHTML(basename string) ([]byte, error) {
+	return getFileContent(filepath.Join(fr.dataRoot, basename) + ".sxhtml")
 }
 
 // GetOPML returns the OPML data.
-func (or *OPMLReader) GetOPML() ([]byte, error) {
-	opmlFile, err := os.Open(or.name)
+func (fr *FileReader) GetOPML() ([]byte, error) {
+	return getFileContent(fr.opmlName)
+}
+
+func getFileContent(filename string) ([]byte, error) {
+	f, err := os.Open(filename)
 	if err != nil {
 		return nil, err
 	}
-	data, err := io.ReadAll(opmlFile)
-	_ = opmlFile.Close()
+	data, err := io.ReadAll(f)
+	_ = f.Close()
 	return data, err
 }
