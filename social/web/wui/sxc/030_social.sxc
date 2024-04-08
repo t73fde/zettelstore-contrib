@@ -34,7 +34,7 @@
   (h1 ,TITLE)
   (ul ,@(map string->item ALLOWED-AGENTS))
   ,@(if (length> BLOCKED-AGENTS 0)
-        `((h2 "Blockiert")
+        `((h2 "Blocked")
           (ul ,@(map string->item BLOCKED-AGENTS))))
   (a (@ (href "?plain")) "plain")
  )
