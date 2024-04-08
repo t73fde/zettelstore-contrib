@@ -42,7 +42,9 @@ func MakeUACollector(statusFn func(string) int) *UACollector {
 func (uac *UACollector) AddUserAgent(_ context.Context, ua string) int {
 	status := uac.statusFn(ua)
 	uac.mx.Lock()
-	uac.uaSet[ua] = status
+	if len(uac.uaSet) < 2048 {
+		uac.uaSet[ua] = status
+	}
 	uac.mx.Unlock()
 	return status
 }
