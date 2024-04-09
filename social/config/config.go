@@ -35,6 +35,7 @@ type Config struct {
 	TemplateRoot string
 	DataRoot     string
 	Debug        bool
+	Repositories map[string]Repository
 	RejectUA     *regexp.Regexp
 	ActionUA     []UAAction
 	Site         *site.Site
@@ -45,6 +46,14 @@ type Config struct {
 // MakeLogger creates a sub-logger for the given subsystem.
 func (cfg *Config) MakeLogger(system string) *slog.Logger {
 	return cfg.logger.With("system", system)
+}
+
+// Repository stores all details about a single source code repository.
+type Repository struct {
+	Name        string
+	Description string
+	Type        string
+	RemoteURL   string
 }
 
 // UAAction stores the regexp match and the resulting values to produce a HTTP response.
@@ -139,6 +148,7 @@ var cmdMap = map[string]func(*Config, *sx.Symbol, *sx.Pair) error{
 		return parseSetFilePath(&cfg.DataRoot, sym, args)
 	},
 	"SITE-LAYOUT": parseSiteLayout,
+	"REPOS":       parseRepositories,
 	"REJECT-UA":   parseRejectUA,
 }
 
@@ -300,6 +310,56 @@ func parseNodeAttributes(node *site.Node, args *sx.Pair) error {
 				return fmt.Errorf("attribute %q for node %q must be a string, but is: %T/%v", sym.GoString(), node.Path(), val, val)
 			}
 			node.SetProperty(sym.GoString(), string(sVal))
+		}
+	}
+	return nil
+}
+
+func parseRepositories(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
+	for node := args; node != nil; node = node.Tail() {
+		obj := node.Car()
+		if sx.IsNil(obj) {
+			continue
+		}
+		pair, isPair := sx.GetPair(obj)
+		if !isPair {
+			return fmt.Errorf("repository info list expected for %s, got: %T/%v", sym.GoString(), obj, obj)
+		}
+		vec := pair.AsVector()
+		if len(vec) != 4 {
+			return fmt.Errorf("repository info list must be of length 4, but is: %d (%v)", len(vec), pair)
+		}
+		nameSym, isSymbol := sx.GetSymbol(vec[0])
+		if !isSymbol {
+			return fmt.Errorf("name component ist not a symbol, but: %T/%v", vec[0], vec[0])
+		}
+		name := nameSym.GoString()
+		if len(cfg.Repositories) > 0 {
+			if _, found := cfg.Repositories[name]; found {
+				return fmt.Errorf("repository %q already defined", name)
+			}
+		}
+		descr, isString := sx.GetString(vec[1])
+		if !isString {
+			return fmt.Errorf("description component ist not a string, but: %T/%v", vec[1], vec[1])
+		}
+		repoTypeSym, isSymbol := sx.GetSymbol(vec[2])
+		if !isSymbol {
+			return fmt.Errorf("repository type component ist not a symbol, but: %T/%v", vec[2], vec[2])
+		}
+		repoType := repoTypeSym.GoString
+		remoteURL, isString := sx.GetString(vec[3])
+		if !isString {
+			return fmt.Errorf("remote URL component ist not a string, but: %T/%v", vec[3], vec[3])
+		}
+		if cfg.Repositories == nil {
+			cfg.Repositories = map[string]Repository{name: {}}
+		}
+		cfg.Repositories[name] = Repository{
+			Name:        name,
+			Description: string(descr),
+			Type:        repoType(),
+			RemoteURL:   string(remoteURL),
 		}
 	}
 	return nil
