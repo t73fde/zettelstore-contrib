@@ -46,6 +46,17 @@
          (td (a (@ (href ,url)) ,url)))
 ))
 
+;;; Node "Vanity"
+
+(define-template vanity
+`((h1 ,NAME)
+  (p ,DESCRIPTION)
+  (p (code "go get " ,NAME))
+  (p (code "import \"" ,NAME "\""))
+  (p "Source: " (a (@ (href ,REMOTE-URL)) ,REMOTE-URL))
+)
+)
+
 ;;; Node "User Agents"
 
 (defun string->item (s) `(li ,s))

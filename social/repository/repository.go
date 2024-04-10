@@ -127,3 +127,11 @@ func (rs *Repositories) GetAllRepositories() []*config.Repository {
 	}
 	return result
 }
+
+// GetRepository returns the repository with the given name, or nil.
+func (rs *Repositories) GetRepository(name string) *config.Repository {
+	if repo, found := rs.repos[name]; found {
+		return repo
+	}
+	return nil
+}

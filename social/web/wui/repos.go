@@ -17,7 +17,9 @@ import (
 	"net/http"
 
 	"zettelstore.de/contrib/social/usecase"
+	"zettelstore.de/contrib/social/web/server"
 	"zettelstore.de/sx.fossil"
+	"zettelstore.de/sx.fossil/sxhtml"
 )
 
 func (wui *WebUI) MakeGetAllRepositoriesHandler(uc usecase.GetAllRepositories) http.HandlerFunc {
@@ -44,5 +46,45 @@ func (wui *WebUI) MakeGetAllRepositoriesHandler(uc usecase.GetAllRepositories) h
 		rdat := wui.makeRenderData("repos", r)
 		rdat.bindObject("REPOS", lb.List())
 		wui.renderTemplate(w, symRepos, rdat)
+	}
+}
+
+func (wui *WebUI) MakeVanityURLHandler(uc usecase.GetRepository) http.HandlerFunc {
+	symVanity := sx.MakeSymbol("vanity")
+	return func(w http.ResponseWriter, r *http.Request) {
+		repoName := r.PathValue("repo")
+		if repoName == "" {
+			server.Error(w, http.StatusNotFound)
+			return
+		}
+		repo, found := uc.Run(repoName)
+		if !found {
+			server.Error(w, http.StatusNotFound)
+			return
+		}
+		if !repo.NeedVanity {
+			http.Redirect(w, r, repo.RemoteURL, http.StatusFound)
+			return
+		}
+
+		importName := "t73f.de/r/" + repo.Name // TODO: calc prefix
+		rdat := wui.makeRenderData("vanity", r)
+		rdat.bindString("NAME", importName)
+		q := r.URL.Query()
+		if val := q.Get("go-get"); val == "1" {
+			importContent := importName + " " + repo.Kind + " " + repo.RemoteURL
+			vanityMeta := sx.MakeList(
+				sx.MakeSymbol("meta"),
+				sx.MakeList(
+					sxhtml.SymAttr,
+					sx.Cons(sx.MakeSymbol("name"), sx.String("go-import")),
+					sx.Cons(sx.MakeSymbol("content"), sx.String(importContent)),
+				),
+			)
+			rdat.bindObject("META", sx.Cons(vanityMeta, sx.Nil()))
+		}
+		rdat.bindString("DESCRIPTION", repo.Description)
+		rdat.bindString("REMOTE-URL", repo.RemoteURL)
+		wui.renderTemplate(w, symVanity, rdat)
 	}
 }

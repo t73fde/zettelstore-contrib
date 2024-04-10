@@ -81,6 +81,7 @@ func (wui *WebUI) makeRenderData(name string, r *http.Request) *renderData {
 		bind:    wui.baseBinding.MakeChildBinding(name, 128),
 		etag:    "",
 	}
+	rdat.bindObject("META", sx.Nil())
 	urlPath := r.URL.Path
 	rdat.bindString("URL-PATH", urlPath)
 

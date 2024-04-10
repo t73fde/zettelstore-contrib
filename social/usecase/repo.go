@@ -30,7 +30,7 @@ type Repository struct {
 	NeedVanity  bool
 }
 
-// GetAllRepositoriesPort contains all needed repostiry functions for the use case.
+// GetAllRepositoriesPort contains all needed repository functions for the use case.
 type GetAllRepositoriesPort interface {
 	GetAllRepositories() []*config.Repository
 }
@@ -56,6 +56,30 @@ func (gr GetAllRepositories) Run() []Repository {
 		return strings.Compare(a.Name, b.Name)
 	})
 	return result
+}
+
+// GetRepositoryPort defines acces to the repository function to fetch a source code repository.
+type GetRepositoryPort interface {
+	GetRepository(string) *config.Repository
+}
+
+// GetRepository is the use case to retrieve a specific reposity.
+type GetRepository struct {
+	port GetRepositoryPort
+}
+
+// NewGetRepository creates a new use case.
+func NewGetRepository(port GetRepositoryPort) GetRepository {
+	return GetRepository{port: port}
+}
+
+// Run the use case.
+func (uc GetRepository) Run(name string) (Repository, bool) {
+	rRepo := uc.port.GetRepository(name)
+	if rRepo == nil {
+		return Repository{}, false
+	}
+	return makeRepository(rRepo), true
 }
 
 var symGo = sx.MakeSymbol("go")

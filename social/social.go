@@ -101,6 +101,7 @@ func setupRouting(
 		"repos":       webui.MakeGetAllRepositoriesHandler(usecase.NewGetAllRepositories(rs)),
 		"test":        webui.MakeTestHandler(),
 		"user-agents": userAgentsHandler,
+		"vanity":      webui.MakeVanityURLHandler(usecase.NewGetRepository(rs)),
 	}
 
 	h.HandleFunc("GET /", webui.MakeDocumentHandler(cfg.DocumentRoot))
