@@ -27,8 +27,15 @@ func (wui *WebUI) MakeGetAllRepositoriesHandler(uc usecase.GetAllRepositories) h
 
 		var lb sx.ListBuilder
 		for _, repo := range repos {
+			var repoVanity string
+			if repo.NeedVanity {
+				// TODO: fetch "/r" from site info
+				ub := wui.NewURLBuilder().AddPath("/r").AddPath(repo.Name)
+				repoVanity = ub.String()
+			}
 			vec := sx.Vector{
 				sx.String(repo.Name),
+				sx.String(repoVanity),
 				sx.String(repo.Description),
 				sx.String(repo.RemoteURL),
 			}

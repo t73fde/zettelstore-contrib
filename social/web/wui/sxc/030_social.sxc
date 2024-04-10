@@ -39,8 +39,11 @@
 
 (defun repo-entry (r)
   (let ((name (nth r 0))
-        (url (nth r 2)))
-    `(tr (td ,name) (td ,(nth r 1)) (td (a (@ (href ,url)) ,url)))
+        (vanity (nth r 1))
+        (url (nth r 3)))
+    `(tr (td ,(if vanity `(a (@ (href ,vanity)) ,name) name))
+         (td ,(nth r 2))
+         (td (a (@ (href ,url)) ,url)))
 ))
 
 ;;; Node "User Agents"
