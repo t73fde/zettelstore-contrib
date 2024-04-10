@@ -45,8 +45,9 @@ func main() {
 
 	uaColl := repository.MakeUACollector(createUAStatusFunc(&cfg))
 	fr := repository.NewFileReader(cfg.DataRoot)
+	rs := repository.NewRepositories(cfg.Repositories)
 	h := server.NewHandler(cfg.MakeLogger("HTTP"), usecase.NewAddUserAgent(uaColl))
-	if err := setupRouting(h, uaColl, fr, &cfg); err != nil {
+	if err := setupRouting(h, uaColl, fr, rs, &cfg); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		var execErr sxeval.ExecuteError
 		if errors.As(err, &execErr) {
@@ -80,7 +81,13 @@ func createUAStatusFunc(cfg *config.Config) func(string) int {
 	}
 }
 
-func setupRouting(h *server.Handler, uaColl *repository.UACollector, fr *repository.FileReader, cfg *config.Config) error {
+func setupRouting(
+	h *server.Handler,
+	uaColl *repository.UACollector,
+	fr *repository.FileReader,
+	rs *repository.Repositories,
+	cfg *config.Config,
+) error {
 	webui, err := wui.NewWebUI(cfg.MakeLogger("WebUI"), cfg.TemplateRoot, cfg.Site)
 	if err != nil {
 		return err
@@ -91,6 +98,7 @@ func setupRouting(h *server.Handler, uaColl *repository.UACollector, fr *reposit
 		"blogroll":    webui.MakeBlogrollHandler(usecase.NewGetBlogroll(fr)),
 		"header":      webui.MakeHeaderHandler(),
 		"html":        webui.MakeGetPageHandler(usecase.NewGetPage(fr)),
+		"repos":       webui.MakeGetAllRepositoriesHandler(usecase.NewGetAllRepositories(rs)),
 		"test":        webui.MakeTestHandler(),
 		"user-agents": userAgentsHandler,
 	}

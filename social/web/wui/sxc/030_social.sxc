@@ -25,6 +25,24 @@
     `(li (a (@ (href ,(cdr p))) ,(car p)))
 )
 
+;;; Node "Repo-List
+
+(define-template repo-list
+`((h1, TITLE)
+  (table
+    (thead
+      (tr (th "Name") (th "Description") (th "URL")))
+    (tbody ,@(map repo-entry REPOS)
+    ))
+)
+)
+
+(defun repo-entry (r)
+  (let ((name (nth r 0))
+        (url (nth r 2)))
+    `(tr (td ,name) (td ,(nth r 1)) (td (a (@ (href ,url)) ,url)))
+))
+
 ;;; Node "User Agents"
 
 (defun string->item (s) `(li ,s))

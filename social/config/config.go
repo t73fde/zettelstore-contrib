@@ -35,7 +35,7 @@ type Config struct {
 	TemplateRoot string
 	DataRoot     string
 	Debug        bool
-	Repositories map[string]Repository
+	Repositories RepositoryMap
 	RejectUA     *regexp.Regexp
 	ActionUA     []UAAction
 	Site         *site.Site
@@ -48,12 +48,16 @@ func (cfg *Config) MakeLogger(system string) *slog.Logger {
 	return cfg.logger.With("system", system)
 }
 
+// RepositoryMap maps repository names to repository data.
+type RepositoryMap map[string]*Repository
+
 // Repository stores all details about a single source code repository.
 type Repository struct {
-	Name        string
+	Name        *sx.Symbol
 	Description string
-	Type        string
+	Type        *sx.Symbol
 	RemoteURL   string
+	ProgLang    *sx.Symbol
 }
 
 // UAAction stores the regexp match and the resulting values to produce a HTTP response.
@@ -326,8 +330,8 @@ func parseRepositories(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
 			return fmt.Errorf("repository info list expected for %s, got: %T/%v", sym.GoString(), obj, obj)
 		}
 		vec := pair.AsVector()
-		if len(vec) != 4 {
-			return fmt.Errorf("repository info list must be of length 4, but is: %d (%v)", len(vec), pair)
+		if len(vec) != 4 && len(vec) != 5 {
+			return fmt.Errorf("repository info list must be of length 4 or 5, but is: %d (%v)", len(vec), pair)
 		}
 		nameSym, isSymbol := sx.GetSymbol(vec[0])
 		if !isSymbol {
@@ -347,19 +351,27 @@ func parseRepositories(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
 		if !isSymbol {
 			return fmt.Errorf("repository type component ist not a symbol, but: %T/%v", vec[2], vec[2])
 		}
-		repoType := repoTypeSym.GoString
 		remoteURL, isString := sx.GetString(vec[3])
 		if !isString {
 			return fmt.Errorf("remote URL component ist not a string, but: %T/%v", vec[3], vec[3])
 		}
-		if cfg.Repositories == nil {
-			cfg.Repositories = map[string]Repository{name: {}}
+		var progLang *sx.Symbol
+		if len(vec) > 4 {
+			if progLang, isSymbol = sx.GetSymbol(vec[4]); !isSymbol {
+				return fmt.Errorf("repository programming language ist not a symbol, but: %T/%v", vec[4], vec[4])
+			}
 		}
-		cfg.Repositories[name] = Repository{
-			Name:        name,
+		repo := Repository{
+			Name:        nameSym,
 			Description: string(descr),
-			Type:        repoType(),
+			Type:        repoTypeSym,
 			RemoteURL:   string(remoteURL),
+			ProgLang:    progLang,
+		}
+		if cfg.Repositories == nil {
+			cfg.Repositories = RepositoryMap{name: &repo}
+		} else {
+			cfg.Repositories[name] = &repo
 		}
 	}
 	return nil

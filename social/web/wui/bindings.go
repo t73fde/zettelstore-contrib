@@ -60,6 +60,7 @@ var (
 		&sxbuiltins.Cadar,         // cadar
 		&sxbuiltins.LengthGreater, // length>
 		&sxbuiltins.List,          // list
+		&sxbuiltins.Nth,           // nth
 		&sxbuiltins.Map,           // map
 		&sxbuiltins.BoundP,        // bound?
 	}

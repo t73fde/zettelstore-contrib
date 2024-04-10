@@ -21,6 +21,8 @@ import (
 	"path/filepath"
 	"slices"
 	"sync"
+
+	"zettelstore.de/contrib/social/config"
 )
 
 // UACollector collects user agent data.
@@ -99,4 +101,29 @@ func getFileContent(filename string) ([]byte, error) {
 	data, err := io.ReadAll(f)
 	_ = f.Close()
 	return data, err
+}
+
+// Repositories stores all source code repositories.
+type Repositories struct {
+	repos config.RepositoryMap
+}
+
+// NewRepositories creates a new repository repository ;)
+func NewRepositories(cfgRepos config.RepositoryMap) *Repositories {
+	repos := make(config.RepositoryMap, len(cfgRepos))
+	for _, cfgRepo := range cfgRepos {
+		repoData := *cfgRepo // make a copy
+		repos[repoData.Name.GetValue()] = &repoData
+	}
+	return &Repositories{repos}
+}
+
+// GetAllRepositories returns an unsorted list of repositories.
+func (rs *Repositories) GetAllRepositories() []*config.Repository {
+	result := make([]*config.Repository, 0, len(rs.repos))
+	for _, repo := range rs.repos {
+		newRepo := *repo // make a copy
+		result = append(result, &newRepo)
+	}
+	return result
 }
