@@ -44,7 +44,7 @@ func (wui *WebUI) MakeGetPageHandler(ucGetPage usecase.GetPage) http.HandlerFunc
 			return
 		}
 
-		rdat := wui.makeRenderData("user-agent", r)
+		rdat := wui.makeRenderData("page", r)
 		rdat.bindObject("HTML-CONTENT", sx.MakeList(objs...))
 		wui.renderTemplate(w, symHTMLPage, rdat)
 	}
