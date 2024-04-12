@@ -75,7 +75,7 @@ func (wui *WebUI) internRenderTemplateStatus(w http.ResponseWriter, code int, te
 			sx.MakeList(
 				symP,
 				sx.String("Template "),
-				sx.String(templateSym.GoString()),
+				sx.String(templateSym.GetValue()),
 				sx.String(" not found."),
 			))
 	} else {

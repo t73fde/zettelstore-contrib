@@ -57,7 +57,7 @@ type Repository struct {
 	Description string
 	Type        *sx.Symbol
 	RemoteURL   string
-	ProgLang    *sx.Symbol
+	NeedVanity  bool
 }
 
 // UAAction stores the regexp match and the resulting values to produce a HTTP response.
@@ -126,7 +126,7 @@ func (cfg *Config) read() error {
 			continue
 		}
 		if sym, isSymbol := sx.GetSymbol(lst.Car()); isSymbol {
-			if fn, found := cmdMap[sym.GoString()]; found {
+			if fn, found := cmdMap[sym.GetValue()]; found {
 				if errFn := fn(cfg, sym, lst.Tail()); errFn != nil {
 					return errFn
 				}
@@ -247,7 +247,7 @@ func parseNode(sym *sx.Symbol, parent *site.Node, args *sx.Pair) error {
 	car := args.Car()
 	lst, isPair := sx.GetPair(car)
 	if !isPair {
-		return fmt.Errorf("node list expected in %v, but got: %T/%v", sym.GoString(), car, car)
+		return fmt.Errorf("node list expected in %v, but got: %T/%v", sym.GetValue(), car, car)
 	}
 	title, err := parseString(lst, lst)
 	if err != nil {
@@ -307,13 +307,13 @@ func parseNodeAttributes(node *site.Node, args *sx.Pair) error {
 			}
 			node = node.SetLanguage(string(sVal))
 		} else if sx.IsNil(val) {
-			node.SetProperty(sym.GoString(), "")
+			node.SetProperty(sym.GetValue(), "")
 		} else {
 			sVal, isString := sx.GetString(val)
 			if !isString {
-				return fmt.Errorf("attribute %q for node %q must be a string, but is: %T/%v", sym.GoString(), node.Path(), val, val)
+				return fmt.Errorf("attribute %q for node %q must be a string, but is: %T/%v", sym.GetValue(), node.Path(), val, val)
 			}
-			node.SetProperty(sym.GoString(), string(sVal))
+			node.SetProperty(sym.GetValue(), string(sVal))
 		}
 	}
 	return nil
@@ -327,7 +327,7 @@ func parseRepositories(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
 		}
 		pair, isPair := sx.GetPair(obj)
 		if !isPair {
-			return fmt.Errorf("repository info list expected for %s, got: %T/%v", sym.GoString(), obj, obj)
+			return fmt.Errorf("repository info list expected for %s, got: %T/%v", sym.GetValue(), obj, obj)
 		}
 		vec := pair.AsVector()
 		if len(vec) != 4 && len(vec) != 5 {
@@ -337,7 +337,7 @@ func parseRepositories(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
 		if !isSymbol {
 			return fmt.Errorf("name component ist not a symbol, but: %T/%v", vec[0], vec[0])
 		}
-		name := nameSym.GoString()
+		name := nameSym.GetValue()
 		if len(cfg.Repositories) > 0 {
 			if _, found := cfg.Repositories[name]; found {
 				return fmt.Errorf("repository %q already defined", name)
@@ -355,18 +355,16 @@ func parseRepositories(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
 		if !isString {
 			return fmt.Errorf("remote URL component ist not a string, but: %T/%v", vec[3], vec[3])
 		}
-		var progLang *sx.Symbol
+		var needVanity bool
 		if len(vec) > 4 {
-			if progLang, isSymbol = sx.GetSymbol(vec[4]); !isSymbol {
-				return fmt.Errorf("repository programming language ist not a symbol, but: %T/%v", vec[4], vec[4])
-			}
+			needVanity = sx.IsTrue(vec[4])
 		}
 		repo := Repository{
 			Name:        nameSym,
 			Description: string(descr),
 			Type:        repoTypeSym,
 			RemoteURL:   string(remoteURL),
-			ProgLang:    progLang,
+			NeedVanity:  needVanity,
 		}
 		if cfg.Repositories == nil {
 			cfg.Repositories = RepositoryMap{name: &repo}

@@ -15,6 +15,7 @@ package wui
 
 import (
 	"net/http"
+	"strings"
 
 	"zettelstore.de/contrib/social/usecase"
 	"zettelstore.de/contrib/social/web/server"
@@ -24,15 +25,20 @@ import (
 
 func (wui *WebUI) MakeGetAllRepositoriesHandler(uc usecase.GetAllRepositories) http.HandlerFunc {
 	symRepos := sx.MakeSymbol("repo-list")
+	var vanityPath string
+	if site := wui.site; site != nil {
+		if vanityNode := site.GetNode("go-vanity"); vanityNode != nil {
+			vanityPath = strings.TrimSuffix(vanityNode.Path(), "/")
+		}
+	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		repos := uc.Run()
 
 		var lb sx.ListBuilder
 		for _, repo := range repos {
 			var repoVanity string
-			if repo.NeedVanity {
-				// TODO: fetch "/r" from site info
-				ub := wui.NewURLBuilder().AddPath("/r").AddPath(repo.Name)
+			if repo.NeedVanity && vanityPath != "" {
+				ub := wui.NewURLBuilder().AddPath(vanityPath).AddPath(repo.Name)
 				repoVanity = ub.String()
 			}
 			vec := sx.Vector{
@@ -62,17 +68,21 @@ func (wui *WebUI) MakeVanityURLHandler(uc usecase.GetRepository) http.HandlerFun
 			server.Error(w, http.StatusNotFound)
 			return
 		}
-		if !repo.NeedVanity {
+		site := wui.site
+		if !repo.NeedVanity || site == nil {
 			http.Redirect(w, r, repo.RemoteURL, http.StatusFound)
 			return
 		}
 
-		importName := "t73f.de/r/" + repo.Name // TODO: calc prefix
+		node := site.BestNode(r.URL.Path)
+		fullName := site.Name() + site.BasePath() + node.Path() + repo.Name
+
 		rdat := wui.makeRenderData("vanity", r)
-		rdat.bindString("NAME", importName)
+		rdat.bindString("NAME", repo.Name)
+		rdat.bindString("FULL-NAME", fullName)
 		q := r.URL.Query()
 		if val := q.Get("go-get"); val == "1" {
-			importContent := importName + " " + repo.Kind + " " + repo.RemoteURL
+			importContent := fullName + " " + repo.Kind + " " + repo.RemoteURL
 			vanityMeta := sx.MakeList(
 				sx.MakeSymbol("meta"),
 				sx.MakeList(
@@ -85,6 +95,7 @@ func (wui *WebUI) MakeVanityURLHandler(uc usecase.GetRepository) http.HandlerFun
 		}
 		rdat.bindString("DESCRIPTION", repo.Description)
 		rdat.bindString("REMOTE-URL", repo.RemoteURL)
+		rdat.bindString("VCS", repo.Kind)
 		wui.renderTemplate(w, symVanity, rdat)
 	}
 }

@@ -18,7 +18,6 @@ import (
 	"strings"
 
 	"zettelstore.de/contrib/social/config"
-	"zettelstore.de/sx.fossil"
 )
 
 // Repository stores use case specific information about source code repositories.
@@ -82,14 +81,12 @@ func (uc GetRepository) Run(name string) (Repository, bool) {
 	return makeRepository(rRepo), true
 }
 
-var symGo = sx.MakeSymbol("go")
-
 func makeRepository(cfgRepo *config.Repository) Repository {
 	return Repository{
 		Name:        cfgRepo.Name.GetValue(),
 		Description: cfgRepo.Description,
 		Kind:        cfgRepo.Type.GetValue(),
 		RemoteURL:   cfgRepo.RemoteURL,
-		NeedVanity:  symGo.IsEqual(cfgRepo.ProgLang),
+		NeedVanity:  cfgRepo.NeedVanity,
 	}
 }

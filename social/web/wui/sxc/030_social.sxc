@@ -31,7 +31,7 @@
 `((h1, TITLE)
   (table
     (thead
-      (tr (th "Name") (th "Description") (th "URL")))
+      (tr (th "Name") (th "Description") (th "Source")))
     (tbody ,@(map repo-entry REPOS)
     ))
 )
@@ -51,9 +51,17 @@
 (define-template vanity
 `((h1 ,NAME)
   (p ,DESCRIPTION)
-  (p (code "go get " ,NAME))
-  (p (code "import \"" ,NAME "\""))
-  (p "Source: " (a (@ (href ,REMOTE-URL)) ,REMOTE-URL))
+  (dl
+    (dt "Update go.mod:")
+    (dd (code "go get " ,FULL-NAME))
+    (dt "Import statement:")
+    (dd (code "import \"" ,FULL-NAME "\""))
+    (dt "Source:")
+    (dd (a (@ (href ,REMOTE-URL)) ,REMOTE-URL))
+    (dt "Version control:")
+    (dd (code ,VCS))
+    (dd "(make sure to install it on your computer)")
+  )
 )
 )
 

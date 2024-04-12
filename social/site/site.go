@@ -28,6 +28,7 @@ type Site struct {
 	basepath string
 	language string
 	root     *Node
+	nodes    map[string]*Node
 }
 
 // CreateSite creates a web site model with the given site name, base path, and
@@ -39,12 +40,14 @@ func CreateSite(name, path string, root *Node) (*Site, error) {
 	if path[len(path)-1] != '/' {
 		return nil, fmt.Errorf("site path must end with '/', but got %q", path)
 	}
-	return &Site{
+	site := &Site{
 		name:     name,
 		basepath: path,
 		language: DefaultLanguage,
 		root:     root,
-	}, nil
+	}
+	root.site = site
+	return site, nil
 }
 
 // Name returns the name of the site.
@@ -78,9 +81,20 @@ func (st *Site) BestNode(path string) *Node {
 	return st.root.BestNode(relpath)
 }
 
+// GetNode returns the node with the given ID, or nil.
+func (st *Site) GetNode(id string) *Node {
+	if nodes := st.nodes; len(nodes) > 0 {
+		if n, found := nodes[id]; found {
+			return n
+		}
+	}
+	return nil
+}
+
 // Node contains all data about a node within a site, identified by the path of
 // its parent and its own path.
 type Node struct {
+	site       *Site
 	parent     *Node
 	children   []*Node
 	title      string
@@ -93,6 +107,7 @@ type Node struct {
 // CreateRootNode creates a root node to be given as a argument to [CreateSite].
 func CreateRootNode(title string) *Node {
 	return &Node{
+		site:       nil,
 		parent:     nil,
 		children:   nil,
 		title:      title,
@@ -119,6 +134,7 @@ func (n *Node) CreateNode(title, nodepath string) (*Node, error) {
 		}
 	}
 	node := &Node{
+		site:       n.site,
 		parent:     n,
 		title:      title,
 		nodepath:   nodepath,
@@ -130,13 +146,31 @@ func (n *Node) CreateNode(title, nodepath string) (*Node, error) {
 	return node, nil
 }
 
+// Node property names
+const (
+	PropertyID = "id"
+)
+
 // SetProperty sets the given property key with the given value.
-func (n *Node) SetProperty(key, val string) {
+func (n *Node) SetProperty(key, val string) error {
+	switch key {
+	case PropertyID:
+		if len(n.site.nodes) > 0 {
+			if _, found := n.site.nodes[val]; found {
+				return fmt.Errorf("node ID %q already given to another node", val)
+			}
+			n.site.nodes[val] = n
+			return nil
+		}
+		n.site.nodes = map[string]*Node{val: n}
+		return nil
+	}
 	if n.properties == nil {
 		n.properties = map[string]string{key: val}
-		return
+		return nil
 	}
 	n.properties[key] = val
+	return nil
 }
 
 // GetProperty returns the property value of the given key, plus an indication,

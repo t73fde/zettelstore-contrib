@@ -125,7 +125,7 @@ func (rdat *renderData) calcETag() {
 		if !found {
 			continue
 		}
-		buf.WriteString(sym.GoString())
+		buf.WriteString(sym.GetValue())
 		buf.WriteString(val.GoString())
 	}
 	rdat.etag = etagFromBytes(buf.Bytes())
