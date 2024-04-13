@@ -16,9 +16,9 @@ package main
 import (
 	"log"
 
+	"t73f.de/r/sx"
 	"zettelstore.de/client.fossil/api"
 	"zettelstore.de/client.fossil/sz"
-	"zettelstore.de/sx.fossil"
 )
 
 // Constants for zettel metadata keys

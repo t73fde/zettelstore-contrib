@@ -29,13 +29,13 @@ import (
 
 	"golang.org/x/term"
 
+	"t73f.de/r/sx"
+	"t73f.de/r/sx/sxhtml"
 	"zettelstore.de/client.fossil/api"
 	"zettelstore.de/client.fossil/client"
 	"zettelstore.de/client.fossil/shtml"
 	"zettelstore.de/client.fossil/sz"
 	"zettelstore.de/client.fossil/text"
-	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxhtml"
 )
 
 const langDE = "de"

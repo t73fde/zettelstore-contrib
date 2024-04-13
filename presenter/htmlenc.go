@@ -21,11 +21,11 @@ import (
 	"net/http"
 	"strings"
 
+	"t73f.de/r/sx"
+	"t73f.de/r/sx/sxhtml"
 	"zettelstore.de/client.fossil/api"
 	"zettelstore.de/client.fossil/shtml"
 	"zettelstore.de/client.fossil/sz"
-	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxhtml"
 )
 
 type htmlGenerator struct {
