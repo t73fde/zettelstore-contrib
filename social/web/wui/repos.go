@@ -17,10 +17,10 @@ import (
 	"net/http"
 	"strings"
 
+	"t73f.de/r/sx"
+	"t73f.de/r/sx/sxhtml"
 	"zettelstore.de/contrib/social/usecase"
 	"zettelstore.de/contrib/social/web/server"
-	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxhtml"
 )
 
 func (wui *WebUI) MakeGetAllRepositoriesHandler(uc usecase.GetAllRepositories) http.HandlerFunc {

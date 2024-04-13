@@ -18,9 +18,9 @@ import (
 	"net/http"
 	"path"
 
+	"t73f.de/r/sx"
+	"t73f.de/r/sx/sxreader"
 	"zettelstore.de/contrib/social/usecase"
-	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxreader"
 )
 
 // MakeGetPageHandler creates a new HTTP handler to show the content of a

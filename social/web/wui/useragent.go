@@ -18,9 +18,9 @@ import (
 	"fmt"
 	"net/http"
 
+	"t73f.de/r/sx"
 	"zettelstore.de/contrib/social/usecase"
 	"zettelstore.de/contrib/social/web/server"
-	"zettelstore.de/sx.fossil"
 )
 
 // MakeGetAllUAHandler creates a new HTTP handler to display the list of found

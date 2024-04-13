@@ -25,11 +25,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"t73f.de/r/sx"
+	"t73f.de/r/sx/sxeval"
+	"t73f.de/r/sx/sxreader"
 	"zettelstore.de/contrib/social/site"
 	"zettelstore.de/contrib/social/web"
-	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxeval"
-	"zettelstore.de/sx.fossil/sxreader"
 )
 
 // WebUI stores data relevant to the web user interface adapter.

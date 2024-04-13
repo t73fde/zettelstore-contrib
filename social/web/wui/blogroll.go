@@ -16,8 +16,8 @@ package wui
 import (
 	"net/http"
 
+	"t73f.de/r/sx"
 	"zettelstore.de/contrib/social/usecase"
-	"zettelstore.de/sx.fossil"
 )
 
 func (wui *WebUI) MakeBlogrollHandler(ucBlogroll usecase.GetBlogroll) http.HandlerFunc {

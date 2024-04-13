@@ -17,7 +17,7 @@ import (
 	"net/http"
 	"slices"
 
-	"zettelstore.de/sx.fossil"
+	"t73f.de/r/sx"
 )
 
 // MakeHeaderHandler returns a HTTP handler that shows all HTTP header.

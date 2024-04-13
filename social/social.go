@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"os"
 
+	"t73f.de/r/sx/sxeval"
 	"zettelstore.de/contrib/social/config"
 	"zettelstore.de/contrib/social/kernel"
 	"zettelstore.de/contrib/social/repository"
@@ -28,7 +29,6 @@ import (
 	"zettelstore.de/contrib/social/usecase"
 	"zettelstore.de/contrib/social/web/server"
 	"zettelstore.de/contrib/social/web/wui"
-	"zettelstore.de/sx.fossil/sxeval"
 )
 
 func main() {

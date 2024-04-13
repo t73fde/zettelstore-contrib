@@ -20,9 +20,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxeval"
-	"zettelstore.de/sx.fossil/sxhtml"
+	"t73f.de/r/sx"
+	"t73f.de/r/sx/sxeval"
+	"t73f.de/r/sx/sxhtml"
 )
 
 const contentName = "CONTENT"

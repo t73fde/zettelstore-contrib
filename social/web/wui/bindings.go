@@ -16,11 +16,11 @@ package wui
 import (
 	"slices"
 
+	"t73f.de/r/sx"
+	"t73f.de/r/sx/sxbuiltins"
+	"t73f.de/r/sx/sxeval"
+	"t73f.de/r/sx/sxhtml"
 	"zettelstore.de/contrib/social/site"
-	"zettelstore.de/sx.fossil"
-	"zettelstore.de/sx.fossil/sxbuiltins"
-	"zettelstore.de/sx.fossil/sxeval"
-	"zettelstore.de/sx.fossil/sxhtml"
 )
 
 func (wui *WebUI) createRootBinding() (*sxeval.Binding, error) {
