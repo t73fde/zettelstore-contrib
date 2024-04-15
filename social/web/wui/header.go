@@ -33,9 +33,9 @@ func (wui *WebUI) MakeHeaderHandler() http.HandlerFunc {
 		var headerList sx.ListBuilder
 		headerList.Add(symDL)
 		for _, key := range keys {
-			headerList.Add(sx.MakeList(symDT, sx.String(key)))
+			headerList.Add(sx.MakeList(symDT, sx.MakeString(key)))
 			for _, val := range r.Header[key] {
-				headerList.Add(sx.MakeList(symDD, sx.String(val)))
+				headerList.Add(sx.MakeList(symDD, sx.MakeString(val)))
 			}
 		}
 

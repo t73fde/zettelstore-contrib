@@ -30,7 +30,7 @@ func (wui *WebUI) MakeBlogrollHandler(ucBlogroll usecase.GetBlogroll) http.Handl
 		}
 		var lb sx.ListBuilder
 		for _, sl := range bloginfo {
-			lb.Add(sx.Cons(sx.String(sl.Title), sx.String(sl.URL)))
+			lb.Add(sx.Cons(sx.MakeString(sl.Title), sx.MakeString(sl.URL)))
 		}
 
 		rdat := wui.makeRenderData("blogroll", r)

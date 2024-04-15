@@ -192,7 +192,7 @@ func parseString(obj sx.Object, args *sx.Pair) (string, error) {
 	}
 	val := args.Car()
 	if sVal, isString := sx.GetString(val); isString {
-		return string(sVal), nil
+		return sVal.GetValue(), nil
 	}
 	return "", fmt.Errorf("expected string value in %v, but got: %T/%v", obj.GoString(), val, val)
 }
@@ -302,10 +302,10 @@ func parseNodeAttributes(node *site.Node, args *sx.Pair) error {
 			node = node.SetInvisible()
 		} else if sym.IsEqual(sx.MakeSymbol("language")) {
 			sVal, isString := sx.GetString(val)
-			if !isString || sVal == "" {
+			if !isString || sVal.GetValue() == "" {
 				return fmt.Errorf("language value for node %q must be a non-empty string, but is: %T/%v", node.Path(), val, val)
 			}
-			node = node.SetLanguage(string(sVal))
+			node = node.SetLanguage(sVal.GetValue())
 		} else if sx.IsNil(val) {
 			node.SetProperty(sym.GetValue(), "")
 		} else {
@@ -313,7 +313,7 @@ func parseNodeAttributes(node *site.Node, args *sx.Pair) error {
 			if !isString {
 				return fmt.Errorf("attribute %q for node %q must be a string, but is: %T/%v", sym.GetValue(), node.Path(), val, val)
 			}
-			node.SetProperty(sym.GetValue(), string(sVal))
+			node.SetProperty(sym.GetValue(), sVal.GetValue())
 		}
 	}
 	return nil
@@ -361,9 +361,9 @@ func parseRepositories(cfg *Config, sym *sx.Symbol, args *sx.Pair) error {
 		}
 		repo := Repository{
 			Name:        nameSym,
-			Description: string(descr),
+			Description: descr.GetValue(),
 			Type:        repoTypeSym,
-			RemoteURL:   string(remoteURL),
+			RemoteURL:   remoteURL.GetValue(),
 			NeedVanity:  needVanity,
 		}
 		if cfg.Repositories == nil {
@@ -383,7 +383,7 @@ func parseRejectUA(cfg *Config, _ *sx.Symbol, args *sx.Pair) error {
 			continue
 		}
 		if sVal, isString := sx.GetString(obj); isString {
-			re, err := regexp.Compile(string(sVal))
+			re, err := regexp.Compile(sVal.GetValue())
 			if err != nil {
 				return err
 			}
@@ -393,7 +393,7 @@ func parseRejectUA(cfg *Config, _ *sx.Symbol, args *sx.Pair) error {
 		if pair, isPair := sx.GetPair(obj); isPair {
 			first := pair.Car()
 			if sVal, isString := sx.GetString(first); isString {
-				re, err := regexp.Compile(string(sVal))
+				re, err := regexp.Compile(sVal.GetValue())
 				if err != nil {
 					return err
 				}

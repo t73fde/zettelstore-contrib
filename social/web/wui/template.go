@@ -74,12 +74,12 @@ func (wui *WebUI) internRenderTemplateStatus(w http.ResponseWriter, code int, te
 			contentName,
 			sx.MakeList(
 				symP,
-				sx.String("Template "),
-				sx.String(templateSym.GetValue()),
-				sx.String(" not found."),
+				sx.MakeString("Template "),
+				sx.MakeString(templateSym.GetValue()),
+				sx.MakeString(" not found."),
 			))
 	} else {
-		rdat.bindObject(contentName, sx.MakeList(symP, sx.String("No template given.")))
+		rdat.bindObject(contentName, sx.MakeList(symP, sx.MakeString("No template given.")))
 	}
 	obj, err := env.Eval(sx.MakeList(sx.MakeSymbol("render-template"), sx.MakeSymbol(nameLayout)))
 	if err != nil {
@@ -104,7 +104,7 @@ func (wui *WebUI) internRenderTemplateStatus(w http.ResponseWriter, code int, te
 func (wui *WebUI) MakeTestHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rdat := wui.makeRenderData("test", r)
-		rdat.bindObject("CONTENT", sx.MakeList(symP, sx.String(fmt.Sprintf("Some content, url is: %q", r.URL))))
+		rdat.bindObject("CONTENT", sx.MakeList(symP, sx.MakeString(fmt.Sprintf("Some content, url is: %q", r.URL))))
 		wui.renderTemplate(w, nil, rdat)
 	}
 }

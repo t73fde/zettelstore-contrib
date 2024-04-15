@@ -114,7 +114,7 @@ func (rdat *renderData) bindObject(key string, obj sx.Object) {
 }
 func (rdat *renderData) bindString(key, val string) {
 	if rdat.err == nil {
-		rdat.err = rdat.bind.Bind(sx.MakeSymbol(key), sx.String(val))
+		rdat.err = rdat.bind.Bind(sx.MakeSymbol(key), sx.MakeString(val))
 	}
 }
 

@@ -74,7 +74,7 @@ func (wui *WebUI) MakeGetAllUAHandler(ucAllUA usecase.GetAllUserAgents) http.Han
 func stringsTosxList(sl []string) *sx.Pair {
 	var lb sx.ListBuilder
 	for _, s := range sl {
-		lb.Add(sx.String(s))
+		lb.Add(sx.MakeString(s))
 	}
 	return lb.List()
 }

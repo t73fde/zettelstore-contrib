@@ -42,10 +42,10 @@ func (wui *WebUI) MakeGetAllRepositoriesHandler(uc usecase.GetAllRepositories) h
 				repoVanity = ub.String()
 			}
 			vec := sx.Vector{
-				sx.String(repo.Name),
-				sx.String(repoVanity),
-				sx.String(repo.Description),
-				sx.String(repo.RemoteURL),
+				sx.MakeString(repo.Name),
+				sx.MakeString(repoVanity),
+				sx.MakeString(repo.Description),
+				sx.MakeString(repo.RemoteURL),
 			}
 			lb.Add(vec)
 		}
@@ -87,8 +87,8 @@ func (wui *WebUI) MakeVanityURLHandler(uc usecase.GetRepository) http.HandlerFun
 				sx.MakeSymbol("meta"),
 				sx.MakeList(
 					sxhtml.SymAttr,
-					sx.Cons(sx.MakeSymbol("name"), sx.String("go-import")),
-					sx.Cons(sx.MakeSymbol("content"), sx.String(importContent)),
+					sx.Cons(sx.MakeSymbol("name"), sx.MakeString("go-import")),
+					sx.Cons(sx.MakeSymbol("content"), sx.MakeString(importContent)),
 				),
 			)
 			rdat.bindObject("META", sx.Cons(vanityMeta, sx.Nil()))

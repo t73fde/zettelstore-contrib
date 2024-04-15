@@ -73,7 +73,7 @@ func (wui *WebUI) bindExtra(root *sxeval.Binding) error {
 		MaxArity: -1,
 		TestPure: sxeval.AssertPure,
 		Fn0: func(_ *sxeval.Environment) (sx.Object, error) {
-			return sx.String(wui.NewURLBuilder().String()), nil
+			return sx.MakeString(wui.NewURLBuilder().String()), nil
 		},
 		Fn1: func(_ *sxeval.Environment, arg sx.Object) (sx.Object, error) {
 			ub := wui.NewURLBuilder()
@@ -81,8 +81,8 @@ func (wui *WebUI) bindExtra(root *sxeval.Binding) error {
 			if err != nil {
 				return nil, err
 			}
-			ub = ub.AddPath(string(s))
-			return sx.String(ub.String()), nil
+			ub = ub.AddPath(s.GetValue())
+			return sx.MakeString(ub.String()), nil
 		},
 		Fn2: func(_ *sxeval.Environment, arg0, arg1 sx.Object) (sx.Object, error) {
 			ub := wui.NewURLBuilder()
@@ -90,13 +90,13 @@ func (wui *WebUI) bindExtra(root *sxeval.Binding) error {
 			if err != nil {
 				return nil, err
 			}
-			ub = ub.AddPath(string(s))
+			ub = ub.AddPath(s.GetValue())
 			s, err = sxbuiltins.GetString(arg1, 1)
 			if err != nil {
 				return nil, err
 			}
-			ub = ub.AddPath(string(s))
-			return sx.String(ub.String()), nil
+			ub = ub.AddPath(s.GetValue())
+			return sx.MakeString(ub.String()), nil
 		},
 		Fn: func(_ *sxeval.Environment, args sx.Vector) (sx.Object, error) {
 			ub := wui.NewURLBuilder()
@@ -105,9 +105,9 @@ func (wui *WebUI) bindExtra(root *sxeval.Binding) error {
 				if err != nil {
 					return nil, err
 				}
-				ub = ub.AddPath(string(sVal))
+				ub = ub.AddPath(sVal.GetValue())
 			}
-			return sx.String(ub.String()), nil
+			return sx.MakeString(ub.String()), nil
 		},
 	})
 	if err != nil {
@@ -127,7 +127,7 @@ func (wui *WebUI) bindExtra(root *sxeval.Binding) error {
 			if site == nil {
 				return sx.Nil(), nil
 			}
-			node := site.BestNode(string(sPath))
+			node := site.BestNode(sPath.GetValue())
 			topLevel := buildNavList(site, node)
 			return topLevel, nil
 		},
@@ -193,7 +193,7 @@ func buildNavLevel(st *site.Site, lb *sx.ListBuilder, ancestors, children []*sit
 				}
 			}
 			lb.Add(sx.MakeList(
-				symLI, sx.MakeList(sxhtml.SymAttr, sx.Cons(symClass, sx.String("sub-menu"))), sub.List(),
+				symLI, sx.MakeList(sxhtml.SymAttr, sx.Cons(symClass, sx.MakeString("sub-menu"))), sub.List(),
 			))
 		}
 	}
@@ -203,9 +203,9 @@ func makeNavItem(st *site.Site, node, active *site.Node) *sx.Pair {
 	var lb sx.ListBuilder
 	lb.Add(symLI)
 	if node == active {
-		lb.Add(sx.MakeList(sxhtml.SymAttr, sx.Cons(symClass, sx.String("active"))))
+		lb.Add(sx.MakeList(sxhtml.SymAttr, sx.Cons(symClass, sx.MakeString("active"))))
 	}
-	lb.Add(makeSimpleLink(sx.String(st.Path(node)), sx.String(node.Title())))
+	lb.Add(makeSimpleLink(sx.MakeString(st.Path(node)), sx.MakeString(node.Title())))
 	return lb.List()
 }
 
