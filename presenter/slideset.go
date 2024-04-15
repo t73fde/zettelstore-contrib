@@ -456,7 +456,7 @@ func (ce *collectEnv) visitContent(content *sx.Pair) {
 			}
 			if sz.SymLinkZettel.IsEqual(sym) {
 				if zidVal, isString := sx.GetString(o.Tail().Tail().Car()); isString {
-					if zid := api.ZettelID(zidVal); zid.IsValid() {
+					if zid := api.ZettelID(zidVal.GetValue()); zid.IsValid() {
 						ce.visitZettel(zid)
 					}
 				}
@@ -478,7 +478,7 @@ func (ce *collectEnv) visitContent(content *sx.Pair) {
 				if !isString {
 					continue
 				}
-				zid := api.ZettelID(zidVal)
+				zid := api.ZettelID(zidVal.GetValue())
 				if !zid.IsValid() {
 					continue
 				}
@@ -546,7 +546,7 @@ func getZettelTitleZid(sxMeta sz.Meta, zid api.ZettelID) *sx.Pair {
 	if title := sxMeta.GetPair(api.KeyTitle); title != nil {
 		return title
 	}
-	return sx.Cons(sz.SymText, sx.Cons(sx.String(string(zid)), sx.Nil()))
+	return sx.Cons(sz.SymText, sx.Cons(sx.MakeString(string(zid)), sx.Nil()))
 }
 
 func getSlideTitle(sxMeta sz.Meta) *sx.Pair {
@@ -573,5 +573,5 @@ func getSlideTitleZid(sxMeta sz.Meta, zid api.ZettelID) *sx.Pair {
 }
 
 func makeTitleList(s string) *sx.Pair {
-	return sx.MakeList(sz.SymInline, sx.MakeList(sz.SymText, sx.String(s)))
+	return sx.MakeList(sz.SymInline, sx.MakeList(sz.SymText, sx.MakeString(s)))
 }

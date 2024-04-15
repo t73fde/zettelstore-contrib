@@ -272,7 +272,7 @@ func processZettel(w http.ResponseWriter, r *http.Request, cfg *slidesConfig, zi
 	gen := newGenerator(nil, langDE, nil, true, false)
 
 	headHtml := getHTMLHead("")
-	headHtml.LastPair().AppendBang(sx.MakeList(shtml.SymTitle, sx.String(text.EvaluateInlineString(title))))
+	headHtml.LastPair().AppendBang(sx.MakeList(shtml.SymTitle, sx.MakeString(text.EvaluateInlineString(title))))
 
 	headerHtml := sx.MakeList(
 		sx.MakeSymbol("header"),
@@ -293,9 +293,9 @@ func processZettel(w http.ResponseWriter, r *http.Request, cfg *slidesConfig, zi
 				shtml.SymA,
 				sx.MakeList(
 					sxhtml.SymAttr,
-					sx.Cons(shtml.SymAttrHref, sx.String(cfg.c.Base()+"h/"+string(zid))),
+					sx.Cons(shtml.SymAttrHref, sx.MakeString(cfg.c.Base()+"h/"+string(zid))),
 				),
-				sx.String("\u266e"),
+				sx.MakeString("\u266e"),
 			),
 		),
 	)
@@ -316,18 +316,18 @@ func getURLHtml(sxMeta sz.Meta) *sx.Pair {
 		}
 		li := sx.MakeList(
 			shtml.SymLI,
-			sx.String(k),
-			sx.String(": "),
+			sx.MakeString(k),
+			sx.MakeString(": "),
 			sx.MakeList(
 				shtml.SymA,
 				sx.MakeList(
 					sxhtml.SymAttr,
 					sx.Cons(shtml.SymAttrHref, s),
-					sx.Cons(shtml.SymAttrTarget, sx.String("_blank")),
+					sx.Cons(shtml.SymAttrTarget, sx.MakeString("_blank")),
 				),
 				s,
 			),
-			sx.String("\u279a"),
+			sx.MakeString("\u279a"),
 		)
 		lst = lst.Cons(li)
 	}
@@ -362,7 +362,7 @@ func renderSlideTOC(w http.ResponseWriter, slides *slideSet) {
 	gen := newGenerator(nil, langDE, nil, false, false)
 
 	headHtml := getHTMLHead("")
-	headHtml.LastPair().AppendBang(sx.MakeList(shtml.SymTitle, sx.String(text.EvaluateInlineString(showTitle))))
+	headHtml.LastPair().AppendBang(sx.MakeList(shtml.SymTitle, sx.MakeString(text.EvaluateInlineString(showTitle))))
 
 	hxShowTitle := gen.TransformList(showTitle)
 	headerHtml := sx.MakeList(
@@ -384,9 +384,9 @@ func renderSlideTOC(w http.ResponseWriter, slides *slideSet) {
 	bodyHtml := sx.MakeList(shtml.SymBody, headerHtml, lstSlide)
 	bodyHtml.LastPair().AppendBang(sx.MakeList(
 		shtml.SymP,
-		getSimpleLink("/"+string(slides.zid)+".reveal", sx.MakeList(sx.String("Reveal"))),
-		sx.String(", "),
-		getSimpleLink("/"+string(slides.zid)+".html", sx.MakeList(sx.String("Handout"))),
+		getSimpleLink("/"+string(slides.zid)+".reveal", sx.MakeList(sx.MakeString("Reveal"))),
+		sx.MakeString(", "),
+		getSimpleLink("/"+string(slides.zid)+".html", sx.MakeList(sx.MakeString("Handout"))),
 	))
 
 	gen.writeHTMLDocument(w, slides.Lang(), headHtml, bodyHtml)
@@ -440,7 +440,7 @@ func (rr *revealRenderer) Render(w http.ResponseWriter, slides *slideSet, author
 	headHtml.LastPair().AppendBang(getHeadLink("stylesheet", "revealjs/reveal.css")).
 		AppendBang(getHeadLink("stylesheet", "revealjs/theme/white.css")).
 		AppendBang(getHeadLink("stylesheet", "revealjs/plugin/highlight/default.css")).
-		AppendBang(sx.MakeList(shtml.SymTitle, sx.String(text.EvaluateInlineString(title))))
+		AppendBang(sx.MakeList(shtml.SymTitle, sx.MakeString(text.EvaluateInlineString(title))))
 	lang := slides.Lang()
 
 	slidesHtml := sx.MakeList(shtml.SymDIV, getClassAttr("slides"))
@@ -460,7 +460,7 @@ func (rr *revealRenderer) Render(w http.ResponseWriter, slides *slideSet, author
 			curr.AppendBang(sx.MakeList(
 				shtml.SymP,
 				getClassAttr("author"),
-				sx.String(author),
+				sx.MakeString(author),
 			))
 		}
 		slidesHtml = slidesHtml.LastPair().AppendBang(sx.MakeList(sx.MakeSymbol("section"), hgroupHtml))
@@ -495,10 +495,10 @@ func (rr *revealRenderer) Render(w http.ResponseWriter, slides *slideSet, author
 func getRevealSlide(gen *htmlGenerator, si *slideInfo, lang string) *sx.Pair {
 	attr := sx.MakeList(
 		sxhtml.SymAttr,
-		sx.Cons(shtml.SymAttrId, sx.String(fmt.Sprintf("(%d)", si.SlideNo))),
+		sx.Cons(shtml.SymAttrId, sx.MakeString(fmt.Sprintf("(%d)", si.SlideNo))),
 	)
 	if slLang := si.Slide.lang; slLang != "" && slLang != lang {
-		attr.LastPair().AppendBang(sx.Cons(shtml.SymAttrLang, sx.String(slLang)))
+		attr.LastPair().AppendBang(sx.Cons(shtml.SymAttrLang, sx.MakeString(slLang)))
 	}
 
 	var titleHtml *sx.Pair
@@ -518,10 +518,10 @@ func getRevealSlide(gen *htmlGenerator, si *slideInfo, lang string) *sx.Pair {
 				shtml.SymA,
 				sx.MakeList(
 					sxhtml.SymAttr,
-					sx.Cons(shtml.SymAttrHref, sx.String(string(si.Slide.zid))),
-					sx.Cons(shtml.SymAttrTarget, sx.String("_blank")),
+					sx.Cons(shtml.SymAttrHref, sx.MakeString(string(si.Slide.zid))),
+					sx.Cons(shtml.SymAttrTarget, sx.MakeString("_blank")),
 				),
-				sx.String("\u266e"),
+				sx.MakeString("\u266e"),
 			),
 		))
 	return slideHtml
@@ -532,7 +532,7 @@ func getJSFileScript(src string) *sx.Pair {
 		shtml.SymScript,
 		sx.MakeList(
 			sxhtml.SymAttr,
-			sx.Cons(shtml.SymAttrSrc, sx.String(src)),
+			sx.Cons(shtml.SymAttrSrc, sx.MakeString(src)),
 		),
 	)
 }
@@ -563,7 +563,7 @@ aside.handout { border: 0.2rem solid lightgray }
 	headHtml.LastPair().AppendBang(getSimpleMeta("author", author)).
 		AppendBang(getSimpleMeta("copyright", copyright)).
 		AppendBang(getSimpleMeta("license", license)).
-		AppendBang(sx.MakeList(shtml.SymTitle, sx.String(text.EvaluateInlineString(handoutTitle))))
+		AppendBang(sx.MakeList(shtml.SymTitle, sx.MakeString(text.EvaluateInlineString(handoutTitle))))
 
 	offset := 1
 	lang := slides.Lang()
@@ -574,14 +574,14 @@ aside.handout { border: 0.2rem solid lightgray }
 		headerHtml.LastPair().AppendBang(curr)
 		curr = curr.AppendBang(
 			gen.TransformList(handoutTitle).
-				Cons(sx.MakeList(sxhtml.SymAttr, sx.Cons(shtml.SymAttrId, sx.String("(1)")))).
+				Cons(sx.MakeList(sxhtml.SymAttr, sx.Cons(shtml.SymAttrId, sx.MakeString("(1)")))).
 				Cons(shtml.SymH1))
 		if handoutSubtitle := slides.Subtitle(); handoutSubtitle != nil {
 			curr = curr.AppendBang(gen.TransformList(handoutSubtitle).Cons(shtml.SymH2))
 		}
-		curr.AppendBang(sx.MakeList(shtml.SymP, sx.String(author))).
-			AppendBang(sx.MakeList(shtml.SymP, sx.String(copyright))).
-			AppendBang(sx.MakeList(shtml.SymP, sx.String(license)))
+		curr.AppendBang(sx.MakeList(shtml.SymP, sx.MakeString(author))).
+			AppendBang(sx.MakeList(shtml.SymP, sx.MakeString(copyright))).
+			AppendBang(sx.MakeList(shtml.SymP, sx.MakeString(license)))
 	}
 	articleHtml := sx.MakeList(sx.MakeSymbol("article"))
 	curr := articleHtml
@@ -590,7 +590,7 @@ aside.handout { border: 0.2rem solid lightgray }
 		gen.SetUnique(fmt.Sprintf("%d:", si.Number))
 		idAttr := sx.MakeList(
 			sxhtml.SymAttr,
-			sx.Cons(shtml.SymAttrId, sx.String(fmt.Sprintf("(%d)", si.Number))),
+			sx.Cons(shtml.SymAttrId, sx.MakeString(fmt.Sprintf("(%d)", si.Number))),
 		)
 		sl := si.Slide
 		if slideTitle := sl.title; slideTitle != nil {
@@ -602,7 +602,7 @@ aside.handout { border: 0.2rem solid lightgray }
 		}
 		content := gen.Transform(sl.content)
 		if slLang := sl.lang; slLang != "" && slLang != lang {
-			content = content.Cons(sx.MakeList(sxhtml.SymAttr, sx.Cons(shtml.SymAttrLang, sx.String(slLang)))).Cons(shtml.SymDIV)
+			content = content.Cons(sx.MakeList(sxhtml.SymAttr, sx.Cons(shtml.SymAttrLang, sx.MakeString(slLang)))).Cons(shtml.SymDIV)
 			curr = curr.AppendBang(content)
 		} else {
 			curr = curr.ExtendBang(content)
@@ -617,9 +617,9 @@ func getSlideNoRange(si *slideInfo) *sx.Pair {
 	if fromSlideNo := si.SlideNo; fromSlideNo > 0 {
 		lstSlNo := sx.MakeList(sxhtml.SymNoEscape)
 		if toSlideNo := si.LastChild().SlideNo; fromSlideNo < toSlideNo {
-			lstSlNo.AppendBang(sx.String(fmt.Sprintf(" (S.%d&ndash;%d)", fromSlideNo, toSlideNo)))
+			lstSlNo.AppendBang(sx.MakeString(fmt.Sprintf(" (S.%d&ndash;%d)", fromSlideNo, toSlideNo)))
 		} else {
-			lstSlNo.AppendBang(sx.String(fmt.Sprintf(" (S.%d)", fromSlideNo)))
+			lstSlNo.AppendBang(sx.MakeString(fmt.Sprintf(" (S.%d)", fromSlideNo)))
 		}
 		return sx.MakeList(sx.MakeSymbol("small"), lstSlNo)
 	}
@@ -660,7 +660,7 @@ func processList(w http.ResponseWriter, r *http.Request, c *client.Client) {
 	}
 
 	headHtml := getHTMLHead("")
-	headHtml.LastPair().AppendBang(sx.MakeList(shtml.SymTitle, sx.String(title)))
+	headHtml.LastPair().AppendBang(sx.MakeList(shtml.SymTitle, sx.MakeString(title)))
 
 	ul := sx.MakeList(shtml.SymUL)
 	curr := ul.LastPair()
@@ -669,23 +669,23 @@ func processList(w http.ResponseWriter, r *http.Request, c *client.Client) {
 			shtml.SymLI, getSimpleLink(string(jm.ID), titles[i]),
 		))
 	}
-	bodyHtml := sx.MakeList(shtml.SymBody, sx.MakeList(shtml.SymH1, sx.String(human)), ul)
+	bodyHtml := sx.MakeList(shtml.SymBody, sx.MakeList(shtml.SymH1, sx.MakeString(human)), ul)
 	gen.writeHTMLDocument(w, "", headHtml, bodyHtml)
 }
 
 func getHTMLHead(extraCss string) *sx.Pair {
 	return sx.MakeList(
 		shtml.SymHead,
-		sx.MakeList(shtml.SymMeta, sx.MakeList(sxhtml.SymAttr, sx.Cons(sx.MakeSymbol("charset"), sx.String("utf-8")))),
+		sx.MakeList(shtml.SymMeta, sx.MakeList(sxhtml.SymAttr, sx.Cons(sx.MakeSymbol("charset"), sx.MakeString("utf-8")))),
 		sx.MakeList(shtml.SymMeta, sx.MakeList(
 			sxhtml.SymAttr,
-			sx.Cons(sx.MakeSymbol("name"), sx.String("viewport")),
-			sx.Cons(sx.MakeSymbol("content"), sx.String("width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no")),
+			sx.Cons(sx.MakeSymbol("name"), sx.MakeString("viewport")),
+			sx.Cons(sx.MakeSymbol("content"), sx.MakeString("width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no")),
 		)),
 		sx.MakeList(shtml.SymMeta, sx.MakeList(
 			sxhtml.SymAttr,
-			sx.Cons(sx.MakeSymbol("name"), sx.String("generator")),
-			sx.Cons(sx.MakeSymbol("content"), sx.String("Zettel Presenter")),
+			sx.Cons(sx.MakeSymbol("name"), sx.MakeString("generator")),
+			sx.Cons(sx.MakeSymbol("content"), sx.MakeString("Zettel Presenter")),
 		)),
 		getPrefixedCSS("", extraCss),
 	)
@@ -707,10 +707,10 @@ var defaultCSS = []string{
 func getPrefixedCSS(prefix string, extraCss string) *sx.Pair {
 	var result *sx.Pair
 	if extraCss != "" {
-		result = result.Cons(sx.String(extraCss))
+		result = result.Cons(sx.MakeString(extraCss))
 	}
 	for i := range defaultCSS {
-		result = result.Cons(sx.MakeList(sxhtml.SymNoEscape, sx.String(prefix+defaultCSS[len(defaultCSS)-i-1]+"\n")))
+		result = result.Cons(sx.MakeList(sxhtml.SymNoEscape, sx.MakeString(prefix+defaultCSS[len(defaultCSS)-i-1]+"\n")))
 	}
 	return result.Cons(sx.MakeSymbol("style"))
 }
@@ -720,7 +720,7 @@ func getSimpleLink(url string, text *sx.Pair) *sx.Pair {
 		shtml.SymA,
 		sx.MakeList(
 			sxhtml.SymAttr,
-			sx.Cons(shtml.SymAttrHref, sx.String(url)),
+			sx.Cons(shtml.SymAttrHref, sx.MakeString(url)),
 		),
 	)
 	curr := result.LastPair()
@@ -735,7 +735,7 @@ func getSimpleMeta(key, val string) *sx.Pair {
 		shtml.SymMeta,
 		sx.MakeList(
 			sxhtml.SymAttr,
-			sx.Cons(sx.MakeSymbol(key), sx.String(val)),
+			sx.Cons(sx.MakeSymbol(key), sx.MakeString(val)),
 		),
 	)
 }
@@ -745,15 +745,15 @@ func getHeadLink(rel, href string) *sx.Pair {
 		sx.MakeSymbol("link"),
 		sx.MakeList(
 			sxhtml.SymAttr,
-			sx.Cons(shtml.SymAttrRel, sx.String(rel)),
-			sx.Cons(shtml.SymAttrHref, sx.String(href)),
+			sx.Cons(shtml.SymAttrRel, sx.MakeString(rel)),
+			sx.Cons(shtml.SymAttrHref, sx.MakeString(href)),
 		))
 }
 
 func getClassAttr(class string) *sx.Pair {
 	return sx.MakeList(
 		sxhtml.SymAttr,
-		sx.Cons(shtml.SymAttrClass, sx.String(class)),
+		sx.Cons(shtml.SymAttrClass, sx.MakeString(class)),
 	)
 }
 

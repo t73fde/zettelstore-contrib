@@ -124,16 +124,16 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		if !isString {
 			return obj
 		}
-		zid, _, _ := strings.Cut(string(refVal), "#")
+		zid, _, _ := strings.Cut(refVal.GetValue(), "#")
 		if si := gen.curSlide.FindSlide(api.ZettelID(zid)); si != nil {
-			avals = avals.Cons(sx.Cons(shtml.SymAttrHref, sx.String(fmt.Sprintf("#(%d)", si.Number))))
+			avals = avals.Cons(sx.Cons(shtml.SymAttrHref, sx.MakeString(fmt.Sprintf("#(%d)", si.Number))))
 			attr.SetCdr(avals)
 			return lst
 		}
 		if extZettelLinks {
 			// TODO: make link absolute
 			avals = addClass(avals, "zettel")
-			attr.SetCdr(avals.Cons(sx.Cons(shtml.SymAttrHref, sx.String("/"+zid))))
+			attr.SetCdr(avals.Cons(sx.Cons(shtml.SymAttrHref, sx.MakeString("/"+zid))))
 			return lst
 		}
 		// Do not show link to other, possibly non-public zettel
@@ -155,8 +155,8 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		}
 		avals := attr.Tail()
 		avals = addClass(avals, "external")
-		avals = avals.Cons(sx.Cons(shtml.SymAttrTarget, sx.String("_blank")))
-		avals = avals.Cons(sx.Cons(shtml.SymAttrRel, sx.String("noopener noreferrer")))
+		avals = avals.Cons(sx.Cons(shtml.SymAttrTarget, sx.MakeString("_blank")))
+		avals = avals.Cons(sx.Cons(shtml.SymAttrRel, sx.MakeString("noopener noreferrer")))
 		attr.SetCdr(avals)
 		return lst
 	})
@@ -182,12 +182,12 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		if !isString {
 			return obj
 		}
-		zid := api.ZettelID(zidVal)
+		zid := api.ZettelID(zidVal.GetValue())
 		syntax, isString := sx.GetString(args[2])
 		if !isString {
 			return obj
 		}
-		if syntax == api.ValueSyntaxSVG {
+		if syntax.GetValue() == api.ValueSyntaxSVG {
 			if gen.s != nil && zid.IsValid() && gen.s.HasImage(zid) {
 				if svg, found := gen.s.GetImage(zid); found && svg.syntax == api.ValueSyntaxSVG {
 					log.Println("SVGG", svg)
@@ -200,8 +200,8 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 					shtml.SymEMBED,
 					sx.MakeList(
 						sxhtml.SymAttr,
-						sx.Cons(shtml.SymAttrType, sx.String("image/svg+xml")),
-						sx.Cons(shtml.SymAttrSrc, sx.String("/"+string(zid)+".svg")),
+						sx.Cons(shtml.SymAttrType, sx.MakeString("image/svg+xml")),
+						sx.Cons(shtml.SymAttrSrc, sx.MakeString("/"+string(zid)+".svg")),
 					),
 				),
 			)
@@ -223,7 +223,7 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		if src == "" {
 			src = "/" + string(zid) + ".content"
 		}
-		attr.SetCdr(avals.Cons(sx.Cons(shtml.SymAttrSrc, sx.String(src))))
+		attr.SetCdr(avals.Cons(sx.Cons(shtml.SymAttrSrc, sx.MakeString(src))))
 		return obj
 	})
 	rebind(tr, sz.SymLiteralComment, func(sx.Vector, *shtml.Environment, shtml.EvalFn) sx.Object { return sx.Nil() })
@@ -265,7 +265,7 @@ func (gen *htmlGenerator) Endnotes() *sx.Pair {
 func (gen *htmlGenerator) writeHTMLDocument(w http.ResponseWriter, lang string, headHtml, bodyHtml *sx.Pair) {
 	var langAttr *sx.Pair
 	if lang != "" {
-		langAttr = sx.MakeList(sxhtml.SymAttr, sx.Cons(shtml.SymAttrLang, sx.String(lang)))
+		langAttr = sx.MakeList(sxhtml.SymAttr, sx.Cons(shtml.SymAttrLang, sx.MakeString(lang)))
 	}
 	zettelHtml := sx.MakeList(
 		sxhtml.SymDoctype,
@@ -279,7 +279,7 @@ func (gen *htmlGenerator) writeHTMLDocument(w http.ResponseWriter, lang string, 
 func getJSScript(jsScript string) *sx.Pair {
 	return sx.MakeList(
 		shtml.SymScript,
-		sx.MakeList(sxhtml.SymNoEscape, sx.String(jsScript)),
+		sx.MakeList(sxhtml.SymNoEscape, sx.MakeString(jsScript)),
 	)
 }
 
@@ -290,8 +290,8 @@ func addClass(alist *sx.Pair, val string) *sx.Pair {
 			if strings.Contains(" "+classVal+" ", val) {
 				return alist
 			}
-			return alist.Cons(sx.Cons(shtml.SymAttrClass, sx.String(classVal+" "+val)))
+			return alist.Cons(sx.Cons(shtml.SymAttrClass, sx.MakeString(classVal+" "+val)))
 		}
 	}
-	return alist.Cons(sx.Cons(shtml.SymAttrClass, sx.String(val)))
+	return alist.Cons(sx.Cons(shtml.SymAttrClass, sx.MakeString(val)))
 }
