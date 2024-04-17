@@ -17,8 +17,8 @@ import (
 	"log"
 
 	"t73f.de/r/sx"
-	"zettelstore.de/client.fossil/api"
-	"zettelstore.de/client.fossil/sz"
+	"t73f.de/r/zsc/api"
+	"t73f.de/r/zsc/sz"
 )
 
 // Constants for zettel metadata keys

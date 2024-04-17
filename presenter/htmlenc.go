@@ -23,9 +23,9 @@ import (
 
 	"t73f.de/r/sx"
 	"t73f.de/r/sx/sxhtml"
-	"zettelstore.de/client.fossil/api"
-	"zettelstore.de/client.fossil/shtml"
-	"zettelstore.de/client.fossil/sz"
+	"t73f.de/r/zsc/api"
+	"t73f.de/r/zsc/shtml"
+	"t73f.de/r/zsc/sz"
 )
 
 type htmlGenerator struct {
