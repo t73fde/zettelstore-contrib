@@ -43,7 +43,7 @@ const langDE = "de"
 // Constants for minimum required version.
 const (
 	minMajor = 0
-	minMinor = 13
+	minMinor = 18
 )
 
 func hasVersion(major, minor int) bool {
@@ -143,24 +143,27 @@ func getClient(ctx context.Context, base string) (*client.Client, error) {
 	return c, nil
 }
 
-const (
-	zidConfig   = api.ZettelID("00009000001000")
-	zidSlideCSS = api.ZettelID("00009000001005")
-)
-
 type slidesConfig struct {
 	c            *client.Client
+	config       api.ZettelID
 	slideSetRole string
 	author       string
+	slideCSS     api.ZettelID
 }
 
 func getConfig(ctx context.Context, c *client.Client) (slidesConfig, error) {
+	zidConfig, err := c.GetApplicationZid(ctx, "zettel-presenter")
+	if err != nil {
+		return slidesConfig{}, err
+	}
+
 	mr, err := c.GetMetaData(ctx, zidConfig)
 	if err != nil {
 		return slidesConfig{}, err
 	}
 	result := slidesConfig{
 		c:            c,
+		config:       zidConfig,
 		slideSetRole: DefaultSlideSetRole,
 	}
 	if ssr, ok := mr.Meta[KeySlideSetRole]; ok {
@@ -168,6 +171,11 @@ func getConfig(ctx context.Context, c *client.Client) (slidesConfig, error) {
 	}
 	if author, ok := mr.Meta[KeyAuthor]; ok {
 		result.author = author
+	}
+	if slideCSSVal, ok := mr.Meta[KeySlideCSS]; ok {
+		if slideCSS := api.ZettelID(slideCSSVal); slideCSS.IsValid() {
+			result.slideCSS = slideCSS
+		}
 	}
 	return result, nil
 }
@@ -427,8 +435,10 @@ type revealRenderer struct {
 
 func (*revealRenderer) Role() string { return SlideRoleShow }
 func (rr *revealRenderer) Prepare(ctx context.Context) {
-	if data, err := rr.cfg.c.GetZettel(ctx, zidSlideCSS, api.PartContent); err == nil && len(data) > 0 {
-		rr.userCSS = string(data)
+	if slideCSS := rr.cfg.slideCSS; slideCSS.IsValid() {
+		if data, err := rr.cfg.c.GetZettel(ctx, slideCSS, api.PartContent); err == nil && len(data) > 0 {
+			rr.userCSS = string(data)
+		}
 	}
 }
 func (rr *revealRenderer) Render(w http.ResponseWriter, slides *slideSet, author string) {

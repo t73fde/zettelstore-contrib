@@ -24,6 +24,7 @@ import (
 // Constants for zettel metadata keys
 const (
 	KeyAuthor       = "author"
+	KeySlideCSS     = "css-zid"
 	KeySlideSetRole = "slideset-role" // Only for Presenter configuration
 	KeySlideRole    = "slide-role"
 	KeySlideTitle   = "slide-title"
