@@ -451,7 +451,7 @@ func (ce *collectEnv) visitContent(content *sx.Pair) {
 			if !ok {
 				continue
 			}
-			if sz.SymText.IsEqual(sym) || sz.SymSpace.IsEqual(sym) {
+			if sz.SymText.IsEqual(sym) {
 				continue
 			}
 			if sz.SymLinkZettel.IsEqual(sym) {
