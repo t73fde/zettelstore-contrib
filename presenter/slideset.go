@@ -509,7 +509,6 @@ func (ce *collectEnv) visitZettel(zid api.ZettelID) {
 
 func (ce *collectEnv) visitImage(zid api.ZettelID, syntax string) {
 	if ce.s.HasImage(zid) {
-		log.Println("DUPI", zid)
 		return
 	}
 

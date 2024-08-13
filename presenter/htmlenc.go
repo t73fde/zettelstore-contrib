@@ -62,7 +62,7 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		a := tr.GetAttributes(args[0], env)
 		if val, found := a.Get(""); found {
 			switch val {
-			case "show":
+			case "show", "show-note":
 				if ren != nil {
 					if ren.Role() == SlideRoleShow {
 						classAttr := addClass(nil, "notes")
@@ -70,7 +70,7 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 					}
 					return sx.Nil()
 				}
-			case "handout":
+			case "handout", "handout-note":
 				if ren != nil {
 					if ren.Role() == SlideRoleHandout {
 						classAttr := addClass(nil, "handout")
@@ -78,7 +78,7 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 					}
 					return sx.Nil()
 				}
-			case "both":
+			case "both", "note":
 				if ren != nil {
 					var classAttr *sx.Pair
 					switch ren.Role() {
@@ -90,6 +90,14 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 						return sx.Nil()
 					}
 					return genSideNote(args[1], env, classAttr)
+				}
+			case "only-show":
+				if ren != nil && ren.Role() != SlideRoleShow {
+					return sx.Nil()
+				}
+			case "only-handout":
+				if ren != nil && ren.Role() != SlideRoleHandout {
+					return sx.Nil()
 				}
 			}
 		}
