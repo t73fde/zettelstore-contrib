@@ -120,7 +120,7 @@ func (si *slideInfo) SplitChildren() {
 		if !isSymbol {
 			break
 		}
-		if !sym.IsEqual(sz.SymHeading) {
+		if !sym.IsEqualSymbol(sz.SymHeading) {
 			content = append(content, bn)
 			continue
 		}
@@ -402,7 +402,7 @@ func (s *slideSet) Completion(getZettel getZettelContentFunc, getZettelSexpr sGe
 			panic(zid)
 		}
 		env.mark(zid)
-		env.visitContent(sl.content)
+		sz.Walk(&env, sl.content, nil)
 	}
 	s.isCompleted = true
 }
@@ -441,62 +441,45 @@ type collectEnv struct {
 	visited    map[api.ZettelID]struct{}
 }
 
-func (ce *collectEnv) visitContent(content *sx.Pair) {
-	if content == nil {
-		return
+func (ce *collectEnv) Visit(node *sx.Pair, env *sx.Pair) sx.Object {
+	sym, isSymbol := sx.GetSymbol(node.Car())
+	if !isSymbol {
+		return node
 	}
-	for elem := content.Tail(); elem != nil; elem = elem.Tail() {
-		switch o := elem.Car().(type) {
-		case *sx.Pair:
-			sym, ok := sx.GetSymbol(o.Car())
-			if !ok {
-				continue
+	if sz.SymLinkZettel.IsEqualSymbol(sym) {
+		if zidVal, isString := sx.GetString(node.Tail().Tail().Car()); isString {
+			if zid := api.ZettelID(zidVal.GetValue()); zid.IsValid() {
+				ce.visitZettel(zid)
 			}
-			if sz.SymText.IsEqual(sym) {
-				continue
-			}
-			if sz.SymLinkZettel.IsEqual(sym) {
-				if zidVal, isString := sx.GetString(o.Tail().Tail().Car()); isString {
-					if zid := api.ZettelID(zidVal.GetValue()); zid.IsValid() {
-						ce.visitZettel(zid)
-					}
-				}
-			} else if sz.SymEmbed.IsEqual(sym) {
-				argRef := o.Tail().Tail()
-				qref, isPair := sx.GetPair(argRef.Car())
-				if !isPair {
-					continue
-				}
-				ref, isPair := sx.GetPair(qref.Tail().Car())
-				if !isPair {
-					continue
-				}
-				symEmbedRefState, isSymbol := sx.GetSymbol(ref.Car())
-				if !isSymbol || !sz.SymRefStateZettel.IsEqual(symEmbedRefState) {
-					continue
-				}
-				zidVal, isString := sx.GetString(ref.Tail().Car())
-				if !isString {
-					continue
-				}
-				zid := api.ZettelID(zidVal.GetValue())
-				if !zid.IsValid() {
-					continue
-				}
-				syntax, isString := sx.GetString(argRef.Tail().Car())
-				if !isString {
-					continue
-				}
-				ce.visitImage(zid, syntax.String())
-			} else {
-				ce.visitContent(o)
-			}
-		case sx.Number:
-		case sx.String:
-		default:
-			log.Printf("ELEM %T/%v", o, o)
 		}
+		return node
 	}
+
+	if sz.SymEmbed.IsEqualSymbol(sym) {
+		argRef := node.Tail().Tail()
+		qref, isPair := sx.GetPair(argRef.Car())
+		if !isPair {
+			return node
+		}
+		symEmbedRefState, isSymbol := sx.GetSymbol(qref.Car())
+		if !isSymbol || !sz.SymRefStateZettel.IsEqualSymbol(symEmbedRefState) {
+			return node
+		}
+		zidVal, isString := sx.GetString(qref.Tail().Car())
+		if !isString {
+			return node
+		}
+		zid := api.ZettelID(zidVal.GetValue())
+		if !zid.IsValid() {
+			return node
+		}
+		syntax, isString := sx.GetString(argRef.Tail().Car())
+		if !isString {
+			return node
+		}
+		ce.visitImage(zid, syntax.GetValue())
+	}
+	return sx.MakeBoolean(true)
 }
 
 func (ce *collectEnv) visitZettel(zid api.ZettelID) {

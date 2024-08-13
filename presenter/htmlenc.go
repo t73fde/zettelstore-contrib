@@ -108,7 +108,7 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 			return obj
 		}
 		sym, isSymbol := sx.GetSymbol(lst.Car())
-		if !isSymbol || !sym.IsEqual(shtml.SymA) {
+		if !isSymbol || !sym.IsEqualSymbol(shtml.SymA) {
 			return obj
 		}
 		attr, isPair := sx.GetPair(lst.Tail().Car())
@@ -212,6 +212,7 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		var src string
 		if gen.s != nil && embedImage && gen.s.HasImage(zid) {
 			if img, found := gen.s.GetImage(zid); found {
+				// img.syntax == "webp" -> not able to embed
 				var sb strings.Builder
 				sb.WriteString("data:image/")
 				sb.WriteString(img.syntax)

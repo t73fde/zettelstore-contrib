@@ -4,9 +4,9 @@ go 1.22
 
 require (
 	golang.org/x/term v0.23.0
-	t73f.de/r/sx v0.0.0-20240802104402-efd0edab1d7b
+	t73f.de/r/sx v0.0.0-20240813120135-7a2a65d66946
 	t73f.de/r/sxwebs v0.0.0-20240806091242-00940bb01078
-	t73f.de/r/zsc v0.0.0-20240807151211-893f855afe50
+	t73f.de/r/zsc v0.0.0-20240813135218-ed0b11b0eb81
 )
 
 require (
