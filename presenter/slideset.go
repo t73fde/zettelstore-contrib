@@ -120,25 +120,14 @@ func (si *slideInfo) SplitChildren() {
 		if !isSymbol {
 			break
 		}
-		if !sym.IsEqualSymbol(sz.SymHeading) {
-			content = append(content, bn)
-			continue
-		}
-		levelPair := bn.Tail()
-		num, isNumber := sx.GetNumber(levelPair.Car())
-		if !isNumber {
-			break
-		}
-		if level := num.(sx.Int64); level != 1 {
-			content = append(content, bn)
-			continue
+		nextTitle, ok := splitHeading(bn, sym)
+		if !ok {
+			if nextTitle, ok = sx.Nil(), splitThematicBreak(bn, sym); !ok {
+				content = append(content, bn)
+				continue
+			}
 		}
 
-		nextTitle := levelPair.Tail().Tail().Tail().Tail()
-		if nextTitle == nil {
-			content = append(content, bn)
-			continue
-		}
 		slInfo := &slideInfo{
 			prev:  youngest,
 			Slide: si.Slide.MakeChild(title, sx.MakeList(content...)),
@@ -153,6 +142,7 @@ func (si *slideInfo) SplitChildren() {
 		youngest = slInfo
 		title = nextTitle
 	}
+
 	if oldest == nil {
 		oldest = &slideInfo{Slide: si.Slide.MakeChild(title, sx.MakeList(content...))}
 		youngest = oldest
@@ -168,6 +158,32 @@ func (si *slideInfo) SplitChildren() {
 	}
 	si.oldest = oldest
 	si.youngest = youngest
+}
+func splitHeading(bn *sx.Pair, sym *sx.Symbol) (*sx.Pair, bool) {
+	if !sym.IsEqualSymbol(sz.SymHeading) {
+		return nil, false
+	}
+	levelPair := bn.Tail()
+	num, isNumber := sx.GetNumber(levelPair.Car())
+	if !isNumber {
+		return nil, false
+	}
+	if level := num.(sx.Int64); level != 1 {
+		return nil, false
+	}
+
+	nextTitle := levelPair.Tail().Tail().Tail().Tail()
+	if nextTitle == nil {
+		return nil, false
+	}
+	return nextTitle, true
+}
+func splitThematicBreak(bn *sx.Pair, sym *sx.Symbol) bool {
+	if !sym.IsEqualSymbol(sz.SymThematic) {
+		return false
+	}
+	attrs := sz.GetAttributes(bn.Tail().Head())
+	return attrs.HasDefault()
 }
 
 func (si *slideInfo) FindSlide(zid api.ZettelID) *slideInfo {
@@ -534,13 +550,13 @@ func getZettelTitleZid(sxMeta sz.Meta, zid api.ZettelID) *sx.Pair {
 
 func getSlideTitle(sxMeta sz.Meta) *sx.Pair {
 	if title := sxMeta.GetPair(KeySlideTitle); title != nil {
-		return title
+		return title.Cons(sz.SymInline)
 	}
 	if title := sxMeta.GetString(KeySlideTitle); title != "" {
 		return makeTitleList(title)
 	}
 	if title := sxMeta.GetPair(api.KeyTitle); title != nil {
-		return title
+		return title.Cons(sz.SymInline)
 	}
 	if title := sxMeta.GetString(api.KeyTitle); title != "" {
 		return makeTitleList(title)

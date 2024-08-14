@@ -105,6 +105,25 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		return prevFn(args, env)
 	})
 
+	rebind(tr, sz.SymHeading, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
+		if num, isNum := sx.GetNumber(args[0]); isNum {
+			if level := num.(sx.Int64); level == 1 {
+				a := tr.GetAttributes(args[1], env)
+				if a.HasDefault() {
+					return sx.Nil()
+				}
+			}
+		}
+		return prevFn(args, env)
+	})
+	rebind(tr, sz.SymThematic, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
+		if len(args) > 0 {
+			if a := tr.GetAttributes(args[0], env); a.HasDefault() {
+				return sx.Nil()
+			}
+		}
+		return prevFn(args, env)
+	})
 	rebind(tr, sz.SymVerbatimComment, func(sx.Vector, *shtml.Environment, shtml.EvalFn) sx.Object { return sx.Nil() })
 	rebind(tr, sz.SymLinkZettel, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
 		obj := prevFn(args, env)

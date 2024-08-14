@@ -301,7 +301,7 @@ func processZettel(w http.ResponseWriter, r *http.Request, cfg *slidesConfig, zi
 				shtml.SymA,
 				sx.MakeList(
 					sxhtml.SymAttr,
-					sx.Cons(shtml.SymAttrHref, sx.MakeString(cfg.c.Base()+"h/"+string(zid))),
+					sx.Cons(shtml.SymAttrHref, sx.MakeString(cfg.c.Base()+"/h/"+string(zid))),
 				),
 				sx.MakeString("\u266e"),
 			),
