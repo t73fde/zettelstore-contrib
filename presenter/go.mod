@@ -1,15 +1,15 @@
 module zettelstore.de/contrib/presenter
 
-go 1.22
+go 1.23
 
 require (
 	golang.org/x/term v0.23.0
-	t73f.de/r/sx v0.0.0-20240813120135-7a2a65d66946
-	t73f.de/r/sxwebs v0.0.0-20240806091242-00940bb01078
-	t73f.de/r/zsc v0.0.0-20240813135218-ed0b11b0eb81
+	t73f.de/r/sx v0.0.0-20240814083626-4df0ec6454b5
+	t73f.de/r/sxwebs v0.0.0-20240814085618-5b4b5c496c94
+	t73f.de/r/zsc v0.0.0-20240814091421-596024c3db5c
 )
 
 require (
 	golang.org/x/sys v0.24.0 // indirect
-	t73f.de/r/webs v0.0.0-20240806094736-62c5d3cbb589 // indirect
+	t73f.de/r/webs v0.0.0-20240814085020-19dac746d568 // indirect
 )
