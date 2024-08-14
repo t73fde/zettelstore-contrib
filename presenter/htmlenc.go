@@ -197,9 +197,8 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		}
 		if syntax.GetValue() == api.ValueSyntaxSVG {
 			if gen.s != nil && zid.IsValid() && gen.s.HasImage(zid) {
-				if svg, found := gen.s.GetImage(zid); found && svg.syntax == api.ValueSyntaxSVG {
-					log.Println("SVGG", svg)
-					return obj
+				if img, found := gen.s.GetImage(zid); found && img.syntax == api.ValueSyntaxSVG {
+					return sx.MakeList(sxhtml.SymNoEscape, sx.MakeString(string(img.data)))
 				}
 			}
 			return sx.MakeList(
