@@ -279,8 +279,10 @@ func processZettel(w http.ResponseWriter, r *http.Request, cfg *slidesConfig, zi
 
 	gen := newGenerator(nil, langDE, nil, true, false)
 
-	headHtml := getHTMLHead("")
-	headHtml.LastPair().AppendBang(sx.MakeList(shtml.SymTitle, sx.MakeString(text.EvaluateInlineString(title))))
+	headHtml := getHTMLHead()
+	headHtml.LastPair().
+		AppendBang(sx.MakeList(shtml.SymTitle, sx.MakeString(text.EvaluateInlineString(title)))).
+		AppendBang(getPrefixedCSS(""))
 
 	headerHtml := sx.MakeList(
 		sx.MakeSymbol("header"),
@@ -369,8 +371,10 @@ func renderSlideTOC(w http.ResponseWriter, slides *slideSet) {
 
 	gen := newGenerator(nil, langDE, nil, false, false)
 
-	headHtml := getHTMLHead("")
-	headHtml.LastPair().AppendBang(sx.MakeList(shtml.SymTitle, sx.MakeString(text.EvaluateInlineString(showTitle))))
+	headHtml := getHTMLHead()
+	headHtml.LastPair().
+		AppendBang(sx.MakeList(shtml.SymTitle, sx.MakeString(text.EvaluateInlineString(showTitle)))).
+		AppendBang(getPrefixedCSS(""))
 
 	hxShowTitle := gen.TransformList(showTitle)
 	headerHtml := sx.MakeList(
@@ -446,10 +450,11 @@ func (rr *revealRenderer) Render(w http.ResponseWriter, slides *slideSet, author
 
 	title := slides.Title()
 
-	headHtml := getHTMLHead(rr.userCSS)
+	headHtml := getHTMLHead()
 	headHtml.LastPair().AppendBang(getHeadLink("stylesheet", "revealjs/reveal.css")).
 		AppendBang(getHeadLink("stylesheet", "revealjs/theme/white.css")).
 		AppendBang(getHeadLink("stylesheet", "revealjs/plugin/highlight/default.css")).
+		AppendBang(getPrefixedCSS(rr.userCSS)).
 		AppendBang(sx.MakeList(shtml.SymTitle, sx.MakeString(text.EvaluateInlineString(title))))
 	lang := slides.Lang()
 
@@ -563,17 +568,16 @@ func (hr *handoutRenderer) Render(w http.ResponseWriter, slides *slideSet, autho
   padding-left: 1rem;
   margin-left: 1rem;
   margin-right: 2rem;
-  font-style: italic;
 }
 blockquote p { margin-bottom: .5rem }
-blockquote cite { font-style: normal }
 aside.handout { border: 0.2rem solid lightgray }
 `
-	headHtml := getHTMLHead(extraCss)
+	headHtml := getHTMLHead()
 	headHtml.LastPair().AppendBang(getSimpleMeta("author", author)).
 		AppendBang(getSimpleMeta("copyright", copyright)).
 		AppendBang(getSimpleMeta("license", license)).
-		AppendBang(sx.MakeList(shtml.SymTitle, sx.MakeString(text.EvaluateInlineString(handoutTitle))))
+		AppendBang(sx.MakeList(shtml.SymTitle, sx.MakeString(text.EvaluateInlineString(handoutTitle)))).
+		AppendBang(getPrefixedCSS(extraCss))
 
 	offset := 1
 	lang := slides.Lang()
@@ -669,8 +673,10 @@ func processList(w http.ResponseWriter, r *http.Request, c *client.Client) {
 		human = "Search: " + human
 	}
 
-	headHtml := getHTMLHead("")
-	headHtml.LastPair().AppendBang(sx.MakeList(shtml.SymTitle, sx.MakeString(title)))
+	headHtml := getHTMLHead()
+	headHtml.LastPair().
+		AppendBang(sx.MakeList(shtml.SymTitle, sx.MakeString(title))).
+		AppendBang(getPrefixedCSS(""))
 
 	ul := sx.MakeList(shtml.SymUL)
 	curr := ul.LastPair()
@@ -683,7 +689,7 @@ func processList(w http.ResponseWriter, r *http.Request, c *client.Client) {
 	gen.writeHTMLDocument(w, "", headHtml, bodyHtml)
 }
 
-func getHTMLHead(extraCss string) *sx.Pair {
+func getHTMLHead() *sx.Pair {
 	return sx.MakeList(
 		shtml.SymHead,
 		sx.MakeList(shtml.SymMeta, sx.MakeList(sxhtml.SymAttr, sx.Cons(sx.MakeSymbol("charset"), sx.MakeString("utf-8")))),
@@ -697,30 +703,30 @@ func getHTMLHead(extraCss string) *sx.Pair {
 			sx.Cons(sx.MakeSymbol("name"), sx.MakeString("generator")),
 			sx.Cons(sx.MakeSymbol("content"), sx.MakeString("Zettel Presenter")),
 		)),
-		getPrefixedCSS("", extraCss),
 	)
 }
 
 var defaultCSS = []string{
-	"td.left,",
+	"td.left, .reveal td.left,",
 	"th.left { text-align: left }",
-	"td.center,",
+	"td.center, .reveal td.center,",
 	"th.center { text-align: center }",
-	"td.right,",
+	"td.right, .reveal td.right,",
 	"th.right { text-align: right }",
 	"ol.zs-endnotes { padding-top: .5rem; border-top: 1px solid; font-size: smaller; margin-left: 2em; }",
 	`a.external::after { content: "➚"; display: inline-block }`,
 	`a.zettel::after { content: "⤳"; display: inline-block }`,
 	"a.broken { text-decoration: line-through }",
+	".reveal blockquote {font-style: normal}",
 }
 
-func getPrefixedCSS(prefix string, extraCss string) *sx.Pair {
+func getPrefixedCSS(extraCss string) *sx.Pair {
 	var result *sx.Pair
 	if extraCss != "" {
 		result = result.Cons(sx.MakeString(extraCss))
 	}
 	for i := range defaultCSS {
-		result = result.Cons(sx.MakeList(sxhtml.SymNoEscape, sx.MakeString(prefix+defaultCSS[len(defaultCSS)-i-1]+"\n")))
+		result = result.Cons(sx.MakeList(sxhtml.SymNoEscape, sx.MakeString(defaultCSS[len(defaultCSS)-i-1]+"\n")))
 	}
 	return result.Cons(sx.MakeSymbol("style"))
 }
