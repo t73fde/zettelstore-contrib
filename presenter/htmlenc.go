@@ -59,7 +59,7 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 	}
 
 	rebind(tr, sz.SymRegionBlock, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
-		a := tr.GetAttributes(args[0], env)
+		a := shtml.GetAttributes(args[0], env)
 		if val, found := a.Get(""); found {
 			switch val {
 			case "show", "show-note":
@@ -108,8 +108,7 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 	rebind(tr, sz.SymHeading, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
 		if num, isNum := sx.GetNumber(args[0]); isNum {
 			if level := num.(sx.Int64); level == 1 {
-				a := tr.GetAttributes(args[1], env)
-				if a.HasDefault() {
+				if a := shtml.GetAttributes(args[1], env); a.HasDefault() {
 					return sx.Nil()
 				}
 			}
@@ -118,7 +117,7 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 	})
 	rebind(tr, sz.SymThematic, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
 		if len(args) > 0 {
-			if a := tr.GetAttributes(args[0], env); a.HasDefault() {
+			if a := shtml.GetAttributes(args[0], env); a.HasDefault() {
 				return sx.Nil()
 			}
 		}
@@ -284,7 +283,7 @@ func (gen *htmlGenerator) TransformList(astLst *sx.Pair) *sx.Pair {
 }
 
 func (gen *htmlGenerator) Endnotes() *sx.Pair {
-	result := gen.tr.Endnotes(gen.env)
+	result := shtml.Endnotes(gen.env)
 	gen.env.Reset()
 	return result
 }
