@@ -9,3 +9,17 @@ Some may move into their own repository, when proved useful.
 
 <h2>Test data</h2>
   *  [/dir?ci=tip&name=10000|10000 Zettel]: a collection of 10000 markdown files, with a script to convert them into zettel.
+
+<h2>Clone the repository</h2>
+
+This repository is provided via [https://fossil-scm.org/|Fossil], not via Git (for good reasons).
+
+  #  Create a directory to store your Fossil repositories.
+     Let's assume, you have created <code>$HOME/fossils</code>
+  #  Clone the repository: <code>fossil clone https://zettelstore.de/contrib/ $HOME/fossils/zettelstore-contrib.fossil</code>
+  #  Create a working directory.
+     Let's assume, you have created <code>$HOME/zettelstore-contrib</code>
+  #  Change into this directory: <code>cd $HOME/zettelstore-contrib</code>
+  #  Open development: <code>fossil open $HOME/fossils/zettelstore-contrib.fossil</code>
+
+Most of this how-to is covered by the excellent Fossil [https://fossil-scm.org/home/doc/trunk/www/quickstart.wiki|documentation].
