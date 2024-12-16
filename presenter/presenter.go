@@ -43,7 +43,7 @@ const langDE = "de"
 // Constants for minimum required version.
 const (
 	minMajor = 0
-	minMinor = 18
+	minMinor = 19
 )
 
 func hasVersion(major, minor int) bool {
