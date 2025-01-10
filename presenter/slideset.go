@@ -355,8 +355,10 @@ func (s *slideSet) Images() []api.ZettelID {
 	return result
 }
 
-func (s *slideSet) Title() *sx.Pair    { return getSlideTitle(s.sxMeta) }
-func (s *slideSet) Subtitle() *sx.Pair { return s.sxMeta.GetPair(KeySubTitle) }
+func (s *slideSet) Title() *sx.Pair { return getSlideTitle(s.sxMeta) }
+func (s *slideSet) Subtitle() *sx.Pair {
+	return makeTitleList(s.sxMeta.GetString(KeySubTitle))
+}
 
 func (s *slideSet) Lang() string { return s.sxMeta.GetString(api.KeyLang) }
 func (s *slideSet) Author(cfg *slidesConfig) string {
