@@ -510,7 +510,7 @@ func (rr *revealRenderer) Render(w http.ResponseWriter, slides *slideSet, author
 func getRevealSlide(gen *htmlGenerator, si *slideInfo, lang string) *sx.Pair {
 	attr := sx.MakeList(
 		sxhtml.SymAttr,
-		sx.Cons(shtml.SymAttrId, sx.MakeString(fmt.Sprintf("(%d)", si.SlideNo))),
+		sx.Cons(shtml.SymAttrID, sx.MakeString(fmt.Sprintf("(%d)", si.SlideNo))),
 	)
 	if slLang := si.Slide.lang; slLang != "" && slLang != lang {
 		attr.LastPair().AppendBang(sx.Cons(shtml.SymAttrLang, sx.MakeString(slLang)))
@@ -588,7 +588,7 @@ aside.handout { border: 0.2rem solid lightgray }
 		headerHtml.LastPair().AppendBang(curr)
 		curr = curr.AppendBang(
 			gen.TransformList(handoutTitle).
-				Cons(sx.MakeList(sxhtml.SymAttr, sx.Cons(shtml.SymAttrId, sx.MakeString("(1)")))).
+				Cons(sx.MakeList(sxhtml.SymAttr, sx.Cons(shtml.SymAttrID, sx.MakeString("(1)")))).
 				Cons(shtml.SymH1))
 		if handoutSubtitle := slides.Subtitle(); handoutSubtitle != nil {
 			curr = curr.AppendBang(gen.TransformList(handoutSubtitle).Cons(shtml.SymH2))
@@ -604,7 +604,7 @@ aside.handout { border: 0.2rem solid lightgray }
 		gen.SetUnique(fmt.Sprintf("%d:", si.Number))
 		idAttr := sx.MakeList(
 			sxhtml.SymAttr,
-			sx.Cons(shtml.SymAttrId, sx.MakeString(fmt.Sprintf("(%d)", si.Number))),
+			sx.Cons(shtml.SymAttrID, sx.MakeString(fmt.Sprintf("(%d)", si.Number))),
 		)
 		sl := si.Slide
 		if slideTitle := sl.title; slideTitle != nil {

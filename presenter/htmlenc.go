@@ -295,7 +295,7 @@ func (gen *htmlGenerator) writeHTMLDocument(w http.ResponseWriter, lang string, 
 	}
 	zettelHtml := sx.MakeList(
 		sxhtml.SymDoctype,
-		sx.MakeList(shtml.SymHtml, langAttr, headHtml, bodyHtml),
+		sx.MakeList(shtml.SymHTML, langAttr, headHtml, bodyHtml),
 	)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	g := sxhtml.NewGenerator().SetNewline()
