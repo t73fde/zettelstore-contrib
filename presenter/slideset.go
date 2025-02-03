@@ -18,6 +18,7 @@ import (
 
 	"t73f.de/r/sx"
 	"t73f.de/r/zsc/api"
+	"t73f.de/r/zsc/domain/id"
 	"t73f.de/r/zsc/sz"
 )
 
@@ -40,14 +41,14 @@ const (
 
 // Slide is one slide that is shown one or more times.
 type slide struct {
-	zid     api.ZettelID // The zettel identifier
+	zid     id.Zid // The zettel identifier
 	title   *sx.Pair
 	lang    string
 	role    string
 	content *sx.Pair // Zettel / slide content
 }
 
-func newSlide(zid api.ZettelID, sxMeta sz.Meta, sxContent *sx.Pair) *slide {
+func newSlide(zid id.Zid, sxMeta sz.Meta, sxContent *sx.Pair) *slide {
 	return &slide{
 		zid:     zid,
 		title:   getSlideTitleZid(sxMeta, zid),
@@ -186,8 +187,8 @@ func splitThematicBreak(bn *sx.Pair, sym *sx.Symbol) bool {
 	return attrs.HasDefault()
 }
 
-func (si *slideInfo) FindSlide(zid api.ZettelID) *slideInfo {
-	if si == nil {
+func (si *slideInfo) FindSlide(zid id.Zid) *slideInfo {
+	if si == nil || zid == id.Invalid {
 		return nil
 	}
 
@@ -214,38 +215,38 @@ type image struct {
 
 // slideSet is the sequence of slides shown.
 type slideSet struct {
-	zid         api.ZettelID
+	zid         id.Zid
 	sxMeta      sz.Meta  // Metadata of slideset
 	seqSlide    []*slide // slide may occur more than once in seq, but should be stored only once
-	setSlide    map[api.ZettelID]*slide
-	setImage    map[api.ZettelID]image
+	setSlide    map[id.Zid]*slide
+	setImage    map[id.Zid]image
 	isCompleted bool
 }
 
-func newSlideSet(zid api.ZettelID, sxMeta sz.Meta) *slideSet {
+func newSlideSet(zid id.Zid, sxMeta sz.Meta) *slideSet {
 	if len(sxMeta) == 0 {
 		return nil
 	}
 	return newSlideSetMeta(zid, sxMeta)
 }
-func newSlideSetMeta(zid api.ZettelID, sxMeta sz.Meta) *slideSet {
+func newSlideSetMeta(zid id.Zid, sxMeta sz.Meta) *slideSet {
 	return &slideSet{
 		zid:      zid,
 		sxMeta:   sxMeta,
-		setSlide: make(map[api.ZettelID]*slide),
-		setImage: make(map[api.ZettelID]image),
+		setSlide: make(map[id.Zid]*slide),
+		setImage: make(map[id.Zid]image),
 	}
 }
 
-func (s *slideSet) GetSlide(zid api.ZettelID) *slide {
+func (s *slideSet) GetSlide(zid id.Zid) *slide {
 	if sl, found := s.setSlide[zid]; found {
 		return sl
 	}
 	return nil
 }
 
-func (s *slideSet) SlideZids() []api.ZettelID {
-	result := make([]api.ZettelID, len(s.seqSlide))
+func (s *slideSet) SlideZids() []id.Zid {
+	result := make([]id.Zid, len(s.seqSlide))
 	for i, sl := range s.seqSlide {
 		result[i] = sl.zid
 	}
@@ -336,19 +337,19 @@ func (s *slideSet) addChildrenForHandout(si *slideInfo, slideNo *int) {
 	*slideNo++
 }
 
-func (s *slideSet) HasImage(zid api.ZettelID) bool {
+func (s *slideSet) HasImage(zid id.Zid) bool {
 	_, found := s.setImage[zid]
 	return found
 }
-func (s *slideSet) AddImage(zid api.ZettelID, syntax string, data []byte) {
+func (s *slideSet) AddImage(zid id.Zid, syntax string, data []byte) {
 	s.setImage[zid] = image{syntax, data}
 }
-func (s *slideSet) GetImage(zid api.ZettelID) (image, bool) {
+func (s *slideSet) GetImage(zid id.Zid) (image, bool) {
 	img, found := s.setImage[zid]
 	return img, found
 }
-func (s *slideSet) Images() []api.ZettelID {
-	result := make([]api.ZettelID, 0, len(s.setImage))
+func (s *slideSet) Images() []id.Zid {
+	result := make([]id.Zid, 0, len(s.setImage))
 	for zid := range s.setImage {
 		result = append(result, zid)
 	}
@@ -370,10 +371,10 @@ func (s *slideSet) Author(cfg *slidesConfig) string {
 func (s *slideSet) Copyright() string { return s.sxMeta.GetString(api.KeyCopyright) }
 func (s *slideSet) License() string   { return s.sxMeta.GetString(api.KeyLicense) }
 
-type getZettelContentFunc func(api.ZettelID) ([]byte, error)
-type sGetZettelFunc func(api.ZettelID) (sx.Object, error)
+type getZettelContentFunc func(id.Zid) ([]byte, error)
+type sGetZettelFunc func(id.Zid) (sx.Object, error)
 
-func (s *slideSet) AddSlide(zid api.ZettelID, sGetZettel sGetZettelFunc) {
+func (s *slideSet) AddSlide(zid id.Zid, sGetZettel sGetZettelFunc) {
 	if sl, found := s.setSlide[zid]; found {
 		s.seqSlide = append(s.seqSlide, sl)
 		return
@@ -394,7 +395,7 @@ func (s *slideSet) AddSlide(zid api.ZettelID, sGetZettel sGetZettelFunc) {
 	s.setSlide[zid] = sl
 }
 
-func (s *slideSet) AdditionalSlide(zid api.ZettelID, sxMeta sz.Meta, sxContent *sx.Pair) {
+func (s *slideSet) AdditionalSlide(zid id.Zid, sxMeta sz.Meta, sxContent *sx.Pair) {
 	// TODO: if first, add slide with text "additional content"
 	sl := newSlide(zid, sxMeta, sxContent)
 	s.seqSlide = append(s.seqSlide, sl)
@@ -412,7 +413,7 @@ func (s *slideSet) Completion(getZettel getZettelContentFunc, getZettelSexpr sGe
 		if !found {
 			break
 		}
-		if zid == api.InvalidZID {
+		if zid == id.Invalid {
 			continue
 		}
 		sl := s.GetSlide(zid)
@@ -430,23 +431,23 @@ func (ce *collectEnv) initCollection(s *slideSet) {
 	for i := len(zids) - 1; i >= 0; i-- {
 		ce.push(zids[i])
 	}
-	ce.visited = make(map[api.ZettelID]struct{}, len(zids)+16)
+	ce.visited = make(map[id.Zid]struct{}, len(zids)+16)
 }
-func (ce *collectEnv) push(zid api.ZettelID) { ce.stack = append(ce.stack, zid) }
-func (ce *collectEnv) pop() (api.ZettelID, bool) {
+func (ce *collectEnv) push(zid id.Zid) { ce.stack = append(ce.stack, zid) }
+func (ce *collectEnv) pop() (id.Zid, bool) {
 	lp := len(ce.stack) - 1
 	if lp < 0 {
-		return api.InvalidZID, false
+		return id.Invalid, false
 	}
 	zid := ce.stack[lp]
 	ce.stack = ce.stack[0:lp]
 	if _, found := ce.visited[zid]; found {
-		return api.InvalidZID, true
+		return id.Invalid, true
 	}
 	return zid, true
 }
-func (ce *collectEnv) mark(zid api.ZettelID) { ce.visited[zid] = struct{}{} }
-func (ce *collectEnv) isMarked(zid api.ZettelID) bool {
+func (ce *collectEnv) mark(zid id.Zid) { ce.visited[zid] = struct{}{} }
+func (ce *collectEnv) isMarked(zid id.Zid) bool {
 	_, found := ce.visited[zid]
 	return found
 }
@@ -455,8 +456,8 @@ type collectEnv struct {
 	s          *slideSet
 	getZettel  getZettelContentFunc
 	sGetZettel sGetZettelFunc
-	stack      []api.ZettelID
-	visited    map[api.ZettelID]struct{}
+	stack      []id.Zid
+	visited    map[id.Zid]struct{}
 }
 
 func (ce *collectEnv) VisitBefore(node *sx.Pair, _ *sx.Pair) (sx.Object, bool) { return nil, false }
@@ -467,7 +468,7 @@ func (ce *collectEnv) VisitAfter(node *sx.Pair, _ *sx.Pair) (sx.Object, bool) {
 	}
 	if sz.SymLinkZettel.IsEqualSymbol(sym) {
 		if zidVal, isString := sx.GetString(node.Tail().Tail().Car()); isString {
-			if zid := api.ZettelID(zidVal.GetValue()); zid.IsValid() {
+			if zid, err := id.Parse(zidVal.GetValue()); err == nil {
 				ce.visitZettel(zid)
 			}
 		}
@@ -488,8 +489,8 @@ func (ce *collectEnv) VisitAfter(node *sx.Pair, _ *sx.Pair) (sx.Object, bool) {
 		if !isString {
 			return node, true
 		}
-		zid := api.ZettelID(zidVal.GetValue())
-		if !zid.IsValid() {
+		zid, err := id.Parse(zidVal.GetValue())
+		if err != nil {
 			return node, true
 		}
 		syntax, isString := sx.GetString(argRef.Tail().Car())
@@ -501,7 +502,7 @@ func (ce *collectEnv) VisitAfter(node *sx.Pair, _ *sx.Pair) (sx.Object, bool) {
 	return nil, false
 }
 
-func (ce *collectEnv) visitZettel(zid api.ZettelID) {
+func (ce *collectEnv) visitZettel(zid id.Zid) {
 	if ce.isMarked(zid) || ce.s.GetSlide(zid) != nil {
 		return
 	}
@@ -526,7 +527,7 @@ func (ce *collectEnv) visitZettel(zid api.ZettelID) {
 	ce.push(zid)
 }
 
-func (ce *collectEnv) visitImage(zid api.ZettelID, syntax string) {
+func (ce *collectEnv) visitImage(zid id.Zid, syntax string) {
 	if ce.s.HasImage(zid) {
 		return
 	}
@@ -544,11 +545,11 @@ func (ce *collectEnv) visitImage(zid api.ZettelID, syntax string) {
 
 // Utility function to retrieve some slide/slideset metadata.
 
-func getZettelTitleZid(sxMeta sz.Meta, zid api.ZettelID) *sx.Pair {
+func getZettelTitleZid(sxMeta sz.Meta, zid id.Zid) *sx.Pair {
 	if title := sxMeta.GetPair(api.KeyTitle); title != nil {
 		return title
 	}
-	return sx.Cons(sz.SymText, sx.Cons(sx.MakeString(string(zid)), sx.Nil()))
+	return sx.Cons(sz.SymText, sx.Cons(sx.MakeString(zid.String()), sx.Nil()))
 }
 
 func getSlideTitle(sxMeta sz.Meta) *sx.Pair {
@@ -567,11 +568,11 @@ func getSlideTitle(sxMeta sz.Meta) *sx.Pair {
 	return nil
 }
 
-func getSlideTitleZid(sxMeta sz.Meta, zid api.ZettelID) *sx.Pair {
+func getSlideTitleZid(sxMeta sz.Meta, zid id.Zid) *sx.Pair {
 	if title := getSlideTitle(sxMeta); title != nil {
 		return title
 	}
-	return makeTitleList(string(zid))
+	return makeTitleList(zid.String())
 }
 
 func makeTitleList(s string) *sx.Pair {

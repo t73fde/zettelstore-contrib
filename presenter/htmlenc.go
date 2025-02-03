@@ -24,6 +24,7 @@ import (
 	"t73f.de/r/sx"
 	"t73f.de/r/sxwebs/sxhtml"
 	"t73f.de/r/zsc/api"
+	"t73f.de/r/zsc/domain/id"
 	"t73f.de/r/zsc/shtml"
 	"t73f.de/r/zsc/sz"
 )
@@ -150,8 +151,9 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		if !isString {
 			return obj
 		}
-		zid, _, _ := strings.Cut(refVal.GetValue(), "#")
-		if si := gen.curSlide.FindSlide(api.ZettelID(zid)); si != nil {
+		strZid, _, _ := strings.Cut(refVal.GetValue(), "#")
+		zid, err := id.Parse(strZid)
+		if si := gen.curSlide.FindSlide(zid); err == nil && si != nil {
 			avals = avals.Cons(sx.Cons(shtml.SymAttrHref, sx.MakeString(fmt.Sprintf("#(%d)", si.Number))))
 			attr.SetCdr(avals)
 			return lst
@@ -159,7 +161,7 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		if extZettelLinks {
 			// TODO: make link absolute
 			avals = addClass(avals, "zettel")
-			attr.SetCdr(avals.Cons(sx.Cons(shtml.SymAttrHref, sx.MakeString("/"+zid))))
+			attr.SetCdr(avals.Cons(sx.Cons(shtml.SymAttrHref, sx.MakeString("/"+strZid))))
 			return lst
 		}
 		// Do not show link to other, possibly non-public zettel
@@ -208,13 +210,14 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		if !isString {
 			return obj
 		}
-		zid := api.ZettelID(zidVal.GetValue())
 		syntax, isString := sx.GetString(args[2])
 		if !isString {
 			return obj
 		}
+		strZid := zidVal.GetValue()
+		zid, err := id.Parse(strZid)
 		if syntax.GetValue() == api.ValueSyntaxSVG {
-			if gen.s != nil && zid.IsValid() && gen.s.HasImage(zid) {
+			if gen.s != nil && err == nil && gen.s.HasImage(zid) {
 				if img, found := gen.s.GetImage(zid); found && img.syntax == api.ValueSyntaxSVG {
 					return sx.MakeList(sxhtml.SymNoEscape, sx.MakeString(string(img.data)))
 				}
@@ -226,12 +229,12 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 					sx.MakeList(
 						sxhtml.SymAttr,
 						sx.Cons(shtml.SymAttrType, sx.MakeString("image/svg+xml")),
-						sx.Cons(shtml.SymAttrSrc, sx.MakeString("/"+string(zid)+".svg")),
+						sx.Cons(shtml.SymAttrSrc, sx.MakeString("/"+string(strZid)+".svg")),
 					),
 				),
 			)
 		}
-		if !zid.IsValid() {
+		if err != nil {
 			return obj
 		}
 		var src string
@@ -247,7 +250,7 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 			}
 		}
 		if src == "" {
-			src = "/" + string(zid) + ".content"
+			src = "/" + zid.String() + ".content"
 		}
 		attr.SetCdr(avals.Cons(sx.Cons(shtml.SymAttrSrc, sx.MakeString(src))))
 		return obj

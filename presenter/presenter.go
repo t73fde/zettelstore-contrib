@@ -33,6 +33,7 @@ import (
 	"t73f.de/r/sxwebs/sxhtml"
 	"t73f.de/r/zsc/api"
 	"t73f.de/r/zsc/client"
+	"t73f.de/r/zsc/domain/id"
 	"t73f.de/r/zsc/shtml"
 	"t73f.de/r/zsc/sz"
 	"t73f.de/r/zsc/text"
@@ -145,10 +146,10 @@ func getClient(ctx context.Context, base string) (*client.Client, error) {
 
 type slidesConfig struct {
 	c            *client.Client
-	config       api.ZettelID
+	config       id.Zid
 	slideSetRole string
 	author       string
-	slideCSS     api.ZettelID
+	slideCSS     id.Zid
 }
 
 func getConfig(ctx context.Context, c *client.Client) (slidesConfig, error) {
@@ -173,7 +174,7 @@ func getConfig(ctx context.Context, c *client.Client) (slidesConfig, error) {
 		result.author = author
 	}
 	if slideCSSVal, ok := mr.Meta[KeySlideCSS]; ok {
-		if slideCSS := api.ZettelID(slideCSSVal); slideCSS.IsValid() {
+		if slideCSS, cssErr := id.Parse(slideCSSVal); cssErr == nil {
 			result.slideCSS = slideCSS
 		}
 	}
@@ -183,7 +184,7 @@ func getConfig(ctx context.Context, c *client.Client) (slidesConfig, error) {
 func makeHandler(cfg *slidesConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
-		if zid, suffix := retrieveZidAndSuffix(path); zid != api.InvalidZID {
+		if zid, suffix := retrieveZidAndSuffix(path); zid != id.Invalid {
 			switch suffix {
 			case "reveal", "slide":
 				processSlideSet(w, r, cfg, zid, &revealRenderer{cfg: cfg})
@@ -212,9 +213,9 @@ func makeHandler(cfg *slidesConfig) http.HandlerFunc {
 	}
 }
 
-func retrieveZidAndSuffix(path string) (api.ZettelID, string) {
+func retrieveZidAndSuffix(path string) (id.Zid, string) {
 	if path == "" {
-		return api.InvalidZID, ""
+		return id.Invalid, ""
 	}
 	if path == "/" {
 		return api.ZidDefaultHome, ""
@@ -222,26 +223,26 @@ func retrieveZidAndSuffix(path string) (api.ZettelID, string) {
 	if path[0] == '/' {
 		path = path[1:]
 	}
-	if len(path) < api.LengthZid {
-		return api.InvalidZID, ""
+	if len(path) < id.LengthZid {
+		return id.Invalid, ""
 	}
-	zid := api.ZettelID(path[:api.LengthZid])
-	if !zid.IsValid() {
-		return api.InvalidZID, ""
+	zid, err := id.Parse(path[:id.LengthZid])
+	if err != nil {
+		return id.Invalid, ""
 	}
-	if len(path) == api.LengthZid {
+	if len(path) == id.LengthZid {
 		return zid, ""
 	}
-	if path[api.LengthZid] != '.' {
-		return api.InvalidZID, ""
+	if path[id.LengthZid] != '.' {
+		return id.Invalid, ""
 	}
-	if suffix := path[api.LengthZid+1:]; suffix != "" {
+	if suffix := path[id.LengthZid+1:]; suffix != "" {
 		return zid, suffix
 	}
-	return api.InvalidZID, ""
+	return id.Invalid, ""
 }
 
-func retrieveContent(w http.ResponseWriter, r *http.Request, c *client.Client, zid api.ZettelID) []byte {
+func retrieveContent(w http.ResponseWriter, r *http.Request, c *client.Client, zid id.Zid) []byte {
 	content, err := c.GetZettel(r.Context(), zid, api.PartContent)
 	if err != nil {
 		reportRetrieveError(w, zid, err, "content")
@@ -250,7 +251,7 @@ func retrieveContent(w http.ResponseWriter, r *http.Request, c *client.Client, z
 	return content
 }
 
-func reportRetrieveError(w http.ResponseWriter, zid api.ZettelID, err error, objName string) {
+func reportRetrieveError(w http.ResponseWriter, zid id.Zid, err error, objName string) {
 	var cerr *client.Error
 	if errors.As(err, &cerr) && cerr.StatusCode == http.StatusNotFound {
 		http.Error(w, fmt.Sprintf("%s %s not found", objName, zid), http.StatusNotFound)
@@ -259,7 +260,7 @@ func reportRetrieveError(w http.ResponseWriter, zid api.ZettelID, err error, obj
 	}
 }
 
-func processZettel(w http.ResponseWriter, r *http.Request, cfg *slidesConfig, zid api.ZettelID) {
+func processZettel(w http.ResponseWriter, r *http.Request, cfg *slidesConfig, zid id.Zid) {
 	ctx := r.Context()
 	sxZettel, err := cfg.c.GetEvaluatedSz(ctx, zid, api.PartZettel)
 	if err != nil {
@@ -303,7 +304,7 @@ func processZettel(w http.ResponseWriter, r *http.Request, cfg *slidesConfig, zi
 				shtml.SymA,
 				sx.MakeList(
 					sxhtml.SymAttr,
-					sx.Cons(shtml.SymAttrHref, sx.MakeString(cfg.c.Base()+"/h/"+string(zid))),
+					sx.Cons(shtml.SymAttrHref, sx.MakeString(cfg.c.Base()+"/h/"+zid.String())),
 				),
 				sx.MakeString("\u266e"),
 			),
@@ -347,14 +348,14 @@ func getURLHtml(sxMeta sz.Meta) *sx.Pair {
 	return nil
 }
 
-func processSlideTOC(ctx context.Context, c *client.Client, zid api.ZettelID, sxMeta sz.Meta) *slideSet {
-	_, _, metaSeq, err := c.QueryZettelData(ctx, string(zid)+" "+api.ItemsDirective)
+func processSlideTOC(ctx context.Context, c *client.Client, zid id.Zid, sxMeta sz.Meta) *slideSet {
+	_, _, metaSeq, err := c.QueryZettelData(ctx, zid.String()+" "+api.ItemsDirective)
 	if err != nil {
 		return nil
 	}
 	slides := newSlideSetMeta(zid, sxMeta)
-	getZettel := func(zid api.ZettelID) ([]byte, error) { return c.GetZettel(ctx, zid, api.PartContent) }
-	sGetZettel := func(zid api.ZettelID) (sx.Object, error) {
+	getZettel := func(zid id.Zid) ([]byte, error) { return c.GetZettel(ctx, zid, api.PartContent) }
+	sGetZettel := func(zid id.Zid) (sx.Object, error) {
 		return c.GetEvaluatedSz(ctx, zid, api.PartZettel)
 	}
 	setupSlideSet(slides, metaSeq, getZettel, sGetZettel)
@@ -386,7 +387,7 @@ func renderSlideTOC(w http.ResponseWriter, slides *slideSet) {
 	}
 	lstSlide := sx.MakeList(shtml.SymOL)
 	curr := lstSlide
-	curr = curr.AppendBang(sx.MakeList(shtml.SymLI, getSimpleLink("/"+string(slides.zid)+".slide#(1)", hxShowTitle)))
+	curr = curr.AppendBang(sx.MakeList(shtml.SymLI, getSimpleLink("/"+slides.zid.String()+".slide#(1)", hxShowTitle)))
 	for si := slides.Slides(SlideRoleShow, offset); si != nil; si = si.Next() {
 		slideTitle := gen.TransformList(si.Slide.title)
 		curr = curr.AppendBang(sx.MakeList(
@@ -396,17 +397,17 @@ func renderSlideTOC(w http.ResponseWriter, slides *slideSet) {
 	bodyHtml := sx.MakeList(shtml.SymBody, headerHtml, lstSlide)
 	bodyHtml.LastPair().AppendBang(sx.MakeList(
 		shtml.SymP,
-		getSimpleLink("/"+string(slides.zid)+".reveal", sx.MakeList(sx.MakeString("Reveal"))),
+		getSimpleLink("/"+slides.zid.String()+".reveal", sx.MakeList(sx.MakeString("Reveal"))),
 		sx.MakeString(", "),
-		getSimpleLink("/"+string(slides.zid)+".html", sx.MakeList(sx.MakeString("Handout"))),
+		getSimpleLink("/"+slides.zid.String()+".html", sx.MakeList(sx.MakeString("Handout"))),
 	))
 
 	gen.writeHTMLDocument(w, slides.Lang(), headHtml, bodyHtml)
 }
 
-func processSlideSet(w http.ResponseWriter, r *http.Request, cfg *slidesConfig, zid api.ZettelID, ren renderer) {
+func processSlideSet(w http.ResponseWriter, r *http.Request, cfg *slidesConfig, zid id.Zid, ren renderer) {
 	ctx := r.Context()
-	_, _, metaSeq, err := cfg.c.QueryZettelData(ctx, string(zid)+" "+api.ItemsDirective)
+	_, _, metaSeq, err := cfg.c.QueryZettelData(ctx, zid.String()+" "+api.ItemsDirective)
 	if err != nil {
 		reportRetrieveError(w, zid, err, "zettel")
 		return
@@ -417,8 +418,8 @@ func processSlideSet(w http.ResponseWriter, r *http.Request, cfg *slidesConfig, 
 		return
 	}
 	slides := newSlideSet(zid, sz.MakeMeta(sMeta))
-	getZettel := func(zid api.ZettelID) ([]byte, error) { return cfg.c.GetZettel(ctx, zid, api.PartContent) }
-	sGetZettel := func(zid api.ZettelID) (sx.Object, error) {
+	getZettel := func(zid id.Zid) ([]byte, error) { return cfg.c.GetZettel(ctx, zid, api.PartContent) }
+	sGetZettel := func(zid id.Zid) (sx.Object, error) {
 		return cfg.c.GetEvaluatedSz(ctx, zid, api.PartZettel)
 	}
 	setupSlideSet(slides, metaSeq, getZettel, sGetZettel)
@@ -533,7 +534,7 @@ func getRevealSlide(gen *htmlGenerator, si *slideInfo, lang string) *sx.Pair {
 				shtml.SymA,
 				sx.MakeList(
 					sxhtml.SymAttr,
-					sx.Cons(shtml.SymAttrHref, sx.MakeString(string(si.Slide.zid))),
+					sx.Cons(shtml.SymAttrHref, sx.MakeString(si.Slide.zid.String())),
 					sx.Cons(shtml.SymAttrTarget, sx.MakeString("_blank")),
 				),
 				sx.MakeString("\u266e"),
@@ -682,7 +683,7 @@ func processList(w http.ResponseWriter, r *http.Request, c *client.Client) {
 	curr := ul.LastPair()
 	for i, jm := range zl {
 		curr = curr.AppendBang(sx.MakeList(
-			shtml.SymLI, getSimpleLink(string(jm.ID), titles[i]),
+			shtml.SymLI, getSimpleLink(jm.ID.String(), titles[i]),
 		))
 	}
 	bodyHtml := sx.MakeList(shtml.SymBody, sx.MakeList(shtml.SymH1, sx.MakeString(human)), ul)
