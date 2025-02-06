@@ -23,8 +23,8 @@ import (
 
 	"t73f.de/r/sx"
 	"t73f.de/r/sxwebs/sxhtml"
-	"t73f.de/r/zsc/api"
 	"t73f.de/r/zsc/domain/id"
+	"t73f.de/r/zsc/domain/meta"
 	"t73f.de/r/zsc/shtml"
 	"t73f.de/r/zsc/sz"
 )
@@ -216,9 +216,9 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		}
 		strZid := zidVal.GetValue()
 		zid, err := id.Parse(strZid)
-		if syntax.GetValue() == api.ValueSyntaxSVG {
+		if syntax.GetValue() == meta.ValueSyntaxSVG {
 			if gen.s != nil && err == nil && gen.s.HasImage(zid) {
-				if img, found := gen.s.GetImage(zid); found && img.syntax == api.ValueSyntaxSVG {
+				if img, found := gen.s.GetImage(zid); found && img.syntax == meta.ValueSyntaxSVG {
 					return sx.MakeList(sxhtml.SymNoEscape, sx.MakeString(string(img.data)))
 				}
 			}

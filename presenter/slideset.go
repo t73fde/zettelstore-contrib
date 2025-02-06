@@ -17,8 +17,8 @@ import (
 	"log"
 
 	"t73f.de/r/sx"
-	"t73f.de/r/zsc/api"
 	"t73f.de/r/zsc/domain/id"
+	"t73f.de/r/zsc/domain/meta"
 	"t73f.de/r/zsc/sz"
 )
 
@@ -52,7 +52,7 @@ func newSlide(zid id.Zid, sxMeta sz.Meta, sxContent *sx.Pair) *slide {
 	return &slide{
 		zid:     zid,
 		title:   getSlideTitleZid(sxMeta, zid),
-		lang:    sxMeta.GetString(api.KeyLang),
+		lang:    sxMeta.GetString(meta.KeyLang),
 		role:    sxMeta.GetString(KeySlideRole),
 		content: sxContent,
 	}
@@ -361,15 +361,15 @@ func (s *slideSet) Subtitle() *sx.Pair {
 	return makeTitleList(s.sxMeta.GetString(KeySubTitle))
 }
 
-func (s *slideSet) Lang() string { return s.sxMeta.GetString(api.KeyLang) }
+func (s *slideSet) Lang() string { return s.sxMeta.GetString(meta.KeyLang) }
 func (s *slideSet) Author(cfg *slidesConfig) string {
 	if author := s.sxMeta.GetString(KeyAuthor); author != "" {
 		return author
 	}
 	return cfg.author
 }
-func (s *slideSet) Copyright() string { return s.sxMeta.GetString(api.KeyCopyright) }
-func (s *slideSet) License() string   { return s.sxMeta.GetString(api.KeyLicense) }
+func (s *slideSet) Copyright() string { return s.sxMeta.GetString(meta.KeyCopyright) }
+func (s *slideSet) License() string   { return s.sxMeta.GetString(meta.KeyLicense) }
 
 type getZettelContentFunc func(id.Zid) ([]byte, error)
 type sGetZettelFunc func(id.Zid) (sx.Object, error)
@@ -519,7 +519,7 @@ func (ce *collectEnv) visitZettel(zid id.Zid) {
 		return
 	}
 
-	if vis := sxMeta.GetString(api.KeyVisibility); vis != api.ValueVisibilityPublic {
+	if vis := sxMeta.GetString(meta.KeyVisibility); vis != meta.ValueVisibilityPublic {
 		// log.Println("VISZ", zid, vis)
 		return
 	}
@@ -546,7 +546,7 @@ func (ce *collectEnv) visitImage(zid id.Zid, syntax string) {
 // Utility function to retrieve some slide/slideset metadata.
 
 func getZettelTitleZid(sxMeta sz.Meta, zid id.Zid) *sx.Pair {
-	if title := sxMeta.GetPair(api.KeyTitle); title != nil {
+	if title := sxMeta.GetPair(meta.KeyTitle); title != nil {
 		return title
 	}
 	return sx.Cons(sz.SymText, sx.Cons(sx.MakeString(zid.String()), sx.Nil()))
@@ -559,10 +559,10 @@ func getSlideTitle(sxMeta sz.Meta) *sx.Pair {
 	if title := sxMeta.GetString(KeySlideTitle); title != "" {
 		return makeTitleList(title)
 	}
-	if title := sxMeta.GetPair(api.KeyTitle); title != nil {
+	if title := sxMeta.GetPair(meta.KeyTitle); title != nil {
 		return title.Cons(sz.SymInline)
 	}
-	if title := sxMeta.GetString(api.KeyTitle); title != "" {
+	if title := sxMeta.GetString(meta.KeyTitle); title != "" {
 		return makeTitleList(title)
 	}
 	return nil

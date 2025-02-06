@@ -34,6 +34,7 @@ import (
 	"t73f.de/r/zsc/api"
 	"t73f.de/r/zsc/client"
 	"t73f.de/r/zsc/domain/id"
+	"t73f.de/r/zsc/domain/meta"
 	"t73f.de/r/zsc/shtml"
 	"t73f.de/r/zsc/sz"
 	"t73f.de/r/zsc/text"
@@ -218,7 +219,7 @@ func retrieveZidAndSuffix(path string) (id.Zid, string) {
 		return id.Invalid, ""
 	}
 	if path == "/" {
-		return api.ZidDefaultHome, ""
+		return id.ZidDefaultHome, ""
 	}
 	if path[0] == '/' {
 		path = path[1:]
@@ -269,7 +270,7 @@ func processZettel(w http.ResponseWriter, r *http.Request, cfg *slidesConfig, zi
 	}
 	sxMeta, sxContent := sz.GetMetaContent(sxZettel)
 
-	role := sxMeta.GetString(api.KeyRole)
+	role := sxMeta.GetString(meta.KeyRole)
 	if role == cfg.slideSetRole {
 		if slides := processSlideTOC(ctx, cfg.c, zid, sxMeta); slides != nil {
 			renderSlideTOC(w, slides)
@@ -312,13 +313,13 @@ func processZettel(w http.ResponseWriter, r *http.Request, cfg *slidesConfig, zi
 	)
 	bodyHtml := sx.MakeList(shtml.SymBody, headerHtml, articleHtml, footerHtml)
 
-	gen.writeHTMLDocument(w, sxMeta.GetString(api.KeyLang), headHtml, bodyHtml)
+	gen.writeHTMLDocument(w, sxMeta.GetString(meta.KeyLang), headHtml, bodyHtml)
 }
 
 func getURLHtml(sxMeta sz.Meta) *sx.Pair {
 	var lst *sx.Pair
 	for k, v := range sxMeta {
-		if v.Type != api.MetaURL {
+		if v.Type != meta.MetaURL {
 			continue
 		}
 		s, ok := v.Value.(sx.String)
