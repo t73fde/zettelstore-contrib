@@ -112,8 +112,8 @@ func (si *slideInfo) SplitChildren() {
 	title := si.Slide.title
 	var content sx.Vector
 	// First element of si.Slide.content is the BLOCK symbol. Ignore it.
-	for elem := si.Slide.content.Tail(); !elem.IsNil(); elem = elem.Tail() {
-		bn, isPair := sx.GetPair(elem.Car())
+	for elem := range si.Slide.content.Tail().Values() {
+		bn, isPair := sx.GetPair(elem)
 		if !isPair || bn == nil {
 			break
 		}

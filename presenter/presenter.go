@@ -293,8 +293,8 @@ func processZettel(w http.ResponseWriter, r *http.Request, cfg *slidesConfig, zi
 	)
 	articleHtml := sx.MakeList(sx.MakeSymbol("article"))
 	curr := articleHtml
-	for elem := gen.Transform(sxContent); elem != nil; elem = elem.Tail() {
-		curr = curr.AppendBang(elem.Car())
+	for elem := range gen.Transform(sxContent).Values() {
+		curr = curr.AppendBang(elem)
 	}
 	footerHtml := sx.MakeList(
 		sx.MakeSymbol("footer"),
@@ -525,7 +525,7 @@ func getRevealSlide(gen *htmlGenerator, si *slideInfo, lang string) *sx.Pair {
 	gen.SetUnique(fmt.Sprintf("%d:", si.Number))
 	slideHtml := sx.MakeList(sx.MakeSymbol("section"), attr, titleHtml)
 	curr := slideHtml.LastPair()
-	for content := si.Slide.content; content != nil; content = content.Tail() {
+	for content := range si.Slide.content.Pairs() {
 		curr = curr.AppendBang(gen.Transform(content.Head()))
 	}
 	curr.AppendBang(gen.Endnotes()).
@@ -742,8 +742,8 @@ func getSimpleLink(url string, text *sx.Pair) *sx.Pair {
 		),
 	)
 	curr := result.LastPair()
-	for elem := text; elem != nil; elem = elem.Tail() {
-		curr = curr.AppendBang(elem.Car())
+	for obj := range text.Values() {
+		curr = curr.AppendBang(obj)
 	}
 	return result
 }
