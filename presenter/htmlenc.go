@@ -278,7 +278,7 @@ func (gen *htmlGenerator) Transform(astLst *sx.Pair) *sx.Pair {
 }
 
 func (gen *htmlGenerator) TransformList(astLst *sx.Pair) *sx.Pair {
-	result, err := gen.tr.EvaluateList(astLst.AsVector(), gen.env)
+	result, err := gen.tr.EvaluateList(sx.Collect(astLst.Values()), gen.env)
 	if err != nil {
 		log.Println("ETRL", err)
 	}
@@ -291,18 +291,18 @@ func (gen *htmlGenerator) Endnotes() *sx.Pair {
 	return result
 }
 
-func (gen *htmlGenerator) writeHTMLDocument(w http.ResponseWriter, lang string, headHtml, bodyHtml *sx.Pair) {
+func (gen *htmlGenerator) writeHTMLDocument(w http.ResponseWriter, lang string, headHTML, bodyHTML *sx.Pair) {
 	var langAttr *sx.Pair
 	if lang != "" {
 		langAttr = sx.MakeList(sxhtml.SymAttr, sx.Cons(shtml.SymAttrLang, sx.MakeString(lang)))
 	}
-	zettelHtml := sx.MakeList(
+	zettelHTML := sx.MakeList(
 		sxhtml.SymDoctype,
-		sx.MakeList(shtml.SymHTML, langAttr, headHtml, bodyHtml),
+		sx.MakeList(shtml.SymHTML, langAttr, headHTML, bodyHTML),
 	)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	g := sxhtml.NewGenerator().SetNewline()
-	g.WriteHTML(w, zettelHtml)
+	g.WriteHTML(w, zettelHTML)
 }
 
 func getJSScript(jsScript string) *sx.Pair {

@@ -460,7 +460,7 @@ type collectEnv struct {
 	visited    map[id.Zid]struct{}
 }
 
-func (ce *collectEnv) VisitBefore(node *sx.Pair, _ *sx.Pair) (sx.Object, bool) { return nil, false }
+func (ce *collectEnv) VisitBefore(_ *sx.Pair, _ *sx.Pair) (sx.Object, bool) { return nil, false }
 func (ce *collectEnv) VisitAfter(node *sx.Pair, _ *sx.Pair) (sx.Object, bool) {
 	sym, isSymbol := sx.GetSymbol(node.Car())
 	if !isSymbol {

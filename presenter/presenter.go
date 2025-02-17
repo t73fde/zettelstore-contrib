@@ -281,22 +281,22 @@ func processZettel(w http.ResponseWriter, r *http.Request, cfg *slidesConfig, zi
 
 	gen := newGenerator(nil, langDE, nil, true, false)
 
-	headHtml := getHTMLHead()
-	headHtml.LastPair().
+	headHTML := getHTMLHead()
+	headHTML.LastPair().
 		AppendBang(sx.MakeList(shtml.SymTitle, sx.MakeString(text.EvaluateInlineString(title)))).
 		AppendBang(getPrefixedCSS(""))
 
-	headerHtml := sx.MakeList(
+	headerHTML := sx.MakeList(
 		sx.MakeSymbol("header"),
 		gen.Transform(title).Cons(shtml.SymH1),
 		getURLHtml(sxMeta),
 	)
-	articleHtml := sx.MakeList(sx.MakeSymbol("article"))
-	curr := articleHtml
+	articleHTML := sx.MakeList(sx.MakeSymbol("article"))
+	curr := articleHTML
 	for elem := range gen.Transform(sxContent).Values() {
 		curr = curr.AppendBang(elem)
 	}
-	footerHtml := sx.MakeList(
+	footerHTML := sx.MakeList(
 		sx.MakeSymbol("footer"),
 		gen.Endnotes(),
 		sx.MakeList(
@@ -311,9 +311,9 @@ func processZettel(w http.ResponseWriter, r *http.Request, cfg *slidesConfig, zi
 			),
 		),
 	)
-	bodyHtml := sx.MakeList(shtml.SymBody, headerHtml, articleHtml, footerHtml)
+	bodyHTML := sx.MakeList(shtml.SymBody, headerHTML, articleHTML, footerHTML)
 
-	gen.writeHTMLDocument(w, sxMeta.GetString(meta.KeyLang), headHtml, bodyHtml)
+	gen.writeHTMLDocument(w, sxMeta.GetString(meta.KeyLang), headHTML, bodyHTML)
 }
 
 func getURLHtml(sxMeta sz.Meta) *sx.Pair {
@@ -373,18 +373,18 @@ func renderSlideTOC(w http.ResponseWriter, slides *slideSet) {
 
 	gen := newGenerator(nil, langDE, nil, false, false)
 
-	headHtml := getHTMLHead()
-	headHtml.LastPair().
+	headHTML := getHTMLHead()
+	headHTML.LastPair().
 		AppendBang(sx.MakeList(shtml.SymTitle, sx.MakeString(text.EvaluateInlineString(showTitle)))).
 		AppendBang(getPrefixedCSS(""))
 
 	hxShowTitle := gen.TransformList(showTitle)
-	headerHtml := sx.MakeList(
+	headerHTML := sx.MakeList(
 		sx.MakeSymbol("header"),
 		hxShowTitle.Cons(shtml.SymH1),
 	)
 	if showSubtitle != nil {
-		headerHtml.LastPair().AppendBang(gen.TransformList(showSubtitle).Cons(shtml.SymH2))
+		headerHTML.LastPair().AppendBang(gen.TransformList(showSubtitle).Cons(shtml.SymH2))
 	}
 	lstSlide := sx.MakeList(shtml.SymOL)
 	curr := lstSlide
@@ -395,15 +395,15 @@ func renderSlideTOC(w http.ResponseWriter, slides *slideSet) {
 			shtml.SymLI,
 			getSimpleLink(fmt.Sprintf("/%s.slide#(%d)", slides.zid, si.Number), slideTitle)))
 	}
-	bodyHtml := sx.MakeList(shtml.SymBody, headerHtml, lstSlide)
-	bodyHtml.LastPair().AppendBang(sx.MakeList(
+	bodyHTML := sx.MakeList(shtml.SymBody, headerHTML, lstSlide)
+	bodyHTML.LastPair().AppendBang(sx.MakeList(
 		shtml.SymP,
 		getSimpleLink("/"+slides.zid.String()+".reveal", sx.MakeList(sx.MakeString("Reveal"))),
 		sx.MakeString(", "),
 		getSimpleLink("/"+slides.zid.String()+".html", sx.MakeList(sx.MakeString("Handout"))),
 	))
 
-	gen.writeHTMLDocument(w, slides.Lang(), headHtml, bodyHtml)
+	gen.writeHTMLDocument(w, slides.Lang(), headHTML, bodyHTML)
 }
 
 func processSlideSet(w http.ResponseWriter, r *http.Request, cfg *slidesConfig, zid id.Zid, ren renderer) {
@@ -452,24 +452,24 @@ func (rr *revealRenderer) Render(w http.ResponseWriter, slides *slideSet, author
 
 	title := slides.Title()
 
-	headHtml := getHTMLHead()
-	headHtml.LastPair().AppendBang(getHeadLink("stylesheet", "revealjs/reveal.css")).
+	headHTML := getHTMLHead()
+	headHTML.LastPair().AppendBang(getHeadLink("stylesheet", "revealjs/reveal.css")).
 		AppendBang(getHeadLink("stylesheet", "revealjs/theme/white.css")).
 		AppendBang(getHeadLink("stylesheet", "revealjs/plugin/highlight/default.css")).
 		AppendBang(getPrefixedCSS(rr.userCSS)).
 		AppendBang(sx.MakeList(shtml.SymTitle, sx.MakeString(text.EvaluateInlineString(title))))
 	lang := slides.Lang()
 
-	slidesHtml := sx.MakeList(shtml.SymDIV, getClassAttr("slides"))
-	revealHtml := sx.MakeList(shtml.SymDIV, getClassAttr("reveal"), slidesHtml)
+	slidesHTML := sx.MakeList(shtml.SymDIV, getClassAttr("slides"))
+	revealHTML := sx.MakeList(shtml.SymDIV, getClassAttr("reveal"), slidesHTML)
 	offset := 1
 	if title != nil {
 		offset++
-		hgroupHtml := sx.MakeList(
+		hgroupHTML := sx.MakeList(
 			sx.MakeSymbol("hgroup"),
 			gen.TransformList(title).Cons(getClassAttr("title")).Cons(shtml.SymH1),
 		)
-		curr := hgroupHtml.LastPair()
+		curr := hgroupHTML.LastPair()
 		if subtitle := slides.Subtitle(); subtitle != nil {
 			curr = curr.AppendBang(gen.TransformList(subtitle).Cons(getClassAttr("subtitle")).Cons(shtml.SymH2))
 		}
@@ -480,33 +480,33 @@ func (rr *revealRenderer) Render(w http.ResponseWriter, slides *slideSet, author
 				sx.MakeString(author),
 			))
 		}
-		slidesHtml = slidesHtml.LastPair().AppendBang(sx.MakeList(sx.MakeSymbol("section"), hgroupHtml))
+		slidesHTML = slidesHTML.LastPair().AppendBang(sx.MakeList(sx.MakeSymbol("section"), hgroupHTML))
 	}
 
 	for si := slides.Slides(SlideRoleShow, offset); si != nil; si = si.Next() {
 		gen.SetCurrentSlide(si)
 		main := si.Child()
-		rSlideHtml := getRevealSlide(gen, main, lang)
+		rSlideHTML := getRevealSlide(gen, main, lang)
 		if sub := main.Next(); sub != nil {
-			rSlideHtml = sx.MakeList(sx.MakeSymbol("section"), rSlideHtml)
-			curr := rSlideHtml.LastPair()
+			rSlideHTML = sx.MakeList(sx.MakeSymbol("section"), rSlideHTML)
+			curr := rSlideHTML.LastPair()
 			for ; sub != nil; sub = sub.Next() {
 				curr = curr.AppendBang(getRevealSlide(gen, sub, main.Slide.lang))
 			}
 		}
-		slidesHtml = slidesHtml.AppendBang(rSlideHtml)
+		slidesHTML = slidesHTML.AppendBang(rSlideHTML)
 	}
 
-	bodyHtml := sx.MakeList(
+	bodyHTML := sx.MakeList(
 		shtml.SymBody,
-		revealHtml,
+		revealHTML,
 		getJSFileScript("revealjs/plugin/highlight/highlight.js"),
 		getJSFileScript("revealjs/plugin/notes/notes.js"),
 		getJSFileScript("revealjs/reveal.js"),
 		getJSScript(`Reveal.initialize({width: 1920, height: 1024, center: true, slideNumber: "c", hash: true, plugins: [ RevealHighlight, RevealNotes ]});`),
 	)
 
-	gen.writeHTMLDocument(w, lang, headHtml, bodyHtml)
+	gen.writeHTMLDocument(w, lang, headHTML, bodyHTML)
 }
 
 func getRevealSlide(gen *htmlGenerator, si *slideInfo, lang string) *sx.Pair {
@@ -518,13 +518,13 @@ func getRevealSlide(gen *htmlGenerator, si *slideInfo, lang string) *sx.Pair {
 		attr.LastPair().AppendBang(sx.Cons(shtml.SymAttrLang, sx.MakeString(slLang)))
 	}
 
-	var titleHtml *sx.Pair
+	var titleHTML *sx.Pair
 	if title := si.Slide.title; title != nil {
-		titleHtml = gen.TransformList(title).Cons(shtml.SymH1)
+		titleHTML = gen.TransformList(title).Cons(shtml.SymH1)
 	}
 	gen.SetUnique(fmt.Sprintf("%d:", si.Number))
-	slideHtml := sx.MakeList(sx.MakeSymbol("section"), attr, titleHtml)
-	curr := slideHtml.LastPair()
+	slideHTML := sx.MakeList(sx.MakeSymbol("section"), attr, titleHTML)
+	curr := slideHTML.LastPair()
 	for content := range si.Slide.content.Pairs() {
 		curr = curr.AppendBang(gen.Transform(content.Head()))
 	}
@@ -541,7 +541,7 @@ func getRevealSlide(gen *htmlGenerator, si *slideInfo, lang string) *sx.Pair {
 				sx.MakeString("\u266e"),
 			),
 		))
-	return slideHtml
+	return slideHTML
 }
 
 func getJSFileScript(src string) *sx.Pair {
@@ -565,7 +565,7 @@ func (hr *handoutRenderer) Render(w http.ResponseWriter, slides *slideSet, autho
 	copyright := slides.Copyright()
 	license := slides.License()
 
-	const extraCss = `blockquote {
+	const extraCSS = `blockquote {
   border-left: 0.5rem solid lightgray;
   padding-left: 1rem;
   margin-left: 1rem;
@@ -574,20 +574,20 @@ func (hr *handoutRenderer) Render(w http.ResponseWriter, slides *slideSet, autho
 blockquote p { margin-bottom: .5rem }
 aside.handout { border: 0.2rem solid lightgray }
 `
-	headHtml := getHTMLHead()
-	headHtml.LastPair().AppendBang(getSimpleMeta("author", author)).
+	headHTML := getHTMLHead()
+	headHTML.LastPair().AppendBang(getSimpleMeta("author", author)).
 		AppendBang(getSimpleMeta("copyright", copyright)).
 		AppendBang(getSimpleMeta("license", license)).
 		AppendBang(sx.MakeList(shtml.SymTitle, sx.MakeString(text.EvaluateInlineString(handoutTitle)))).
-		AppendBang(getPrefixedCSS(extraCss))
+		AppendBang(getPrefixedCSS(extraCSS))
 
 	offset := 1
 	lang := slides.Lang()
-	headerHtml := sx.MakeList(sx.MakeSymbol("header"))
+	headerHTML := sx.MakeList(sx.MakeSymbol("header"))
 	if handoutTitle != nil {
 		offset++
 		curr := sx.MakeList(sx.MakeSymbol("hgroup"))
-		headerHtml.LastPair().AppendBang(curr)
+		headerHTML.LastPair().AppendBang(curr)
 		curr = curr.AppendBang(
 			gen.TransformList(handoutTitle).
 				Cons(sx.MakeList(sxhtml.SymAttr, sx.Cons(shtml.SymAttrID, sx.MakeString("(1)")))).
@@ -599,8 +599,8 @@ aside.handout { border: 0.2rem solid lightgray }
 			AppendBang(sx.MakeList(shtml.SymP, sx.MakeString(copyright))).
 			AppendBang(sx.MakeList(shtml.SymP, sx.MakeString(license)))
 	}
-	articleHtml := sx.MakeList(sx.MakeSymbol("article"))
-	curr := articleHtml
+	articleHTML := sx.MakeList(sx.MakeSymbol("article"))
+	curr := articleHTML
 	for si := slides.Slides(SlideRoleHandout, offset); si != nil; si = si.Next() {
 		gen.SetCurrentSlide(si)
 		gen.SetUnique(fmt.Sprintf("%d:", si.Number))
@@ -624,9 +624,9 @@ aside.handout { border: 0.2rem solid lightgray }
 			curr = curr.ExtendBang(content)
 		}
 	}
-	footerHtml := sx.MakeList(sx.MakeSymbol("footer"), gen.Endnotes())
-	bodyHtml := sx.MakeList(shtml.SymBody, headerHtml, articleHtml, footerHtml)
-	gen.writeHTMLDocument(w, lang, headHtml, bodyHtml)
+	footerHTML := sx.MakeList(sx.MakeSymbol("footer"), gen.Endnotes())
+	bodyHTML := sx.MakeList(shtml.SymBody, headerHTML, articleHTML, footerHTML)
+	gen.writeHTMLDocument(w, lang, headHTML, bodyHTML)
 }
 
 func getSlideNoRange(si *slideInfo) *sx.Pair {
@@ -675,8 +675,8 @@ func processList(w http.ResponseWriter, r *http.Request, c *client.Client) {
 		human = "Search: " + human
 	}
 
-	headHtml := getHTMLHead()
-	headHtml.LastPair().
+	headHTML := getHTMLHead()
+	headHTML.LastPair().
 		AppendBang(sx.MakeList(shtml.SymTitle, sx.MakeString(title))).
 		AppendBang(getPrefixedCSS(""))
 
@@ -687,8 +687,8 @@ func processList(w http.ResponseWriter, r *http.Request, c *client.Client) {
 			shtml.SymLI, getSimpleLink(jm.ID.String(), titles[i]),
 		))
 	}
-	bodyHtml := sx.MakeList(shtml.SymBody, sx.MakeList(shtml.SymH1, sx.MakeString(human)), ul)
-	gen.writeHTMLDocument(w, "", headHtml, bodyHtml)
+	bodyHTML := sx.MakeList(shtml.SymBody, sx.MakeList(shtml.SymH1, sx.MakeString(human)), ul)
+	gen.writeHTMLDocument(w, "", headHTML, bodyHTML)
 }
 
 func getHTMLHead() *sx.Pair {
@@ -722,10 +722,10 @@ var defaultCSS = []string{
 	".reveal blockquote {font-style: normal}",
 }
 
-func getPrefixedCSS(extraCss string) *sx.Pair {
+func getPrefixedCSS(extraCSS string) *sx.Pair {
 	var result *sx.Pair
-	if extraCss != "" {
-		result = result.Cons(sx.MakeString(extraCss))
+	if extraCSS != "" {
+		result = result.Cons(sx.MakeString(extraCSS))
 	}
 	for i := range defaultCSS {
 		result = result.Cons(sx.MakeList(sxhtml.SymNoEscape, sx.MakeString(defaultCSS[len(defaultCSS)-i-1]+"\n")))
