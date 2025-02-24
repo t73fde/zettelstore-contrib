@@ -40,7 +40,7 @@ import (
 //************
 
 func main() {
-	listenAddress := flag.String("l", ":23111", "Listen address")
+	listenAddress := flag.String("l", ":23110", "Listen address")
 	flag.Usage = func() {
 		out := flag.CommandLine.Output()
 		fmt.Fprintf(out, "Usage of %s:\n", os.Args[0])
@@ -102,13 +102,15 @@ func makeFeedHandler(feeds feeds) http.Handler {
 
 func buildFeeds() feeds {
 	return feeds{
-		"local": {
-			Title:       "Localhost",
-			URL:         "http://localhost:23121/",
-			Description: "My local Zettelstore, for testing",
-			Language:    "de",
-			Limit:       3,
-		},
+		/*
+			"local": {
+				Title:       "Localhost",
+				URL:         "http://localhost:23121/",
+				Description: "My local Zettelstore, for testing",
+				Language:    "de",
+				Limit:       3,
+			},
+		*/
 		"das": {
 			Title:       "Agiles Studieren",
 			URL:         "https://agiles-studieren.de/",
@@ -167,7 +169,7 @@ func (fi *feedInfo) retrieve(ctx context.Context) (*rss.Feed, error) {
 	}
 
 	defaultQuery := defaultSelect +
-		" " + api.OrderDirective + " " + api.ReverseDirective + " " + meta.KeyCreated +
+		" " + api.OrderDirective + " " + api.ReverseDirective + " " + meta.KeyPublished +
 		" " + api.LimitDirective + fmt.Sprintf(" %d", limit)
 	_, _, ml, err := c.QueryZettelData(ctx, defaultQuery)
 	if err != nil {
@@ -205,7 +207,7 @@ func (fi *feedInfo) retrieve(ctx context.Context) (*rss.Feed, error) {
 
 		item.Category = append(item.Category, meta.Value(m[meta.KeyTags]).AsTags()...)
 
-		zurl := c.NewURLBuilder('z').SetZid(mr.ID).String()
+		zurl := c.NewURLBuilder('h').SetZid(mr.ID).String()
 		item.Link = zurl
 		item.GUID = &rss.GUID{
 			IsPermaLink: true,
