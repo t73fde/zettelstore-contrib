@@ -5,6 +5,7 @@ This repository contains contributed software and test data for
 Some may move into their own repository, when proved useful.
 
 <h2>Software</h2>
+  *  [/dir?ci=tip&name=feeds|Zettel Feeds]: build web feeds for running Zettelstore instances.
   *  [/dir?ci=tip&name=presenter|Zettel Presenter]: create a web-based presentation from some zettel.
 
 <h2>Test data</h2>
