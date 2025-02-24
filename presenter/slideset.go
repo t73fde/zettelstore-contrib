@@ -463,10 +463,10 @@ type collectEnv struct {
 func (ce *collectEnv) VisitBefore(node *sx.Pair, _ *sx.Pair) (sx.Object, bool) {
 	return nil, false
 }
-func (ce *collectEnv) VisitAfter(node *sx.Pair, _ *sx.Pair) (sx.Object, bool) {
+func (ce *collectEnv) VisitAfter(node *sx.Pair, _ *sx.Pair) sx.Object {
 	sym, isSymbol := sx.GetSymbol(node.Car())
 	if !isSymbol {
-		return node, true
+		return node
 	}
 	if sz.SymLinkZettel.IsEqualSymbol(sym) {
 		if zidVal, isString := sx.GetString(node.Tail().Tail().Car()); isString {
@@ -474,34 +474,34 @@ func (ce *collectEnv) VisitAfter(node *sx.Pair, _ *sx.Pair) (sx.Object, bool) {
 				ce.visitZettel(zid)
 			}
 		}
-		return node, true
+		return node
 	}
 
 	if sz.SymEmbed.IsEqualSymbol(sym) {
 		argRef := node.Tail().Tail()
 		qref, isPair := sx.GetPair(argRef.Car())
 		if !isPair {
-			return node, true
+			return node
 		}
 		symEmbedRefState, isSymbol := sx.GetSymbol(qref.Car())
 		if !isSymbol || !sz.SymRefStateZettel.IsEqualSymbol(symEmbedRefState) {
-			return node, true
+			return node
 		}
 		zidVal, isString := sx.GetString(qref.Tail().Car())
 		if !isString {
-			return node, true
+			return node
 		}
 		zid, err := id.Parse(zidVal.GetValue())
 		if err != nil {
-			return node, true
+			return node
 		}
 		syntax, isString := sx.GetString(argRef.Tail().Car())
 		if !isString {
-			return node, true
+			return node
 		}
 		ce.visitImage(zid, syntax.GetValue())
 	}
-	return nil, false
+	return node
 }
 
 func (ce *collectEnv) visitZettel(zid id.Zid) {

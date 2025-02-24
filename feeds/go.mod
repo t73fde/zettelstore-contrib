@@ -4,7 +4,7 @@ go 1.24
 
 require (
 	t73f.de/r/webs v0.0.0-20250213131522-cacd35cfa01a
-	t73f.de/r/zsc v0.0.0-20250224130617-e60c0d63e963
+	t73f.de/r/zsc v0.0.0-20250224184003-fa40a48cc051
 )
 
 require (
