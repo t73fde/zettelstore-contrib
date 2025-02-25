@@ -105,12 +105,12 @@ func buildFeeds() feeds {
 		/*
 			"local": {
 				Title:       "Localhost",
-				URL:         "http://localhost:23121/",
+				URL:         "http://localhost:23123/",
 				Description: "My local Zettelstore, for testing",
 				Language:    "de",
-				Limit:       3,
+				Limit:       -1,
 			},
-		*/
+			//*/
 		"das": {
 			Title:       "Agiles Studieren",
 			URL:         "https://agiles-studieren.de/",
@@ -156,9 +156,9 @@ func (fi *feedInfo) retrieve(ctx context.Context) (*rss.Feed, error) {
 
 	ver, err := c.GetVersionInfo(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to retrieve version: %w", err)
 	}
-	if ver.Minor < 20 {
+	if ver.Major >= 0 && ver.Minor < 20 {
 		return nil, fmt.Errorf("unsupported version: %v", ver)
 	}
 
@@ -166,6 +166,8 @@ func (fi *feedInfo) retrieve(ctx context.Context) (*rss.Feed, error) {
 	var limit = fi.Limit
 	if limit == 0 {
 		limit = 30
+	} else if limit < 0 {
+		limit = 0
 	}
 
 	defaultQuery := defaultSelect +
@@ -173,7 +175,7 @@ func (fi *feedInfo) retrieve(ctx context.Context) (*rss.Feed, error) {
 		" " + api.LimitDirective + fmt.Sprintf(" %d", limit)
 	_, _, ml, err := c.QueryZettelData(ctx, defaultQuery)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to query zettel: %w", err)
 	}
 
 	description := fi.Description
