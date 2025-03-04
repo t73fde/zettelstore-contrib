@@ -245,7 +245,7 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 				sb.WriteString("data:image/")
 				sb.WriteString(img.syntax)
 				sb.WriteString(";base64,")
-				base64.NewEncoder(base64.StdEncoding, &sb).Write(img.data)
+				_, _ = base64.NewEncoder(base64.StdEncoding, &sb).Write(img.data)
 				src = sb.String()
 			}
 		}
@@ -302,7 +302,7 @@ func (gen *htmlGenerator) writeHTMLDocument(w http.ResponseWriter, lang string, 
 	)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	g := sxhtml.NewGenerator().SetNewline()
-	g.WriteHTML(w, zettelHTML)
+	_, _ = g.WriteHTML(w, zettelHTML)
 }
 
 func getJSScript(jsScript string) *sx.Pair {

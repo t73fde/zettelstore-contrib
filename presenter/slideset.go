@@ -460,7 +460,7 @@ type collectEnv struct {
 	visited    map[id.Zid]struct{}
 }
 
-func (ce *collectEnv) VisitBefore(node *sx.Pair, _ *sx.Pair) (sx.Object, bool) {
+func (ce *collectEnv) VisitBefore(_ *sx.Pair, _ *sx.Pair) (sx.Object, bool) {
 	return nil, false
 }
 func (ce *collectEnv) VisitAfter(node *sx.Pair, _ *sx.Pair) sx.Object {
@@ -483,8 +483,8 @@ func (ce *collectEnv) VisitAfter(node *sx.Pair, _ *sx.Pair) sx.Object {
 		if !isPair {
 			return node
 		}
-		symEmbedRefState, isSymbol := sx.GetSymbol(qref.Car())
-		if !isSymbol || !sz.SymRefStateZettel.IsEqualSymbol(symEmbedRefState) {
+		symEmbedRefState, isStateSymbol := sx.GetSymbol(qref.Car())
+		if !isStateSymbol || !sz.SymRefStateZettel.IsEqualSymbol(symEmbedRefState) {
 			return node
 		}
 		zidVal, isString := sx.GetString(qref.Tail().Car())

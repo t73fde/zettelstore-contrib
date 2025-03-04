@@ -59,9 +59,9 @@ func main() {
 	listenAddress := flag.String("l", ":23120", "Listen address")
 	flag.Usage = func() {
 		out := flag.CommandLine.Output()
-		fmt.Fprintf(out, "Usage of %s:\n", os.Args[0])
+		_, _ = fmt.Fprintf(out, "Usage of %s:\n", os.Args[0])
 		flag.PrintDefaults()
-		io.WriteString(out, "  [URL] URL of Zettelstore (default: \"http://127.0.0.1:23123\")\n")
+		_, _ = io.WriteString(out, "  [URL] URL of Zettelstore (default: \"http://127.0.0.1:23123\")\n")
 	}
 	flag.Parse()
 	ctx := context.Background()
@@ -79,7 +79,7 @@ func main() {
 	http.HandleFunc("/", makeHandler(&cfg))
 	http.Handle("/revealjs/", http.FileServer(http.FS(revealjs)))
 	fmt.Println("Listening:", *listenAddress)
-	http.ListenAndServe(*listenAddress, nil)
+	_ = http.ListenAndServe(*listenAddress, nil)
 }
 
 func getClient(ctx context.Context, base string) (*client.Client, error) {
@@ -120,16 +120,16 @@ func getClient(ctx context.Context, base string) (*client.Client, error) {
 
 	if withAuth {
 		if username == "" {
-			io.WriteString(os.Stderr, "Username: ")
+			_, _ = io.WriteString(os.Stderr, "Username: ")
 			_, errUser := fmt.Fscanln(os.Stdin, &username)
 			if errUser != nil {
 				return nil, errUser
 			}
 		}
 		if password == "" {
-			io.WriteString(os.Stderr, "Password: ")
+			_, _ = io.WriteString(os.Stderr, "Password: ")
 			pw, errPw := term.ReadPassword(int(os.Stdin.Fd()))
-			io.WriteString(os.Stderr, "\n")
+			_, _ = io.WriteString(os.Stderr, "\n")
 			if errPw != nil {
 				return nil, errPw
 			}
@@ -193,12 +193,12 @@ func makeHandler(cfg *slidesConfig) http.HandlerFunc {
 				processSlideSet(w, r, cfg, zid, &handoutRenderer{cfg: cfg})
 			case "content":
 				if content := retrieveContent(w, r, cfg.c, zid); len(content) > 0 {
-					w.Write(content)
+					_, _ = w.Write(content)
 				}
 			case "svg":
 				if content := retrieveContent(w, r, cfg.c, zid); len(content) > 0 {
-					io.WriteString(w, `<?xml version='1.0' encoding='utf-8'?>`)
-					w.Write(content)
+					_, _ = io.WriteString(w, `<?xml version='1.0' encoding='utf-8'?>`)
+					_, _ = w.Write(content)
 				}
 			default:
 				processZettel(w, r, cfg, zid)
