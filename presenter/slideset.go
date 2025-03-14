@@ -468,9 +468,9 @@ func (ce *collectEnv) VisitAfter(node *sx.Pair, _ *sx.Pair) sx.Object {
 	if !isSymbol {
 		return node
 	}
-	if sz.SymLinkZettel.IsEqualSymbol(sym) {
-		if zidVal, isString := sx.GetString(node.Tail().Tail().Car()); isString {
-			if zid, err := id.Parse(zidVal.GetValue()); err == nil {
+	if sz.SymLink.IsEqualSymbol(sym) {
+		if refSym, zidVal := sz.GetReference(node.Tail().Tail()); sz.SymRefStateZettel.IsEqual(refSym) {
+			if zid, err := id.Parse(zidVal); err == nil {
 				ce.visitZettel(zid)
 			}
 		}

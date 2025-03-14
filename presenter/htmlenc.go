@@ -125,7 +125,8 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		return prevFn(args, env)
 	})
 	rebind(tr, sz.SymVerbatimComment, func(sx.Vector, *shtml.Environment, shtml.EvalFn) sx.Object { return sx.Nil() })
-	rebind(tr, sz.SymLinkZettel, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
+	rebind(tr, sz.SymLink, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
+		refSym, refVal := sz.GetReference(args[1].(*sx.Pair))
 		obj := prevFn(args, env)
 		if env.GetError() != nil {
 			return sx.Nil()
@@ -142,51 +143,38 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		if !isPair {
 			return obj
 		}
-		avals := attr.Tail()
-		p := avals.Assoc(shtml.SymAttrHref)
-		if p == nil {
-			return obj
+		if sz.SymRefStateZettel.IsEqual(refSym) {
+			avals := attr.Tail()
+			p := avals.Assoc(shtml.SymAttrHref)
+			if p == nil {
+				return obj
+			}
+			strZid, _, _ := strings.Cut(refVal, "#")
+			zid, err := id.Parse(strZid)
+			if si := gen.curSlide.FindSlide(zid); err == nil && si != nil {
+				avals = avals.Cons(sx.Cons(shtml.SymAttrHref, sx.MakeString(fmt.Sprintf("#(%d)", si.Number))))
+				attr.SetCdr(avals)
+				return lst
+			}
+			if extZettelLinks {
+				// TODO: make link absolute
+				avals = addClass(avals, "zettel")
+				attr.SetCdr(avals.Cons(sx.Cons(shtml.SymAttrHref, sx.MakeString("/"+strZid))))
+				return lst
+			}
+			// Do not show link to other, possibly non-public zettel
+			text := lst.Tail().Tail() // Return just the text of the link
+			return text.Cons(shtml.SymSPAN)
 		}
-		refVal, isString := sx.GetString(p.Cdr())
-		if !isString {
-			return obj
-		}
-		strZid, _, _ := strings.Cut(refVal.GetValue(), "#")
-		zid, err := id.Parse(strZid)
-		if si := gen.curSlide.FindSlide(zid); err == nil && si != nil {
-			avals = avals.Cons(sx.Cons(shtml.SymAttrHref, sx.MakeString(fmt.Sprintf("#(%d)", si.Number))))
+		if sz.SymRefStateExternal.IsEqual(refSym) {
+			avals := attr.Tail()
+			avals = addClass(avals, "external")
+			avals = avals.Cons(sx.Cons(shtml.SymAttrTarget, sx.MakeString("_blank")))
+			avals = avals.Cons(sx.Cons(shtml.SymAttrRel, sx.MakeString("noopener noreferrer")))
 			attr.SetCdr(avals)
 			return lst
 		}
-		if extZettelLinks {
-			// TODO: make link absolute
-			avals = addClass(avals, "zettel")
-			attr.SetCdr(avals.Cons(sx.Cons(shtml.SymAttrHref, sx.MakeString("/"+strZid))))
-			return lst
-		}
-		// Do not show link to other, possibly non-public zettel
-		text := lst.Tail().Tail() // Return just the text of the link
-		return text.Cons(shtml.SymSPAN)
-	})
-	rebind(tr, sz.SymLinkExternal, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
-		obj := prevFn(args, env)
-		if env.GetError() != nil {
-			return sx.Nil()
-		}
-		lst, isPair := sx.GetPair(obj)
-		if !isPair {
-			return obj
-		}
-		attr, isPair := sx.GetPair(lst.Tail().Car())
-		if !isPair {
-			return obj
-		}
-		avals := attr.Tail()
-		avals = addClass(avals, "external")
-		avals = avals.Cons(sx.Cons(shtml.SymAttrTarget, sx.MakeString("_blank")))
-		avals = avals.Cons(sx.Cons(shtml.SymAttrRel, sx.MakeString("noopener noreferrer")))
-		attr.SetCdr(avals)
-		return lst
+		return obj
 	})
 	rebind(tr, sz.SymEmbed, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
 		obj := prevFn(args, env)
