@@ -20,6 +20,7 @@ import (
 	"t73f.de/r/zsc/domain/id"
 	"t73f.de/r/zsc/domain/meta"
 	"t73f.de/r/zsc/sz"
+	"t73f.de/r/zsx"
 )
 
 // Constants for zettel metadata keys
@@ -161,7 +162,7 @@ func (si *slideInfo) SplitChildren() {
 	si.youngest = youngest
 }
 func splitHeading(bn *sx.Pair, sym *sx.Symbol) (*sx.Pair, bool) {
-	if !sym.IsEqualSymbol(sz.SymHeading) {
+	if !sym.IsEqualSymbol(zsx.SymHeading) {
 		return nil, false
 	}
 	levelPair := bn.Tail()
@@ -180,10 +181,10 @@ func splitHeading(bn *sx.Pair, sym *sx.Symbol) (*sx.Pair, bool) {
 	return nextTitle, true
 }
 func splitThematicBreak(bn *sx.Pair, sym *sx.Symbol) bool {
-	if !sym.IsEqualSymbol(sz.SymThematic) {
+	if !sym.IsEqualSymbol(zsx.SymThematic) {
 		return false
 	}
-	attrs := sz.GetAttributes(bn.Tail().Head())
+	attrs := zsx.GetAttributes(bn.Tail().Head())
 	return attrs.HasDefault()
 }
 
@@ -421,7 +422,7 @@ func (s *slideSet) Completion(getZettel getZettelContentFunc, getZettelSexpr sGe
 			panic(zid)
 		}
 		env.mark(zid)
-		sz.Walk(&env, sl.content, nil)
+		zsx.Walk(&env, sl.content, nil)
 	}
 	s.isCompleted = true
 }
@@ -468,7 +469,7 @@ func (ce *collectEnv) VisitAfter(node *sx.Pair, _ *sx.Pair) sx.Object {
 	if !isSymbol {
 		return node
 	}
-	if sz.SymLink.IsEqualSymbol(sym) {
+	if zsx.SymLink.IsEqualSymbol(sym) {
 		if refSym, zidVal := sz.GetReference(node.Tail().Tail()); sz.SymRefStateZettel.IsEqual(refSym) {
 			if zid, err := id.Parse(zidVal); err == nil {
 				ce.visitZettel(zid)
@@ -477,7 +478,7 @@ func (ce *collectEnv) VisitAfter(node *sx.Pair, _ *sx.Pair) sx.Object {
 		return node
 	}
 
-	if sz.SymEmbed.IsEqualSymbol(sym) {
+	if zsx.SymEmbed.IsEqualSymbol(sym) {
 		argRef := node.Tail().Tail()
 		qref, isPair := sx.GetPair(argRef.Car())
 		if !isPair {
@@ -551,18 +552,18 @@ func getZettelTitleZid(sxMeta sz.Meta, zid id.Zid) *sx.Pair {
 	if title := sxMeta.GetPair(meta.KeyTitle); title != nil {
 		return title
 	}
-	return sx.Cons(sz.SymText, sx.Cons(sx.MakeString(zid.String()), sx.Nil()))
+	return sx.Cons(zsx.SymText, sx.Cons(sx.MakeString(zid.String()), sx.Nil()))
 }
 
 func getSlideTitle(sxMeta sz.Meta) *sx.Pair {
 	if title := sxMeta.GetPair(KeySlideTitle); title != nil {
-		return title.Cons(sz.SymInline)
+		return title.Cons(zsx.SymInline)
 	}
 	if title := sxMeta.GetString(KeySlideTitle); title != "" {
 		return makeTitleList(title)
 	}
 	if title := sxMeta.GetPair(meta.KeyTitle); title != nil {
-		return title.Cons(sz.SymInline)
+		return title.Cons(zsx.SymInline)
 	}
 	if title := sxMeta.GetString(meta.KeyTitle); title != "" {
 		return makeTitleList(title)
@@ -578,5 +579,5 @@ func getSlideTitleZid(sxMeta sz.Meta, zid id.Zid) *sx.Pair {
 }
 
 func makeTitleList(s string) *sx.Pair {
-	return sx.MakeList(sz.SymInline, sx.MakeList(sz.SymText, sx.MakeString(s)))
+	return sx.MakeList(zsx.SymInline, sx.MakeList(zsx.SymText, sx.MakeString(s)))
 }

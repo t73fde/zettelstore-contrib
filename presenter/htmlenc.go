@@ -27,6 +27,7 @@ import (
 	"t73f.de/r/zsc/domain/meta"
 	"t73f.de/r/zsc/shtml"
 	"t73f.de/r/zsc/sz"
+	"t73f.de/r/zsx"
 )
 
 type htmlGenerator struct {
@@ -59,7 +60,7 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		return result
 	}
 
-	rebind(tr, sz.SymRegionBlock, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
+	rebind(tr, zsx.SymRegionBlock, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
 		a := shtml.GetAttributes(args[0], env)
 		if val, found := a.Get(""); found {
 			switch val {
@@ -106,7 +107,7 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		return prevFn(args, env)
 	})
 
-	rebind(tr, sz.SymHeading, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
+	rebind(tr, zsx.SymHeading, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
 		if num, isNum := sx.GetNumber(args[0]); isNum {
 			if level := num.(sx.Int64); level == 1 {
 				if a := shtml.GetAttributes(args[1], env); a.HasDefault() {
@@ -116,7 +117,7 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		}
 		return prevFn(args, env)
 	})
-	rebind(tr, sz.SymThematic, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
+	rebind(tr, zsx.SymThematic, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
 		if len(args) > 0 {
 			if a := shtml.GetAttributes(args[0], env); a.HasDefault() {
 				return sx.Nil()
@@ -124,8 +125,8 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		}
 		return prevFn(args, env)
 	})
-	rebind(tr, sz.SymVerbatimComment, func(sx.Vector, *shtml.Environment, shtml.EvalFn) sx.Object { return sx.Nil() })
-	rebind(tr, sz.SymLink, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
+	rebind(tr, zsx.SymVerbatimComment, func(sx.Vector, *shtml.Environment, shtml.EvalFn) sx.Object { return sx.Nil() })
+	rebind(tr, zsx.SymLink, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
 		refSym, refVal := sz.GetReference(args[1].(*sx.Pair))
 		obj := prevFn(args, env)
 		if env.GetError() != nil {
@@ -166,7 +167,7 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 			text := lst.Tail().Tail() // Return just the text of the link
 			return text.Cons(shtml.SymSPAN)
 		}
-		if sz.SymRefStateExternal.IsEqual(refSym) {
+		if zsx.SymRefStateExternal.IsEqual(refSym) {
 			avals := attr.Tail()
 			avals = addClass(avals, "external")
 			avals = avals.Cons(sx.Cons(shtml.SymAttrTarget, sx.MakeString("_blank")))
@@ -176,7 +177,7 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		}
 		return obj
 	})
-	rebind(tr, sz.SymEmbed, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
+	rebind(tr, zsx.SymEmbed, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
 		obj := prevFn(args, env)
 		if env.GetError() != nil {
 			return sx.Nil()
@@ -243,7 +244,7 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		attr.SetCdr(avals.Cons(sx.Cons(shtml.SymAttrSrc, sx.MakeString(src))))
 		return obj
 	})
-	rebind(tr, sz.SymLiteralComment, func(sx.Vector, *shtml.Environment, shtml.EvalFn) sx.Object { return sx.Nil() })
+	rebind(tr, zsx.SymLiteralComment, func(sx.Vector, *shtml.Environment, shtml.EvalFn) sx.Object { return sx.Nil() })
 
 	return &gen
 }
