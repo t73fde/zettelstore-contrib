@@ -15,6 +15,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"t73f.de/r/sx"
 	"t73f.de/r/zsc/domain/id"
@@ -46,15 +47,21 @@ type slide struct {
 	title   *sx.Pair
 	lang    string
 	role    string
+	ts      time.Time
 	content *sx.Pair // Zettel / slide content
 }
 
 func newSlide(zid id.Zid, sxMeta sz.Meta, sxContent *sx.Pair) *slide {
+	ts, err := time.Parse(id.TimestampLayout, sxMeta.GetString(meta.KeyPublished))
+	if err != nil {
+		ts = time.Time{}
+	}
 	return &slide{
 		zid:     zid,
 		title:   getSlideTitleZid(sxMeta, zid),
 		lang:    sxMeta.GetString(meta.KeyLang),
 		role:    sxMeta.GetString(KeySlideRole),
+		ts:      ts,
 		content: sxContent,
 	}
 }
@@ -64,6 +71,7 @@ func (sl *slide) MakeChild(sxTitle, sxContent *sx.Pair) *slide {
 		title:   sxTitle,
 		lang:    sl.lang,
 		role:    sl.role,
+		ts:      sl.ts,
 		content: sxContent,
 	}
 }
@@ -237,6 +245,16 @@ func newSlideSetMeta(zid id.Zid, sxMeta sz.Meta) *slideSet {
 		setSlide: make(map[id.Zid]*slide),
 		setImage: make(map[id.Zid]image),
 	}
+}
+
+func (s *slideSet) GetPublished() time.Time {
+	result := time.Time{}
+	for _, slide := range s.seqSlide {
+		if ts := slide.ts; result.Before(ts) {
+			result = ts
+		}
+	}
+	return result
 }
 
 func (s *slideSet) GetSlide(zid id.Zid) *slide {

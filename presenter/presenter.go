@@ -26,6 +26,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	"golang.org/x/term"
 
@@ -474,10 +475,17 @@ func (rr *revealRenderer) Render(w http.ResponseWriter, slides *slideSet, author
 			curr = curr.AppendBang(gen.TransformList(subtitle).Cons(getClassAttr("subtitle")).Cons(shtml.SymH2))
 		}
 		if author != "" {
-			curr.AppendBang(sx.MakeList(
+			curr = curr.AppendBang(sx.MakeList(
 				shtml.SymP,
 				getClassAttr("author"),
 				sx.MakeString(author),
+			))
+		}
+		if ts := slides.GetPublished(); ts.After(time.Time{}) {
+			curr.AppendBang(sx.MakeList(
+				shtml.SymP,
+				getClassAttr("updated"),
+				sx.MakeList(sx.MakeSymbol("time"), sx.MakeString(ts.Format("2006-01-02 15:04"))),
 			))
 		}
 		slidesHTML = slidesHTML.LastPair().AppendBang(sx.MakeList(sx.MakeSymbol("section"), hgroupHTML))
@@ -595,9 +603,12 @@ aside.handout { border: 0.2rem solid lightgray }
 		if handoutSubtitle := slides.Subtitle(); handoutSubtitle != nil {
 			curr = curr.AppendBang(gen.TransformList(handoutSubtitle).Cons(shtml.SymH2))
 		}
-		curr.AppendBang(sx.MakeList(shtml.SymP, sx.MakeString(author))).
+		curr = curr.AppendBang(sx.MakeList(shtml.SymP, sx.MakeString(author))).
 			AppendBang(sx.MakeList(shtml.SymP, sx.MakeString(copyright))).
 			AppendBang(sx.MakeList(shtml.SymP, sx.MakeString(license)))
+		if ts := slides.GetPublished(); ts.After(time.Time{}) {
+			curr.AppendBang(sx.MakeList(shtml.SymP, sx.MakeString("Update: "), sx.MakeString(ts.Format("2006-01-02 15:04"))))
+		}
 	}
 	articleHTML := sx.MakeList(sx.MakeSymbol("article"))
 	curr := articleHTML
@@ -719,7 +730,8 @@ var defaultCSS = []string{
 	`a.external::after { content: "➚"; display: inline-block }`,
 	`a.zettel::after { content: "⤳"; display: inline-block }`,
 	"a.broken { text-decoration: line-through }",
-	".reveal blockquote {font-style: normal}",
+	".reveal blockquote { font-style: normal }",
+	"p.updated { font-size: smaller }",
 }
 
 func getPrefixedCSS(extraCSS string) *sx.Pair {
