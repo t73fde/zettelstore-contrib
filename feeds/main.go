@@ -215,7 +215,7 @@ func (fi *feedInfo) retrieve(ctx context.Context) (*rss.Feed, error) {
 			IsPermaLink: true,
 			Value:       zurl,
 		}
-		pubDate, ok := meta.Value(m[meta.KeyCreated]).AsTime()
+		pubDate, ok := meta.Value(m[meta.KeyPublished]).AsTime()
 		if ok {
 			item.PubDate = rss.RFC822Date(pubDate)
 			if feed.PubDate == "" {
