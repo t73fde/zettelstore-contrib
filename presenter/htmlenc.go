@@ -51,7 +51,7 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		s:   slides,
 	}
 	genSideNote := func(arg sx.Object, env *shtml.Environment, classAttr *sx.Pair) *sx.Pair {
-		result := sx.MakeList(shtml.SymASIDE, classAttr.Cons(sxhtml.SymAttr))
+		result := sx.MakeList(shtml.SymASIDE, classAttr)
 		if region, isPair := sx.GetPair(arg); isPair {
 			if evalRegion := tr.EvalPairList(region, env); evalRegion != nil {
 				result.Tail().SetCdr(evalRegion)
@@ -216,7 +216,6 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 				sx.MakeList(
 					shtml.SymEMBED,
 					sx.MakeList(
-						sxhtml.SymAttr,
 						sx.Cons(shtml.SymAttrType, sx.MakeString("image/svg+xml")),
 						sx.Cons(shtml.SymAttrSrc, sx.MakeString("/"+string(strZid)+".svg")),
 					),
@@ -283,7 +282,7 @@ func (gen *htmlGenerator) Endnotes() *sx.Pair {
 func (gen *htmlGenerator) writeHTMLDocument(w http.ResponseWriter, lang string, headHTML, bodyHTML *sx.Pair) {
 	var langAttr *sx.Pair
 	if lang != "" {
-		langAttr = sx.MakeList(sxhtml.SymAttr, sx.Cons(shtml.SymAttrLang, sx.MakeString(lang)))
+		langAttr = sx.MakeList(sx.Cons(shtml.SymAttrLang, sx.MakeString(lang)))
 	}
 	zettelHTML := sx.MakeList(
 		sxhtml.SymDoctype,
