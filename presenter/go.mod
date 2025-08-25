@@ -6,7 +6,7 @@ require (
 	golang.org/x/term v0.33.0
 	t73f.de/r/sx v0.0.0-20250707071435-95b82f7d24bb
 	t73f.de/r/sxwebs v0.0.0-20250806170342-a33d11a3e7c5
-	t73f.de/r/zsc v0.0.0-20250806171747-38bd9f293b06
+	t73f.de/r/zsc v0.0.0-20250825142132-c4bc92002e77
 	t73f.de/r/zsx v0.0.0-20250707071920-5e29047e4db7
 )
 
