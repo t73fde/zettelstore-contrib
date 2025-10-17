@@ -127,7 +127,7 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 	})
 	rebind(tr, zsx.SymVerbatimComment, func(sx.Vector, *shtml.Environment, shtml.EvalFn) sx.Object { return sx.Nil() })
 	rebind(tr, zsx.SymLink, func(args sx.Vector, env *shtml.Environment, prevFn shtml.EvalFn) sx.Object {
-		refSym, refVal := sz.GetReference(args[1].(*sx.Pair))
+		refSym, refVal := zsx.GetReference(args[1].(*sx.Pair))
 		obj := prevFn(args, env)
 		if env.GetError() != nil {
 			return sx.Nil()
@@ -290,7 +290,7 @@ func (gen *htmlGenerator) writeHTMLDocument(w http.ResponseWriter, lang string, 
 	)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	g := sxhtml.NewGenerator().SetNewline()
-	_, _ = g.WriteHTML(w, zettelHTML)
+	_ = g.WriteHTML(w, zettelHTML)
 }
 
 func getJSScript(jsScript string) *sx.Pair {

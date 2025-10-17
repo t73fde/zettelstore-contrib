@@ -488,7 +488,7 @@ func (ce *collectEnv) VisitAfter(node *sx.Pair, _ *sx.Pair) sx.Object {
 		return node
 	}
 	if zsx.SymLink.IsEqualSymbol(sym) {
-		if refSym, zidVal := sz.GetReference(node.Tail().Tail()); sz.SymRefStateZettel.IsEqual(refSym) {
+		if refSym, zidVal := zsx.GetReference(node.Tail().Tail()); sz.SymRefStateZettel.IsEqual(refSym) {
 			if zid, err := id.Parse(zidVal); err == nil {
 				ce.visitZettel(zid)
 			}
