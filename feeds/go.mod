@@ -1,14 +1,14 @@
 module zettelstore.de/contrib/feeds
 
-go 1.24
+go 1.25
 
 require (
-	t73f.de/r/webs v0.0.0-20250707071548-227f3e99db55
-	t73f.de/r/zsc v0.0.0-20250707072124-be388711ad2a
+	t73f.de/r/webs v0.0.0-20250930141330-11da1688d11c
+	t73f.de/r/zsc v0.0.0-20251017162731-d31c80cec035
 )
 
 require (
-	t73f.de/r/sx v0.0.0-20250707071435-95b82f7d24bb // indirect
-	t73f.de/r/zero v0.0.0-20250703105709-bb38976d4455 // indirect
-	t73f.de/r/zsx v0.0.0-20250707071920-5e29047e4db7 // indirect
+	t73f.de/r/sx v0.0.0-20251017161911-2f8291157520 // indirect
+	t73f.de/r/zero v0.0.0-20251017150835-a8859ec900ed // indirect
+	t73f.de/r/zsx v0.0.0-20251017162536-b66764c5d6c8 // indirect
 )
