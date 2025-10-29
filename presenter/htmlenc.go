@@ -182,20 +182,19 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		if env.GetError() != nil {
 			return sx.Nil()
 		}
-		pair, isPair := sx.GetPair(obj)
+		imgTag, isPair := sx.GetPair(obj)
 		if !isPair {
 			return obj
 		}
-		attr, isPair := sx.GetPair(pair.Tail().Car())
+		attr, isPair := sx.GetPair(imgTag.Tail().Car())
 		if !isPair {
 			return obj
 		}
-		avals := attr.Tail()
-		p := avals.Assoc(shtml.SymAttrSrc)
-		if p == nil {
+		srcAssoc := attr.Assoc(shtml.SymAttrSrc)
+		if srcAssoc == nil {
 			return obj
 		}
-		zidVal, isString := sx.GetString(p.Cdr())
+		zidVal, isString := sx.GetString(srcAssoc.Cdr())
 		if !isString {
 			return obj
 		}
@@ -240,7 +239,7 @@ func newGenerator(slides *slideSet, lang string, ren renderer, extZettelLinks, e
 		if src == "" {
 			src = "/" + zid.String() + ".content"
 		}
-		attr.SetCdr(avals.Cons(sx.Cons(shtml.SymAttrSrc, sx.MakeString(src))))
+		srcAssoc.SetCdr(sx.MakeString(src))
 		return obj
 	})
 	rebind(tr, zsx.SymLiteralComment, func(sx.Vector, *shtml.Environment, shtml.EvalFn) sx.Object { return sx.Nil() })
