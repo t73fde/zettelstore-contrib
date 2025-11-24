@@ -704,12 +704,9 @@ func getHTMLHead() *sx.Pair {
 }
 
 var defaultCSS = []string{
-	"td.left, .reveal td.left,",
-	"th.left { text-align: left }",
-	"td.center, .reveal td.center,",
-	"th.center { text-align: center }",
-	"td.right, .reveal td.right,",
-	"th.right { text-align: right }",
+	"td.left, .reveal td.left, th.left, .reveal th.left { text-align: left }",
+	"td.center, .reveal td.center, th.center, .reveal th.center { text-align: center }",
+	"td.right, .reveal td.right, th.right, .reveal th.right { text-align: right }",
 	"ol.zs-endnotes { padding-top: .5rem; border-top: 1px solid; font-size: smaller; margin-left: 2em; }",
 	`a.external::after { content: "➚"; display: inline-block }`,
 	`a.zettel::after { content: "⤳"; display: inline-block }`,
