@@ -1,85 +1,98 @@
-*Zettel Presenter* creates a slide show, handouts and more from zettel maintained by a [Zettelstore](https://zettelstore.de).
+**Zettel Presenter** generates slide shows, handouts, and more from zettels stored in a [Zettelstore](https://zettelstore.de).
 
-## Build instructions
-Just enter `go build .` within the directory of this sub-project and you will find an executable called `presenter`.
+## Build Instructions
+
+To build *Zettel Presenter*, simply navigate to the directory of this sub-project and run the following command:
+
+    go build .
+
+This will create an executable named `presenter`.
+
+You can also download the executables for Windows and macOS from <https://zettelstore.de/contrib/uv>.
+
+> **Note**: Please ensure that the version of *Zettel Presenter* matches the version of Zettelstore to avoid compatibility issues.
 
 ## Run instructions
     # presenter -h
     Usage of presenter:
-      -l string
-            Listen address (default ":23120")
-      [URL] URL of Zettelstore (default: "http://127.0.0.1:23123")
+    -l string
+            Listen address (default: ":23120")
+    [URL] URL of Zettelstore (default: "http://127.0.0.1:23123")
 
-* `URL` denotes the base URL of the Zettelstore, where the slide zettel are stored.
-* `-l` specifies the listen address, to allow to connect to zettel presenter with your browser. If you use the default value, you must point your browser to <http://127.0.0.1:23120>.
+* `URL`: Specifies the base URL of the Zettelstore, where the slide zettels are stored.
+* `-l`: Defines the listen address, enabling the Zettel Presenter to connect to your browser. If you use the default value, point your browser to <http://127.0.0.1:23120>.
 
 ## Configuration
-Further configuration is stored in the metadata of a zettel with the special identifier [00009000001000](https://zettelstore.de/manual/h/00001006055000).
+
+Additional configuration is stored in the metadata of a zettel with the special identifier [00009000001000](https://zettelstore.de/manual/h/00001006055000).
 Currently, two keys are supported:
 
-* `slideset-role` specifies the [zettel role](https://zettelstore.de/manual/h/00001006020100) a zettel must have to be recognized as a starting point of a slide set. The default value is "slideset".
-* `author` specifies the default value for the author value of slide shows. Its default value is the empty string, which omits all author information.
+* **`slideset-role`**: Specifies the [zettel role](https://zettelstore.de/manual/h/00001006020100) required for a zettel to be recognized as the starting point of a slide set. The default value is "slideset".
+* **`author`**: Defines the default author value for slide shows. By default, it is an empty string, which omits any author information.
 
-## Slide set
-A slide set is a zettel, which is marked with a zettel role of the value given by the configuration key `slideset-role`(default: slideset, see above).
-Its main purpose is to list all zettel that should act a slides for a slide show.
-In other word, its is basically a table of contents.
+## Slide Set
 
-Internally, zettel presenter tries to find the first list of the slide set zettel, either an ordered or unordered list.
-For all first-level list items, zettel presenter investigates the very first [link reference](https://zettelstore.de/manual/h/00001007040310).
-If this reference point to a zettel, this zettel will be part of the slide set.
+A slide set is a zettel marked with a zettel role defined by the configuration key `slideset-role` (default: "slideset", as mentioned above).
+Its primary purpose is to list all zettel that will act as slides for a slideshow.
+In other words, it serves as a table of contents.
 
-Of course, it is allowed to reference the same zettel more than one time, if you reference it in different first-level items of the slide set zettel.
+Internally, the Zettel Presenter looks for the first list in the slide set zettel, whether ordered or unordered.
+For each first-level list item, it checks the very first [link reference](https://zettelstore.de/manual/h/00001007040310).
+If the link points to a zettel, that zettel will be included in the slide set.
 
-The second purpose of the slide set zettel is to specify data needed for a slide show / handout.
-This data is stored inside the metadata of the zettel:
+It is perfectly fine to reference the same zettel multiple times, as long as each reference appears in a different first-level item of the slide set zettel.
 
-* `slide-title` specifies the title of the presentation. Its default value is the value of the zettel title. This allows to specify a special value for the presentation.
-* `sub-title` denotes a sub-title. If not given, no default value is produced for the presentation / handout. As with `slide-title`, you are allowed to make use of Zettelmarkup's [inline-structured elements](https://zettelstore.de/manual/h/00001007040000), i.e. text formatting.
-* `author` names the author of the slide set, defaulting to the same value of the configuration zettel (see above).
-* `copyright` produces a copyright statement. If not specified, Zettelstore itself will provide a [default value](https://zettelstore.de/manual/h/00001004020000#default-copyright).
-* `license` allows to specify a license text. Similar to `copyright`, Zettelstore will provide a [default value](https://zettelstore.de/manual/h/00001004020000#default-license).
+The second purpose of the slide set zettel is to define metadata needed for the slideshow or handout.
+This metadata is stored within the zettel’s metadata and includes:
+
+* **`slide-title`**: Specifies the title of the presentation. By default, it takes the value of the zettel’s title, but you can customize it for the presentation.
+* **`sub-title`**: Denotes a subtitle for the presentation. If not specified, no subtitle will be included in the presentation or handout. Like the `slide-title`, you can use Zettelmarkup’s [inline-structured elements](https://zettelstore.de/manual/h/00001007040000) for text formatting.
+* **`author`**: Defines the author of the slide set, defaulting to the value specified in the configuration zettel (see above).
+* **`copyright`**: Specifies a copyright statement. If not provided, Zettelstore will include a [default copyright statement](https://zettelstore.de/manual/h/00001004020000#default-copyright).
+* **`license`**: Allows you to specify a license text. If not provided, Zettelstore will apply a [default license](https://zettelstore.de/manual/h/00001004020000#default-license).
 
 ## Slide
-A slide is just a zettel referenced by slide set zettel.
-Zettel Presenter does not enforce a special zettel role.
-However, it is good practice to use a special zettel role, i.e. "slide".
-This makes it easier to find a specific slide by listing only zettel of the zettel role.
 
-Similar to a slide set zettel, zettel presenter looks at the metadata of a slide zettel:
+A slide is simply a zettel referenced by a slide set zettel.
+The Zettel Presenter does not require a specific zettel role for slides.
+However, it’s considered good practice to assign a dedicated zettel role, such as "slide".
+This makes it easier to find and list specific slides based on their zettel role.
 
-* `slide-title` allows to overwrite the title of the zettel for the purpose of creation a presentation.
-* `slide-role` allows to mark a slide zettel to be included only for either a slide show (value must be "show") or a handout (value must be "handout"). If no value is given, the slide will included in all presentations. If another value is given, the slide will not be part of any presentation document.
+Similar to the slide set zettel, the Zettel Presenter also looks at the metadata of a slide zettel:
 
-## Slide roles
-Currently, two slide roles are implemented: a slide show and a handout.
+* **`slide-title`**: Allows you to override the title of the zettel for the purpose of the presentation.
+* **`slide-role`**: Marks a slide zettel to be included only in specific types of presentations: either a slideshow (value: "show") or a handout (value: "handout"). If no value is provided, the slide will be included in all types of presentations. If another value is used, the slide will not appear in any presentation document.
 
-Presenting a slide show is the main use case of zettel presenter.
-All relevant slides are collected, and a HTML-based slide show is produced.
+## Slide Roles
 
-The handout is another HTML document, that contains all relevant slides.
-There are no slide show elements, all slides content is shown in a linear way.
-Referenced zettel that are not part of the slide set, but have the [visibility](https://zettelstore.de/manual/h/00001010070200) "public", are added at the end of the slide set for further reference.
-This document can be given to your audience, without risking to give away confidential material.
+Currently, two slide roles are implemented: **slide show** and **handout**.
 
-If you reference a zettel of the same slide set, an appropriate HTML link will be produced.
-Since a zettel may occur more than once in a slide set, referenced zettel are first searched backwards.
+Presenting a slide show is the primary use case for the Zettel Presenter.
+All relevant slides are gathered and an HTML-based slide show is generated.
 
-If you reference a zettel outside your slide set, it will be linked in the slide show.
-By following this link, the referenced zettel will shown, but not in the context of the slide show.
-As written above, such a link will only be produced in the handout, if the zettel visibility is "public".
-In this case, it is part of the slide set.
+The handout is another HTML document that contains all relevant slides, but without the interactive slide show elements.
+Instead, the slides are presented in a linear format.
+Zettel that are referenced but not part of the slide set, yet have the [visibility](https://zettelstore.de/manual/h/00001010070200) set to "public", will be added at the end of the handout for further reference.
+This ensures you can provide a complete document to your audience without risking the inclusion of confidential material.
+
+When you reference a zettel from the same slide set, an appropriate HTML link will be created.
+Since a zettel might appear more than once in the slide set, the Zettel Presenter searches for references in reverse order (backwards).
+
+If you reference a zettel outside the slide set, it will be linked in the slide show.
+Following the link will display the referenced zettel, but not within the context of the slide show.
+As mentioned earlier, such links will only appear in the handout if the referenced zettel has "public" visibility.
+In this case, it will be considered part of the slide set.
 
 ## Navigating
-Zettel presenter operates in a simple way.
-It used the same zettel identifier as Zettelstore uses.
-If no zettel identifier is provided in the URL, zettel presenter shows the [home zettel](https://zettelstore.de/manual/h/00001004020000#home-zettel) of Zettelstore.
 
-If the zettel is a slide set, all relevant zettel are collected to be used in a slide show / handout.
-These zettel are presented in a numbered / ordered list.
-If you follow the link of such a list item, you will be directed to the given slide in a slide show.
+Zettel Presenter operates in a simple, intuitive way, using the same zettel identifiers as Zettelstore.
+If no zettel identifier is provided in the URL, Zettel Presenter will display the [home zettel](https://zettelstore.de/manual/h/00001004020000#home-zettel) of Zettelstore.
 
-At the bottom of the presented slide set, there is a link to produce the handout.
+When the zettel is a slide set, all relevant zettels are collected and used to create a slide show or handout.
+These zettels are presented in a numbered or ordered list.
+Clicking on any item in the list will take you to the corresponding slide in the slide show.
 
-If the zettel is not a slide set zettel, it is shown in a relative straight-forward way, very roughly similar to the view of a zettel within the Zettelstore web user interface.
-This allows you to show additional content (if linked from a slide), or allows you to navigate to a slide set zettel to start a presentation.
+At the bottom of the slide set, there is a link to generate the handout.
+
+If the zettel is not part of a slide set, it will be displayed in a straightforward manner, similar to how it appears in the Zettelstore web interface.
+This view allows you to display additional content (if linked from a slide) or navigate to a slide set zettel to begin a presentation.
