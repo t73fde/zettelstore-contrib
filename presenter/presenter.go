@@ -148,26 +148,25 @@ func getClient(ctx context.Context, base string) (*client.Client, error) {
 
 type slidesConfig struct {
 	c            *client.Client
-	config       id.Zid
 	slideSetRole string
 	author       string
 	slideCSS     id.Zid
 }
 
 func getConfig(ctx context.Context, c *client.Client) (slidesConfig, error) {
+	result := slidesConfig{
+		c:            c,
+		slideSetRole: DefaultSlideSetRole,
+	}
+
 	zidConfig, err := c.GetApplicationZid(ctx, "zettel-presenter")
 	if err != nil {
-		return slidesConfig{}, err
+		return result, nil
 	}
 
 	mr, err := c.GetMetaData(ctx, zidConfig)
 	if err != nil {
 		return slidesConfig{}, err
-	}
-	result := slidesConfig{
-		c:            c,
-		config:       zidConfig,
-		slideSetRole: DefaultSlideSetRole,
 	}
 	if ssr, ok := mr.Meta[KeySlideSetRole]; ok {
 		result.slideSetRole = ssr
