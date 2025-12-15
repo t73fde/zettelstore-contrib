@@ -248,7 +248,10 @@ func newSlideSetMeta(zid id.Zid, sxMeta sz.Meta) *slideSet {
 }
 
 func (s *slideSet) GetPublished() time.Time {
-	result := time.Time{}
+	result, err := time.Parse(id.TimestampLayout, s.sxMeta.GetString(meta.KeyPublished))
+	if err != nil {
+		result = time.Time{}
+	}
 	for _, slide := range s.seqSlide {
 		if ts := slide.ts; result.Before(ts) {
 			result = ts
