@@ -158,7 +158,7 @@ func (fi *feedInfo) retrieve(ctx context.Context) (*rss.Feed, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve version: %w", err)
 	}
-	if ver.Major >= 0 && ver.Minor < 20 {
+	if ver.Major == 0 || ver.Major > 1 {
 		return nil, fmt.Errorf("unsupported version: %v", ver)
 	}
 
