@@ -568,6 +568,7 @@ func (hr *handoutRenderer) Render(w http.ResponseWriter, slides *slideSet, autho
   margin-right: 2rem;
 }
 blockquote p { margin-bottom: .5rem }
+img { max-width: 100% }
 aside.handout { border: 0.2rem solid lightgray }
 `
 	headHTML := getHTMLHead()
