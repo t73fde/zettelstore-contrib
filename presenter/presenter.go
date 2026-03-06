@@ -32,13 +32,13 @@ import (
 
 	"t73f.de/r/sx"
 	"t73f.de/r/sxwebs/sxhtml"
-	"t73f.de/r/zsc/api"
 	"t73f.de/r/zsc/client"
 	"t73f.de/r/zsc/domain/id"
 	"t73f.de/r/zsc/domain/meta"
 	"t73f.de/r/zsc/shtml"
 	"t73f.de/r/zsc/sz"
 	"t73f.de/r/zsc/text"
+	"t73f.de/r/zsc/webapi"
 )
 
 const langDE = "de"
@@ -112,7 +112,7 @@ func getClient(ctx context.Context, base string) (*client.Client, error) {
 	}
 
 	if !withAuth {
-		err = c.ExecuteCommand(ctx, api.CommandAuthenticated)
+		err = c.ExecuteCommand(ctx, webapi.CommandAuthenticated)
 		var cerr *client.Error
 		if errors.As(err, &cerr) && cerr.StatusCode == http.StatusUnauthorized {
 			withAuth = true
@@ -244,7 +244,7 @@ func retrieveZidAndSuffix(path string) (id.Zid, string) {
 }
 
 func retrieveContent(w http.ResponseWriter, r *http.Request, c *client.Client, zid id.Zid) []byte {
-	content, err := c.GetZettel(r.Context(), zid, api.PartContent)
+	content, err := c.GetZettel(r.Context(), zid, webapi.PartContent)
 	if err != nil {
 		reportRetrieveError(w, zid, err, "content")
 		return nil
@@ -263,7 +263,7 @@ func reportRetrieveError(w http.ResponseWriter, zid id.Zid, err error, objName s
 
 func processZettel(w http.ResponseWriter, r *http.Request, cfg *slidesConfig, zid id.Zid) {
 	ctx := r.Context()
-	sxZettel, err := cfg.c.GetEvaluatedSz(ctx, zid, api.PartZettel)
+	sxZettel, err := cfg.c.GetEvaluatedSz(ctx, zid, webapi.PartZettel)
 	if err != nil {
 		reportRetrieveError(w, zid, err, "zettel")
 		return
@@ -346,14 +346,14 @@ func getURLHtml(sxMeta sz.Meta) *sx.Pair {
 }
 
 func processSlideTOC(ctx context.Context, c *client.Client, zid id.Zid, sxMeta sz.Meta) *slideSet {
-	_, _, metaSeq, err := c.QueryZettelData(ctx, zid.String()+" "+api.ItemsDirective)
+	_, _, metaSeq, err := c.QueryZettelData(ctx, zid.String()+" "+webapi.ItemsDirective)
 	if err != nil {
 		return nil
 	}
 	slides := newSlideSetMeta(zid, sxMeta)
-	getZettel := func(zid id.Zid) ([]byte, error) { return c.GetZettel(ctx, zid, api.PartContent) }
+	getZettel := func(zid id.Zid) ([]byte, error) { return c.GetZettel(ctx, zid, webapi.PartContent) }
 	sGetZettel := func(zid id.Zid) (sx.Object, error) {
-		return c.GetEvaluatedSz(ctx, zid, api.PartZettel)
+		return c.GetEvaluatedSz(ctx, zid, webapi.PartZettel)
 	}
 	setupSlideSet(slides, metaSeq, getZettel, sGetZettel)
 	return slides
@@ -404,20 +404,20 @@ func renderSlideTOC(w http.ResponseWriter, slides *slideSet) {
 
 func processSlideSet(w http.ResponseWriter, r *http.Request, cfg *slidesConfig, zid id.Zid, ren renderer) {
 	ctx := r.Context()
-	_, _, metaSeq, err := cfg.c.QueryZettelData(ctx, zid.String()+" "+api.ItemsDirective)
+	_, _, metaSeq, err := cfg.c.QueryZettelData(ctx, zid.String()+" "+webapi.ItemsDirective)
 	if err != nil {
 		reportRetrieveError(w, zid, err, "zettel")
 		return
 	}
-	sMeta, err := cfg.c.GetEvaluatedSz(ctx, zid, api.PartMeta)
+	sMeta, err := cfg.c.GetEvaluatedSz(ctx, zid, webapi.PartMeta)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Unable to read zettel %s: %v", zid, err), http.StatusBadRequest)
 		return
 	}
 	slides := newSlideSet(zid, sz.MakeMeta(sMeta))
-	getZettel := func(zid id.Zid) ([]byte, error) { return cfg.c.GetZettel(ctx, zid, api.PartContent) }
+	getZettel := func(zid id.Zid) ([]byte, error) { return cfg.c.GetZettel(ctx, zid, webapi.PartContent) }
 	sGetZettel := func(zid id.Zid) (sx.Object, error) {
-		return cfg.c.GetEvaluatedSz(ctx, zid, api.PartZettel)
+		return cfg.c.GetEvaluatedSz(ctx, zid, webapi.PartZettel)
 	}
 	setupSlideSet(slides, metaSeq, getZettel, sGetZettel)
 	ren.Prepare(ctx)
@@ -438,7 +438,7 @@ type revealRenderer struct {
 func (*revealRenderer) Role() string { return SlideRoleShow }
 func (rr *revealRenderer) Prepare(ctx context.Context) {
 	if slideCSS := rr.cfg.slideCSS; slideCSS.IsValid() {
-		if data, err := rr.cfg.c.GetZettel(ctx, slideCSS, api.PartContent); err == nil && len(data) > 0 {
+		if data, err := rr.cfg.c.GetZettel(ctx, slideCSS, webapi.PartContent); err == nil && len(data) > 0 {
 			rr.userCSS = string(data)
 		}
 	}
@@ -639,7 +639,7 @@ func getSlideNoRange(si *slideInfo) *sx.Pair {
 	return nil
 }
 
-func setupSlideSet(slides *slideSet, l []api.ZidMetaRights, getZettel getZettelContentFunc, sGetZettel sGetZettelFunc) {
+func setupSlideSet(slides *slideSet, l []webapi.ZidMetaRights, getZettel getZettelContentFunc, sGetZettel sGetZettelFunc) {
 	for _, sl := range l {
 		slides.AddSlide(sl.ID, sGetZettel)
 	}
@@ -648,7 +648,7 @@ func setupSlideSet(slides *slideSet, l []api.ZidMetaRights, getZettel getZettelC
 
 func processList(w http.ResponseWriter, r *http.Request, c *client.Client) {
 	ctx := r.Context()
-	_, human, zl, err := c.QueryZettelData(ctx, strings.Join(r.URL.Query()[api.QueryKeyQuery], " "))
+	_, human, zl, err := c.QueryZettelData(ctx, strings.Join(r.URL.Query()[webapi.QueryKeyQuery], " "))
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Error retrieving zettel list %s: %s\n", r.URL.Query(), err), http.StatusBadRequest)
 		return
@@ -658,7 +658,7 @@ func processList(w http.ResponseWriter, r *http.Request, c *client.Client) {
 
 	titles := make([]*sx.Pair, len(zl))
 	for i, jm := range zl {
-		if sMeta, err2 := c.GetEvaluatedSz(ctx, jm.ID, api.PartMeta); err2 == nil {
+		if sMeta, err2 := c.GetEvaluatedSz(ctx, jm.ID, webapi.PartMeta); err2 == nil {
 			titles[i] = gen.Transform(getZettelTitleZid(sz.MakeMeta(sMeta), jm.ID))
 		}
 	}
