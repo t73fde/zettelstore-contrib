@@ -28,9 +28,9 @@ import (
 	"time"
 
 	"t73f.de/r/webs/feed/rss"
-	"t73f.de/r/zsc/api"
 	"t73f.de/r/zsc/client"
 	"t73f.de/r/zsc/domain/meta"
+	"t73f.de/r/zsc/webapi"
 )
 
 //************
@@ -158,11 +158,11 @@ func (fi *feedInfo) retrieve(ctx context.Context) (*rss.Feed, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve version: %w", err)
 	}
-	if ver.Major == 0 || ver.Major > 1 {
+	if ver.Major <= 1 || ver.Major > 2 {
 		return nil, fmt.Errorf("unsupported version: %v", ver)
 	}
 
-	const defaultSelect = meta.KeyRole + api.SearchOperatorNotEqual + meta.ValueRoleConfiguration // config
+	const defaultSelect = meta.KeyRole + webapi.SearchOperatorNotEqual + meta.ValueRoleConfiguration // config
 	var limit = fi.Limit
 	if limit == 0 {
 		limit = 30
@@ -171,8 +171,8 @@ func (fi *feedInfo) retrieve(ctx context.Context) (*rss.Feed, error) {
 	}
 
 	defaultQuery := defaultSelect +
-		" " + api.OrderDirective + " " + api.ReverseDirective + " " + meta.KeyPublished +
-		" " + api.LimitDirective + fmt.Sprintf(" %d", limit)
+		" " + webapi.OrderDirective + " " + webapi.ReverseDirective + " " + meta.KeyPublished +
+		" " + webapi.LimitDirective + fmt.Sprintf(" %d", limit)
 	_, _, ml, err := c.QueryZettelData(ctx, defaultQuery)
 	if err != nil {
 		return nil, fmt.Errorf("unable to query zettel: %w", err)
