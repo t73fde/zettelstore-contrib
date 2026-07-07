@@ -43,7 +43,7 @@ func main() {
 	listenAddress := flag.String("l", ":23110", "Listen address")
 	flag.Usage = func() {
 		out := flag.CommandLine.Output()
-		fmt.Fprintf(out, "Usage of %s:\n", os.Args[0])
+		_, _ = fmt.Fprintf(out, "Usage of %s:\n", os.Args[0])
 		flag.PrintDefaults()
 	}
 	flag.Parse()
@@ -53,15 +53,15 @@ func main() {
 	http.Handle("GET /{$}", makeRootHandler(feeds))
 	http.Handle("GET /{feed}/{$}", makeFeedHandler(feeds))
 	fmt.Println("Listening:", *listenAddress)
-	http.ListenAndServe(*listenAddress, nil)
+	_ = http.ListenAndServe(*listenAddress, nil)
 }
 
 func makeRootHandler(feeds feeds) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		keys := slices.Sorted(maps.Keys(feeds))
 
 		w.Header().Add("Content-Type", "text/html")
-		io.WriteString(w, `<!DOCTYPE html>
+		_, _ = io.WriteString(w, `<!DOCTYPE html>
 <head>
 <title>Zettel Feeds</title>
 </head>
@@ -74,9 +74,9 @@ func makeRootHandler(feeds feeds) http.Handler {
 			if name == "" {
 				name = key
 			}
-			fmt.Fprintf(w, "<li><a href=\"/%s/\">%s</a></li>\n", key, name)
+			_, _ = fmt.Fprintf(w, "<li><a href=\"/%s/\">%s</a></li>\n", key, name)
 		}
-		io.WriteString(w, "</ul>\n</body>\n</html>")
+		_, _ = io.WriteString(w, "</ul>\n</body>\n</html>")
 	})
 }
 
@@ -96,7 +96,7 @@ func makeFeedHandler(feeds feeds) http.Handler {
 		}
 
 		w.Header().Add("content-type", "application/rss+xml")
-		feed.Write(w)
+		_ = feed.Write(w)
 	})
 }
 
