@@ -173,20 +173,11 @@ func splitHeading(bn *sx.Pair, sym *sx.Symbol) (*sx.Pair, bool) {
 	if !sym.IsEqualSymbol(zsx.SymHeading) {
 		return nil, false
 	}
-	levelPair := bn.Tail()
-	num, isNumber := sx.GetNumber(levelPair.Car())
-	if !isNumber {
+	_, level, text := zsx.GetHeading(bn)
+	if level != 1 || text == nil {
 		return nil, false
 	}
-	if level := num.(sx.Int64); level != 1 {
-		return nil, false
-	}
-
-	nextTitle := levelPair.Tail().Tail().Tail().Tail()
-	if nextTitle == nil {
-		return nil, false
-	}
-	return nextTitle, true
+	return text, true
 }
 func splitThematicBreak(bn *sx.Pair, sym *sx.Symbol) bool {
 	if !sym.IsEqualSymbol(zsx.SymThematic) {
