@@ -32,6 +32,7 @@ import (
 
 	"t73f.de/r/sx"
 	"t73f.de/r/sxwebs/sxhtml"
+	"t73f.de/r/zero/semver"
 	"t73f.de/r/zsc/client"
 	"t73f.de/r/zsc/domain/id"
 	"t73f.de/r/zsc/domain/meta"
@@ -43,18 +44,7 @@ import (
 
 const langDE = "de"
 
-// Constants for minimum required version.
-const (
-	minMajor = 1
-	minMinor = 0
-)
-
-func hasVersion(major, minor int) bool {
-	if major < minMajor {
-		return false
-	}
-	return minor >= minMinor
-}
+var minVersion = semver.SemVer{Major: 3, Minor: 0}
 
 func main() {
 	listenAddress := flag.String("l", ":23120", "Listen address")
@@ -105,10 +95,12 @@ func getClient(ctx context.Context, base string) (*client.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	if ver.Major == -1 {
-		fmt.Fprintln(os.Stderr, "Unknown zettelstore version. Use it at your own risk.")
-	} else if !hasVersion(ver.Major, ver.Minor) {
-		return nil, fmt.Errorf("need at least zettelstore version %d.%d but found only %d.%d", minMajor, minMinor, ver.Major, ver.Minor)
+	if ver.Major == 0 {
+		fmt.Fprintf(os.Stderr, "Unknown zettelstore version %s. Use it at your own risk.\n", ver)
+	} else if !minVersion.Compatible(ver) {
+		return nil, fmt.Errorf(
+			"need at least zettelstore version %d.%d but found only %d.%d",
+			minVersion.Major, minVersion.Minor, ver.Major, ver.Minor)
 	}
 
 	if !withAuth {
