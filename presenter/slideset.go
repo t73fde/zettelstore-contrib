@@ -183,7 +183,7 @@ func splitThematicBreak(bn *sx.Pair, sym *sx.Symbol) bool {
 	if !sym.IsEqualSymbol(zsx.SymThematic) {
 		return false
 	}
-	attrs := zsx.GetAttributes(bn.Tail().Head())
+	attrs := zsx.GetAttributes(zsx.GetThematic(bn))
 	return attrs.HasDefault()
 }
 
@@ -482,7 +482,8 @@ func (ce *collectEnv) VisitAfter(node *sx.Pair, _ *sx.Pair) sx.Object {
 		return node
 	}
 	if zsx.SymLink.IsEqualSymbol(sym) {
-		if refSym, zidVal := zsx.GetReference(node.Tail().Tail()); sz.SymRefStateZettel.IsEqual(refSym) {
+		_, ref, _ := zsx.GetLink(node)
+		if refSym, zidVal := zsx.GetReference(ref); sz.SymRefStateZettel.IsEqual(refSym) {
 			if zid, err := id.Parse(zidVal); err == nil {
 				ce.visitZettel(zid)
 			}
@@ -491,28 +492,16 @@ func (ce *collectEnv) VisitAfter(node *sx.Pair, _ *sx.Pair) sx.Object {
 	}
 
 	if zsx.SymEmbed.IsEqualSymbol(sym) {
-		argRef := node.Tail().Tail()
-		qref, isPair := sx.GetPair(argRef.Car())
-		if !isPair {
+		_, ref, syntax, _ := zsx.GetEmbed(node)
+		symEmbedRefState, zidVal := zsx.GetReference(ref)
+		if !sz.SymRefStateZettel.IsEqualSymbol(symEmbedRefState) {
 			return node
 		}
-		symEmbedRefState, isStateSymbol := sx.GetSymbol(qref.Car())
-		if !isStateSymbol || !sz.SymRefStateZettel.IsEqualSymbol(symEmbedRefState) {
-			return node
-		}
-		zidVal, isString := sx.GetString(qref.Tail().Car())
-		if !isString {
-			return node
-		}
-		zid, err := id.Parse(zidVal.GetValue())
+		zid, err := id.Parse(zidVal)
 		if err != nil {
 			return node
 		}
-		syntax, isString := sx.GetString(argRef.Tail().Car())
-		if !isString {
-			return node
-		}
-		ce.visitImage(zid, syntax.GetValue())
+		ce.visitImage(zid, syntax)
 	}
 	return node
 }
