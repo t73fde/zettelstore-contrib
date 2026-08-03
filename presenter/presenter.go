@@ -441,9 +441,9 @@ func (rr *revealRenderer) Render(w http.ResponseWriter, slides *slideSet, author
 	title := slides.Title()
 
 	headHTML := getHTMLHead()
-	headHTML.LastPair().AppendBang(getHeadLink("stylesheet", "revealjs/reveal.css")).
+	headHTML.LastPair().AppendBang(getHeadLink("stylesheet", "revealjs/reset.css")).
+		AppendBang(getHeadLink("stylesheet", "revealjs/reveal.css")).
 		AppendBang(getHeadLink("stylesheet", "revealjs/theme/white.css")).
-		AppendBang(getHeadLink("stylesheet", "revealjs/plugin/highlight/default.css")).
 		AppendBang(getPrefixedCSS(rr.userCSS)).
 		AppendBang(sx.MakeList(shtml.SymTitle, sx.MakeString(text.EvaluateInlineString(title))))
 	lang := slides.Lang()
@@ -496,7 +496,7 @@ func (rr *revealRenderer) Render(w http.ResponseWriter, slides *slideSet, author
 		shtml.SymBody,
 		revealHTML,
 		getJSFileScript("revealjs/plugin/highlight/highlight.js"),
-		getJSFileScript("revealjs/plugin/notes/notes.js"),
+		getJSFileScript("revealjs/plugin/notes.js"),
 		getJSFileScript("revealjs/reveal.js"),
 		getJSScript(`Reveal.initialize({width: 1920, height: 1024, center: true, slideNumber: "c", hash: true, plugins: [ RevealHighlight, RevealNotes ]});`),
 	)
@@ -703,7 +703,9 @@ var defaultCSS = []string{
 	`a.external::after { content: "➚"; display: inline-block }`,
 	`a.zettel::after { content: "⤳"; display: inline-block }`,
 	"a.broken { text-decoration: line-through }",
-	".reveal blockquote { font-style: normal }",
+	".reveal blockquote { box-shadow: none; margin: 1em auto }",
+	".reveal blockquote cite { display: block; font-style: normal; font-size: .8em }",
+	`.reveal blockquote cite::before { content: "— "; }`,
 	"p.updated { font-size: smaller }",
 }
 
