@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"t73f.de/r/webs/feed/rss"
+	"t73f.de/r/zero/semver"
 	"t73f.de/r/zsc/client"
 	"t73f.de/r/zsc/domain/meta"
 	"t73f.de/r/zsc/webapi"
@@ -38,6 +39,8 @@ import (
 // TODO: this is just a POC, there is no real architecture, tests, etc,
 //
 //************
+
+var minVersion = semver.SemVer{Major: 3, Minor: 0}
 
 func main() {
 	listenAddress := flag.String("l", ":23110", "Listen address")
@@ -158,8 +161,12 @@ func (fi *feedInfo) retrieve(ctx context.Context) (*rss.Feed, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve version: %w", err)
 	}
-	if ver.Major <= 1 || ver.Major > 2 {
-		return nil, fmt.Errorf("unsupported version: %v", ver)
+	if ver.Major == 0 {
+		fmt.Fprintf(os.Stderr, "Unknown zettelstore version %s. Use it at your own risk.\n", ver)
+	} else if !minVersion.Compatible(ver) {
+		return nil, fmt.Errorf(
+			"need at least zettelstore version %d.%d but found only %d.%d",
+			minVersion.Major, minVersion.Minor, ver.Major, ver.Minor)
 	}
 
 	const defaultSelect = meta.KeyRole + webapi.SearchOperatorNotEqual + meta.ValueRoleConfiguration // config
