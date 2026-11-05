@@ -61,6 +61,18 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Unable to connect to zettelstore: %v\n", err)
 		os.Exit(2)
 	}
+	for {
+		ready, err := c.IsReady(ctx)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error retrieving readiness: %v\n", err)
+			os.Exit(2)
+		}
+		if ready {
+			break
+		}
+		fmt.Println("Waiting for Zettelstore to become ready ...")
+		time.Sleep(1 * time.Second)
+	}
 	cfg, err := getConfig(ctx, c)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to retrieve presenter config: %v\n", err)
